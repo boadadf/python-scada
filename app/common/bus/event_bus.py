@@ -12,8 +12,6 @@ class EventBus:
         Subscribe a callback to an event type.
         Callback must be async (awaitable).
         """
-        if not asyncio.iscoroutinefunction(callback):
-            raise ValueError("Subscriber callback must be async")
         self._subscribers[event_type].append(callback)
 
     def unsubscribe(self, event_type: str, callback: Callable[[Any], Any]):
@@ -23,9 +21,8 @@ class EventBus:
 
     async def publish(self, event_type: str, data: Any):
         """Publish an event to all subscribers asynchronously."""
-        tasks = []
         for callback in self._subscribers[event_type]:
-            tasks.append(asyncio.create_task(callback(data)))
-        if tasks:
-            await asyncio.gather(*tasks)
+            result = callback(data)
+            if hasattr(result, "__await__"):
+                await result
 

@@ -1,19 +1,21 @@
 import asyncio
 import pytest
-from backend.event_bus import EventBus
+from common.bus.event_bus import EventBus
+from app.common.bus.event_types import TAG_UPDATE
+from app.common.models.dtos import TagUpdateMsg
 
 @pytest.mark.asyncio
 async def test_publish_and_subscribe():
     bus = EventBus()
     results = []
 
-    async def callback(data):
-        results.append(data)
+    async def callback(msg: TagUpdateMsg):
+        results.append(msg)
 
-    bus.subscribe("test_event", callback)
-    await bus.publish("test_event", {"value": 42})
+    bus.subscribe(TAG_UPDATE, callback)
+    await bus.publish(TAG_UPDATE, TagUpdateMsg(tag_id="t1", value=42))
     await asyncio.sleep(0.01)
-    assert results == [{"value": 42}]
+    assert results == [TagUpdateMsg(tag_id="t1", value=42)]
 
 @pytest.mark.asyncio
 async def test_multiple_subscribers():
@@ -21,30 +23,30 @@ async def test_multiple_subscribers():
     results1 = []
     results2 = []
 
-    async def callback1(data):
-        results1.append(data)
+    async def callback1(msg: TagUpdateMsg):
+        results1.append(msg)
 
-    async def callback2(data):
-        results2.append(data)
+    async def callback2(msg: TagUpdateMsg):
+        results2.append(msg)
 
-    bus.subscribe("event1", callback1)
-    bus.subscribe("event1", callback2)
-    await bus.publish("event1", 123)
+    bus.subscribe(TAG_UPDATE, callback1)
+    bus.subscribe(TAG_UPDATE, callback2)
+    await bus.publish(TAG_UPDATE, TagUpdateMsg(tag_id="t2", value=123))
     await asyncio.sleep(0.01)
-    assert results1 == [123]
-    assert results2 == [123]
+    assert results1 == [TagUpdateMsg(tag_id="t2", value=123)]
+    assert results2 == [TagUpdateMsg(tag_id="t2", value=123)]
 
 @pytest.mark.asyncio
 async def test_unsubscribe():
     bus = EventBus()
     results = []
 
-    async def callback(data):
-        results.append(data)
+    async def callback(msg: TagUpdateMsg):
+        results.append(msg)
 
-    bus.subscribe("event1", callback)
-    bus.unsubscribe("event1", callback)
-    await bus.publish("event1", 999)
+    bus.subscribe(TAG_UPDATE, callback)
+    bus.unsubscribe(TAG_UPDATE, callback)
+    await bus.publish(TAG_UPDATE, TagUpdateMsg(tag_id="t3", value=999))
     await asyncio.sleep(0.01)
     assert results == []
 
@@ -52,5 +54,4 @@ async def test_unsubscribe():
 async def test_publish_no_subscribers():
     bus = EventBus()
     # Should not raise any error
-    await bus.publish("non_existing_event", {"ok": True})
-
+    await bus.publish(TAG_UPDATE, TagUpdateMsg(tag_id="t4", value=True))
