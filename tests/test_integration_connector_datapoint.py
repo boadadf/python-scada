@@ -2,7 +2,7 @@ import asyncio
 import uuid
 import pytest
 from common.bus.event_bus import EventBus
-from backend.datapoints.datapoint_manager import DatapointEngine
+from frontend.datapoints.service import DatapointService
 from backend.communications.drivers.test_driver import TestDriver
 from backend.communications.connector_manager import ConnectorManager
 from common.bus.event_types import COMMAND_FEEDBACK
@@ -12,7 +12,7 @@ from common.config.config import Config
 @pytest.mark.asyncio
 async def test_connector_drivers_publish_to_datapoint_engine():
     bus = EventBus()
-    dp_engine = DatapointEngine(bus)
+    dp_engine = DatapointService(bus)
     dp_engine.subscribe_to_eventbus()
 
     config = Config.get_instance()
@@ -28,7 +28,7 @@ async def test_connector_drivers_publish_to_datapoint_engine():
     all_tags = dp_engine.get_all_tags()
     assert len(all_tags) > 0
     for tag_id in all_tags:
-        assert all_tags[tag_id]["value"] is not None
+        assert all_tags[tag_id].value is not None
 
     # Stop drivers
     await connector_manager.stop_all()
@@ -36,7 +36,7 @@ async def test_connector_drivers_publish_to_datapoint_engine():
 @pytest.mark.asyncio
 async def test_send_command_routing():
     bus = EventBus()
-    dp_engine = DatapointEngine(bus)
+    dp_engine = DatapointService(bus)
     dp_engine.subscribe_to_eventbus()
 
     config = Config.get_instance()

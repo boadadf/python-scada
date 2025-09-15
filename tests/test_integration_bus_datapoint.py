@@ -1,7 +1,7 @@
 import asyncio
 import pytest
 from common.bus.event_bus import EventBus
-from backend.datapoints.datapoint_manager import DatapointEngine
+from frontend.datapoints.service import DatapointService
 from app.common.bus.event_types import TAG_UPDATE
 from app.common.models.dtos import TagUpdateMsg
 from common.config.config import Config
@@ -9,7 +9,7 @@ from common.config.config import Config
 @pytest.mark.asyncio
 async def test_driver_to_datapoint_integration():
     bus = EventBus()
-    dp_engine = DatapointEngine(bus)
+    dp_engine = DatapointService(bus)
     dp_engine.subscribe_to_eventbus()
 
     # Use namespaced IDs from config
@@ -30,7 +30,7 @@ async def test_driver_to_datapoint_integration():
 
     # DatapointEngine updated internal state
     tag = dp_engine.get_tag(tag_id)
-    assert tag["value"] == 75.5
+    assert tag.value == 75.5
 
     # RuleEngine also received update
     assert received[0].tag_id == tag_id
@@ -39,7 +39,7 @@ async def test_driver_to_datapoint_integration():
 @pytest.mark.asyncio
 async def test_publish_initial_state():
     bus = EventBus()
-    dp_engine = DatapointEngine(bus)
+    dp_engine = DatapointService(bus)
     dp_engine.subscribe_to_eventbus()
 
     # Use namespaced IDs from config
