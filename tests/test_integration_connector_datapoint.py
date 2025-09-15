@@ -2,18 +2,27 @@ import asyncio
 import uuid
 import pytest
 from common.bus.event_bus import EventBus
-from frontend.datapoints.service import DatapointService
+from frontend.tags.model import DatapointModel
+from frontend.tags.service import DatapointService
 from backend.communications.drivers.test_driver import TestDriver
 from backend.communications.connector_manager import ConnectorManager
 from common.bus.event_types import COMMAND_FEEDBACK
 from app.common.models.dtos import CommandFeedbackMsg
 from common.config.config import Config
 
+@pytest.fixture(autouse=True)
+def reset_config_singleton():
+    Config.reset_instance()
+    Config.get_instance("tests/test_config.json")
+
+def setup_function():
+    Config.reset_instance()
+
+
 @pytest.mark.asyncio
 async def test_connector_drivers_publish_to_datapoint_engine():
     bus = EventBus()
-    dp_engine = DatapointService(bus)
-    dp_engine.subscribe_to_eventbus()
+    dp_engine = DatapointService(bus, DatapointModel(), None)
 
     config = Config.get_instance()
     drivers_config = config.get_drivers()
@@ -25,7 +34,7 @@ async def test_connector_drivers_publish_to_datapoint_engine():
     await asyncio.sleep(2)
 
     # Check that DatapointEngine received updates
-    all_tags = dp_engine.get_all_tags()
+    all_tags = dp_engine.model.get_all_tags()
     assert len(all_tags) > 0
     for tag_id in all_tags:
         assert all_tags[tag_id].value is not None
@@ -36,8 +45,7 @@ async def test_connector_drivers_publish_to_datapoint_engine():
 @pytest.mark.asyncio
 async def test_send_command_routing():
     bus = EventBus()
-    dp_engine = DatapointService(bus)
-    dp_engine.subscribe_to_eventbus()
+    dp_engine = DatapointService(bus, DatapointModel(), None)
 
     config = Config.get_instance()
     drivers_config = config.get_drivers()

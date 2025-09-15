@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Tag List</title>
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 1em; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #bbb; padding: 0.5em; text-align: left; }
+        input[type="text"] { width: 80px; }
+        button { padding: 0.2em 0.8em; }
+    </style>
+</head>
+<body>
+    <h2>Tag List</h2>
+    <table id="tag-table">
+        <thead>
+            <tr>
+                <th>Tag</th>
+                <th>Value</th>
+                <th>Quality</th>
+                <th>Timestamp</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Tag rows will be inserted here -->
+        </tbody>
+    </table>
+    <script>
+        const socket = io();
+        const tagTableBody = document.querySelector('#tag-table tbody');
+        const tags = {};
+
+        function updateTagRow(tag) {
+            let rowId = 'tag-' + tag.tag_id.replace(/[^a-zA-Z0-9]/g, '_');
+            let row = document.getElementById(rowId);
+            // Use 'None' if value is undefined, null, or empty string
+            let valueDisplay = (tag.value === undefined || tag.value === null || tag.value === '') ? 'None' : tag.value;
+            if (!row) {
+                row = document.createElement('tr');
+                row.id = rowId;
+                row.innerHTML = `
+                    <td>${tag.tag_id}</td>
+                    <td><input type="text" value="${valueDisplay}" /></td>
+                    <td class="quality"></td>
+                    <td class="timestamp"></td>
+                    <td><button>Update</button></td>
+                `;
+                tagTableBody.appendChild(row);
+
+                // Update on Enter key
+                row.querySelector('input').addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter') {
+                        sendUpdate(tag.tag_id, this.value);
+                    }
+                });
+                // Update on button click
+                row.querySelector('button').addEventListener('click', function() {
+                    const val = row.querySelector('input').value;
+                    sendUpdate(tag.tag_id, val);
+                });
+            }
+            // Always update the input value and other fields
+            row.querySelector('input').value = valueDisplay;
+            row.querySelector('.quality').textContent = tag.quality !== undefined && tag.quality !== null ? tag.quality : 'None';
+            row.querySelector('.timestamp').textContent = tag.timestamp !== undefined && tag.timestamp !== null ? tag.timestamp : 'None';
+        }
+
+        function sendUpdate(tag_id, value) {
+            socket.emit('set_tag', {
+                tag_id: tag_id,
+                value: value,
+                quality: "good"
+                // timestamp will be set by server if omitted
+            });
+        }
+
+        socket.on('connect', () => {
+            socket.emit('subscribe_live_feed');
+        });
+
+        socket.on('initial_state', function(tagList) {
+            tagTableBody.innerHTML = '';
+            tagList.forEach(tag => {
+                tags[tag.tag_id] = tag;
+                updateTagRow(tag);
+            });
+        });
+
+        socket.on('datapoint_update', function(tag) {
+            tags[tag.tag_id] = tag;
+            updateTagRow(tag);
+        });
+    </script>
+</body>
+</html>

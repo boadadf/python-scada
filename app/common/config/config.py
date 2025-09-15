@@ -1,5 +1,6 @@
+import os
 import json
-from common.models.entities import Rule
+from app.common.models.entities import Rule
 
 class Config:
     _instance = None
@@ -9,9 +10,11 @@ class Config:
             self._config = json.load(f)
 
     @classmethod
-    def get_instance(cls, config_file="config/system_config.json"):
+    def get_instance(cls, config_file=None):
         if cls._instance is None:
-            cls._instance = Config(config_file)
+            if config_file is None:
+                config_file = os.environ.get("SCADA_CONFIG_FILE", "config/system_config.json")
+            cls._instance = cls(config_file)
         return cls._instance
 
     @classmethod

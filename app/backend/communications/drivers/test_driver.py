@@ -31,14 +31,13 @@ class TestDriver:
         if self._value_callback:
             await self._value_callback(TagUpdateMsg(tag_id=f"{self.server_name}@{tag_id}", value=value))
 
-    def register_command_feedback(self, callback: Callable[[CommandFeedbackMsg], Any]):
+    async def register_command_feedback(self, callback: Callable[[CommandFeedbackMsg], Any]):
         self._command_feedback_callback = callback
 
     async def send_command(self, tag_id: str, command: Any, command_id: str):
         await asyncio.sleep(0.1)
         if self._command_feedback_callback:
             full_tag_id = f"{self.server_name}@{tag_id}"
-            # Generate a dummy command_id for feedback
             await self._command_feedback_callback(CommandFeedbackMsg(
                 command_id= command_id,
                 tag_id=full_tag_id,

@@ -30,7 +30,7 @@ async def test_test_driver_command_feedback():
     async def cb(msg: CommandFeedbackMsg):
         feedback.append(msg)
 
-    driver.register_command_feedback(cb)
+    await driver.register_command_feedback(cb)
     await driver.connect()
     await driver.send_command("TANK1_LEVEL", 50, uuid.uuid4())
 

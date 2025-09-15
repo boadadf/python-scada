@@ -2,6 +2,7 @@
 Defines all event types used in the EventBus.
 """
 
+RAW_TAG_UPDATE = "raw_tag_update"
 TAG_UPDATE = "tag_update"
 SEND_COMMAND = "send_command"
 COMMAND_FEEDBACK = "command_feedback"

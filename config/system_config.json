@@ -1,0 +1,52 @@
+{
+  "drivers": [
+    {
+      "name": "Server1",
+      "driver_class": "TestDriver",
+      "connection_info": { "server_name": "Server1" },
+      "datapoints": ["TANK1_LEVEL", "PUMP1_STATUS", "DOOR1_OPEN"]
+    },
+    {
+      "name": "Server2",
+      "driver_class": "TestDriver",
+      "connection_info": { "server_name": "Server2" },
+      "datapoints": ["VALVE1_POS", "PRESSURE", "TEMPERATURE"]
+    }
+  ],
+  "rules": [
+    {
+      "rule_id": "close_valve_if_high",
+      "on_condition": "Server2@PRESSURE > 100",
+      "on_actions": [
+        "send_command('Server2@VALVE1_POS', 0)",
+        "raise_alarm()"
+      ],
+      "off_condition": "Server2@PRESSURE < 80",
+      "off_actions": [
+        "lower_alarm()"
+      ]
+    },
+    {
+      "rule_id": "pump_shutdown_if_low_level",
+      "on_condition": "Server1@TANK1_LEVEL < 10",
+      "on_actions": [
+        "send_command('Server1@PUMP1_STATUS', 'OFF')",
+        "raise_alarm()"
+      ]
+    },
+    {
+      "rule_id": "door_open_alarm",
+      "on_condition": "Server1@DOOR1_OPEN == True",
+      "on_actions": [
+        "raise_alarm()"
+      ]
+    },
+    {
+      "rule_id": "temperature_high_warning",
+      "on_condition": "Server2@TEMPERATURE > 80",
+      "on_actions": [
+        "raise_alarm()"
+      ]
+    }
+  ]
+}

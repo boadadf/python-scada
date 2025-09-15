@@ -1,8 +1,10 @@
 import uuid
 import pytest
 import asyncio
+from common import bus
 from common.bus.event_bus import EventBus
-from frontend.datapoints.service import DatapointService
+from frontend.tags.model import DatapointModel
+from frontend.tags.service import DatapointService
 from backend.communications.connector_manager import ConnectorManager
 from backend.rule.rule_manager import RuleEngine
 from backend.alarm.alarm_engine import AlarmEngine
@@ -24,8 +26,7 @@ async def test_full_system_with_recursive_alarms_and_feedback():
     bus = EventBus()
 
     # Datapoint Engine
-    dp_engine = DatapointService(bus)
-    dp_engine.subscribe_to_eventbus()
+    dp_engine = DatapointService(bus, DatapointModel(), None)
 
     # Configuration & Connector
     Config.reset_instance()

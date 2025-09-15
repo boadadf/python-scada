@@ -1,7 +1,7 @@
 import asyncio
 from typing import Any
 from backend.communications.drivers import DRIVER_REGISTRY
-from common.bus.event_types import COMMAND_FEEDBACK, TAG_UPDATE
+from common.bus.event_types import COMMAND_FEEDBACK, RAW_TAG_UPDATE, TAG_UPDATE
 
 class ConnectorManager:
     def __init__(self, event_bus, drivers_config: list):
@@ -20,17 +20,17 @@ class ConnectorManager:
                 "datapoints": cfg.get("datapoints", [])
             })
 
-    async def start_all(self):
-        for d in self.drivers:
-            async def emit_value(data: dict):
-                await self.event_bus.publish(TAG_UPDATE, data)
-            await d["driver"].register_value_listener(emit_value)
+    async def emit_value(self, data: dict):
+        await self.event_bus.publish(RAW_TAG_UPDATE, data)
 
-            async def emit_command_feedback(data: dict):
-                await self.event_bus.publish(COMMAND_FEEDBACK, data)
-            d["driver"].register_command_feedback(
-                lambda data: asyncio.create_task(emit_command_feedback(data))
-            )
+    async def emit_command_feedback(self, data: dict):
+        await self.event_bus.publish(COMMAND_FEEDBACK, data)
+
+    async def start_all(self):
+        for d in self.drivers:            
+            await d["driver"].register_value_listener(self.emit_value)
+            
+            await d["driver"].register_command_feedback(self.emit_command_feedback)
 
             await d["driver"].connect()
             await d["driver"].subscribe(d["datapoints"])
