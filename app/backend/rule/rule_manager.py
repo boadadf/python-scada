@@ -9,9 +9,9 @@ the lifecycle state for each rule.
 import asyncio
 import re
 from asteval import Interpreter
-from common.config.config import Config
-from common.bus.event_bus import EventBus
-from app.common.bus.event_types import TAG_UPDATE
+from app.common.bus.event_types import EventType
+from app.common.config.config import Config
+from app.common.bus.event_bus import EventBus
 from app.common.models.dtos import TagUpdateMsg
 from backend.rule.actioncommands.command_map import ACTION_MAP
 
@@ -69,7 +69,7 @@ class RuleEngine:
         """
         Subscribe the rule engine to tag update events on the event bus.
         """
-        self.event_bus.subscribe(TAG_UPDATE, self.on_tag_update)
+        self.event_bus.subscribe(EventType.TAG_UPDATE, self.on_tag_update)
 
     async def on_tag_update(self, msg: TagUpdateMsg):
         """
@@ -81,7 +81,7 @@ class RuleEngine:
         Args:
             data (dict): The tag update event data, must include 'tag_id' and 'value'.
         """
-        tag_id = msg.tag_id
+        tag_id = msg.datapoint_identifier
         value = msg.value
         self.datapoint_state[tag_id] = value
 

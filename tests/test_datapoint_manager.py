@@ -2,11 +2,11 @@ import pytest
 import asyncio
 from datetime import datetime, timezone
 
-from common.config.config import Config
-from frontend.tags.model import DatapointModel
-from frontend.tags.service import DatapointService
-from common.bus.event_bus import EventBus
-from app.common.bus.event_types import TAG_UPDATE
+from app.common.config.config import Config
+from app.frontend.datapoints.model import DatapointModel
+from app.frontend.datapoints.service import DatapointService
+from app.common.bus.event_bus import EventBus
+from app.common.bus.event_types import EventType
 from app.common.models.dtos import TagUpdateMsg
 
 @pytest.fixture(autouse=True)
@@ -26,7 +26,7 @@ async def test_update_tag_quality_and_timestamp():
     async def capture(msg: TagUpdateMsg):
         results.append(msg)
 
-    bus.subscribe(TAG_UPDATE, capture)
+    bus.subscribe(EventType.TAG_UPDATE, capture)
 
     now = datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
     await dp_engine.update_tag("Server1@TANK1_LEVEL", 55.5, quality="bad", timestamp=now)
@@ -55,7 +55,7 @@ async def test_multiple_tag_updates():
     async def capture(msg: TagUpdateMsg):
         results.append(msg)
 
-    bus.subscribe(TAG_UPDATE, capture)
+    bus.subscribe(EventType.TAG_UPDATE, capture)
 
     await dp_engine.update_tag("Server1@TANK1_LEVEL", 10)
     await dp_engine.update_tag("Server1@TANK1_LEVEL", 20)
@@ -76,7 +76,7 @@ async def test_update_tag_without_optional_fields():
     async def capture(msg: TagUpdateMsg):
         results.append(msg)
 
-    bus.subscribe(TAG_UPDATE, capture)
+    bus.subscribe(EventType.TAG_UPDATE, capture)
     
     await dp_engine.update_tag("Server1@TANK1_LEVEL", 99)
     tag = dp_engine.model.get_tag("Server1@TANK1_LEVEL")

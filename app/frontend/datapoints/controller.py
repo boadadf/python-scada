@@ -5,7 +5,7 @@ from threading import Lock
 
 import socketio
 from app.common.models.dtos import TagUpdateMsg
-from app.frontend.tags.model import DatapointModel
+from app.frontend.datapoints.model import DatapointModel
 
 class DatapointController:
     def __init__(self, model: DatapointModel, socketio):
@@ -14,6 +14,7 @@ class DatapointController:
         self._initializing_clients = set()
         self._lock = Lock()
         self.service = None
+        self.register_socketio()
 
     def handle_subscribe_live_feed(self):
         sid = getattr(emit, 'sid', None) or None
@@ -29,7 +30,7 @@ class DatapointController:
         asyncio.run(self.service.update_tag(tag_id, value, quality, timestamp))
 
     def handle_set_tag(self, data):
-        tag_id = data.get("tag_id")
+        tag_id = data.get("datapoint_identifier")
         value = data.get("value")
         quality = data.get("quality", "good")
         timestamp = data.get("timestamp")
@@ -39,24 +40,24 @@ class DatapointController:
             if hasattr(self.service, "update_tag") and callable(self.service.update_tag):
                 # Run the async update_tag in the background
                 self.socketio.start_background_task(self.run_async_update, tag_id, value, quality, timestamp)
-                self.socketio.emit('set_tag_ack', {"status": "ok", "tag_id": tag_id})
+                self.socketio.emit('set_tag_ack', {"status": "ok", "datapoint_identifier": tag_id})
             else:
                 self.socketio.emit('set_tag_ack', {"status": "error", "reason": "Service missing update_tag"})
         else:
             self.socketio.emit('set_tag_ack', {"status": "error", "reason": "No service attached"})
 
-    def register_socketio(self, socketio):
-        @socketio.on('subscribe_live_feed')
+    def register_socketio(self):
+        @self.socketio.on('subscribe_live_feed')
         def _handler():
             self.handle_subscribe_live_feed()
 
-        @socketio.on('disconnect')
+        @self.socketio.on('disconnect')
         def handle_disconnect():
             sid = getattr(socketio, 'sid', None) or getattr(emit, 'sid', None) or None
             with self._lock:
                 self._initializing_clients.discard(sid)
 
-        @socketio.on('set_tag')
+        @self.socketio.on('set_tag')
         def _handler(data):
             self.handle_set_tag(data)
 

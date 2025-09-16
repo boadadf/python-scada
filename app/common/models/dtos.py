@@ -3,7 +3,7 @@ from typing import Any, Tuple, Optional
 
 @dataclass
 class TagUpdateMsg:
-    tag_id: str
+    datapoint_identifier: str
     value: Any
     quality: str = "good"
     timestamp: Optional[str] = None
@@ -11,32 +11,37 @@ class TagUpdateMsg:
 @dataclass
 class SendCommandMsg:
     command_id: str
-    tag_id: str
+    datapoint_identifier: str
     command: Any
 
 @dataclass
 class CommandFeedbackMsg:
     command_id: str
     status: str
-    tag_id: str
+    datapoint_identifier: str
  
 @dataclass
 class RaiseAlarmMsg:
-    tag_id: str
+    datapoint_identifier: str
     params: Tuple[Any, ...] = ()
 
 @dataclass
 class LowerAlarmMsg:
-    tag_id: str
+    datapoint_identifier: str
     params: Tuple[Any, ...] = ()
 
 @dataclass
 class AckAlarmMsg:
-    tag_id: str
+    datapoint_identifier: str
     user: Optional[str] = None
 
 @dataclass
 class AlarmUpdateMsg:
-    tag_id: str
+    datapoint_identifier: str
     state: str
     details: Optional[Any] = None
+
+@dataclass
+class CommunicationStatusMsg:
+    server_name: str
+    status: str

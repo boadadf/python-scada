@@ -3,8 +3,8 @@ import asyncio
 from datetime import datetime
 
 from backend.alarm.alarm_engine import AlarmEngine
-from common.bus.event_bus import EventBus
-from app.common.bus.event_types import ACK_ALARM, ALARM_UPDATE, LOWER_ALARM, TAG_UPDATE, RAISE_ALARM
+from app.common.bus.event_bus import EventBus
+from app.common.bus.event_types import EventType
 from app.common.models.dtos import RaiseAlarmMsg, LowerAlarmMsg, AckAlarmMsg, AlarmUpdateMsg
 
 @pytest.mark.asyncio
@@ -15,15 +15,15 @@ async def test_alarm_active_creation():
     updates = []
     async def capture(data):
         updates.append(data)
-    bus.subscribe(ALARM_UPDATE, capture)
+    bus.subscribe(EventType.ALARM_UPDATE, capture)
 
     # Trigger an active alarm
-    await bus.publish(RAISE_ALARM, RaiseAlarmMsg(tag_id="tag1"))
+    await bus.publish(EventType.RAISE_ALARM, RaiseAlarmMsg(datapoint_identifier="tag1"))
     await asyncio.sleep(0.01)
 
     # Check occurrence created
     assert len(updates) == 1
-    assert updates[0][0]["tag_id"] == "tag1"
+    assert updates[0][0]["datapoint_identifier"] == "tag1"
     assert updates[0][0]["active"] is True
     assert updates[0][0]["acknowledged"] is False
     assert updates[0][0]["finished"] is False
@@ -37,14 +37,14 @@ async def test_alarm_inactive_transition():
     updates = []
     async def capture(data):
         updates.append(data)
-    bus.subscribe(ALARM_UPDATE, capture)
+    bus.subscribe(EventType.ALARM_UPDATE, capture)
 
     # Active alarm
-    await bus.publish(RAISE_ALARM, RaiseAlarmMsg(tag_id="tag1"))
+    await bus.publish(EventType.RAISE_ALARM, RaiseAlarmMsg(datapoint_identifier="tag1"))
     await asyncio.sleep(0.01)
 
     # Inactive transition
-    await bus.publish(LOWER_ALARM, LowerAlarmMsg(tag_id="tag1"))
+    await bus.publish(EventType.LOWER_ALARM, LowerAlarmMsg(datapoint_identifier="tag1"))
     await asyncio.sleep(0.01)
 
     # Check inactive
@@ -62,14 +62,14 @@ async def test_alarm_acknowledge_active():
     updates = []
     async def capture(data):
         updates.append(data)
-    bus.subscribe(ALARM_UPDATE, capture)
+    bus.subscribe(EventType.ALARM_UPDATE, capture)
 
     # Active alarm
-    await bus.publish(RAISE_ALARM, RaiseAlarmMsg(tag_id="tag1"))
+    await bus.publish(EventType.RAISE_ALARM, RaiseAlarmMsg(datapoint_identifier="tag1"))
     await asyncio.sleep(0.01)
 
     # Acknowledge while active
-    await bus.publish(ACK_ALARM, AckAlarmMsg(tag_id="tag1"))
+    await bus.publish(EventType.ACK_ALARM, AckAlarmMsg(datapoint_identifier="tag1"))
     await asyncio.sleep(0.01)
 
     occ = updates[-1][0]
@@ -86,16 +86,16 @@ async def test_alarm_acknowledge_inactive_finishes():
     updates = []
     async def capture(data):
         updates.append(data)
-    bus.subscribe(ALARM_UPDATE, capture)
+    bus.subscribe(EventType.ALARM_UPDATE, capture)
 
     # Active -> Inactive
-    await bus.publish(RAISE_ALARM, RaiseAlarmMsg(tag_id="tag1"))
+    await bus.publish(EventType.RAISE_ALARM, RaiseAlarmMsg(datapoint_identifier="tag1"))
     await asyncio.sleep(0.01)
-    await bus.publish(LOWER_ALARM, LowerAlarmMsg(tag_id="tag1"))
+    await bus.publish(EventType.LOWER_ALARM, LowerAlarmMsg(datapoint_identifier="tag1"))
     await asyncio.sleep(0.01)
 
     # Ack after inactive -> finished
-    await bus.publish(ACK_ALARM, AckAlarmMsg(tag_id="tag1"))
+    await bus.publish(EventType.ACK_ALARM, AckAlarmMsg(datapoint_identifier="tag1"))
     await asyncio.sleep(0.01)
 
     # After finishing, alarm_update should exclude finished alarms
@@ -112,18 +112,18 @@ async def test_recursive_alarms_full_updates():
         # Make a copy of the snapshot at this moment
         updates.append([dict(occ) for occ in data])
 
-    bus.subscribe(ALARM_UPDATE, capture)
+    bus.subscribe(EventType.ALARM_UPDATE, capture)
 
     # First occurrence active
-    await bus.publish(RAISE_ALARM, RaiseAlarmMsg(tag_id="door"))
+    await bus.publish(EventType.RAISE_ALARM, RaiseAlarmMsg(datapoint_identifier="door"))
     await asyncio.sleep(0.01)
 
     # First occurrence inactive
-    await bus.publish(LOWER_ALARM, LowerAlarmMsg(tag_id="door"))
+    await bus.publish(EventType.LOWER_ALARM, LowerAlarmMsg(datapoint_identifier="door"))
     await asyncio.sleep(0.01)
 
     # Second occurrence active
-    await bus.publish(RAISE_ALARM, RaiseAlarmMsg(tag_id="door"))
+    await bus.publish(EventType.RAISE_ALARM, RaiseAlarmMsg(datapoint_identifier="door"))
     await asyncio.sleep(0.01)
 
     # Check all updates
@@ -152,23 +152,23 @@ async def test_alarm_active_inactive_ack():
     async def capture(data):
         updates.append([dict(occ) for occ in data])
 
-    bus.subscribe(ALARM_UPDATE, capture)
+    bus.subscribe(EventType.ALARM_UPDATE, capture)
 
     # Active alarm
-    await bus.publish(RAISE_ALARM, RaiseAlarmMsg(tag_id="rule1"))
+    await bus.publish(EventType.RAISE_ALARM, RaiseAlarmMsg(datapoint_identifier="rule1"))
     await asyncio.sleep(0.01)
 
     occ_id = updates[0][0]["occurrence_id"]
 
     # Inactive
-    await bus.publish(LOWER_ALARM, LowerAlarmMsg(tag_id="rule1"))
+    await bus.publish(EventType.LOWER_ALARM, LowerAlarmMsg(datapoint_identifier="rule1"))
     await asyncio.sleep(0.01)
 
     assert updates[1][0]["occurrence_id"] == occ_id
     assert updates[1][0]["active"] is False
 
     # Ack → finishes since inactive
-    await bus.publish(ACK_ALARM, AckAlarmMsg(tag_id="rule1"))
+    await bus.publish(EventType.ACK_ALARM, AckAlarmMsg(datapoint_identifier="rule1"))
     await asyncio.sleep(0.01)
 
     # Finished → should not appear in last update
@@ -185,19 +185,19 @@ async def test_recursive_alarms():
     async def capture(data):
         updates.append([dict(occ) for occ in data])
 
-    bus.subscribe(ALARM_UPDATE, capture)
+    bus.subscribe(EventType.ALARM_UPDATE, capture)
 
     # First occurrence active
-    await bus.publish(RAISE_ALARM, RaiseAlarmMsg(tag_id="door"))
+    await bus.publish(EventType.RAISE_ALARM, RaiseAlarmMsg(datapoint_identifier="door"))
     await asyncio.sleep(0.01)
     occ1 = updates[-1][0]["occurrence_id"]
 
     # First occurrence inactive
-    await bus.publish(LOWER_ALARM, LowerAlarmMsg(tag_id="door"))
+    await bus.publish(EventType.LOWER_ALARM, LowerAlarmMsg(datapoint_identifier="door"))
     await asyncio.sleep(0.01)
 
     # Second occurrence active
-    await bus.publish(RAISE_ALARM, RaiseAlarmMsg(tag_id="door"))
+    await bus.publish(EventType.RAISE_ALARM, RaiseAlarmMsg(datapoint_identifier="door"))
     await asyncio.sleep(0.01)
     occ2 = [occ for occ in updates[-1] if occ["active"]][0]["occurrence_id"]
 

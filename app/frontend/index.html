@@ -22,15 +22,19 @@
 </head>
 <body>
     <div class="tabs">
-        <button class="tab-btn" data-tab="tags">Tag List</button>
-        <button class="tab-btn active" data-tab="image">Image</button>        
-        <button class="tab-btn" data-tab="alarms">Alarm List</button>
-        <button class="tab-btn" data-tab="commands">Command List</button>
+        <button class="tab-btn active" data-tab="datapoints">Datapoints</button>
+        <button class="tab-btn" data-tab="communications">Communications</button>
+        <button class="tab-btn" data-tab="image">Image</button>        
+        <button class="tab-btn" data-tab="alarms">Alarms</button>
+        <button class="tab-btn" data-tab="commands">Commands</button>        
     </div>
-    <div id="tags" class="tab-content">
-        <iframe src="tags/tags.html"></iframe>
+    <div id="datapoints" class="tab-content active">
+        <iframe src="datapoints/view.html"></iframe>
     </div>
-    <div id="image" class="tab-content active">
+    <div id="communications" class="tab-content">
+        <iframe src="communications/view.html"></iframe>
+    </div>
+    <div id="image" class="tab-content">
         <iframe src="about:blank"></iframe>
     </div>    
     <div id="alarms" class="tab-content">

@@ -1,4 +1,4 @@
-from app.common.bus.event_types import SEND_COMMAND
+from app.common.bus.event_types import EventType
 from app.common.models.dtos import SendCommandMsg
 import uuid
 
@@ -7,6 +7,6 @@ class SendCommandAction:
         target_tag_id, command = params
         command_id = str(uuid.uuid4())
         await engine.event_bus.publish(
-            SEND_COMMAND,
-            SendCommandMsg(command_id=command_id, tag_id=target_tag_id, command=command)
+            EventType.SEND_COMMAND,
+            SendCommandMsg(command_id=command_id, datapoint_identifier=target_tag_id, command=command)
         )

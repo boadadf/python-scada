@@ -34,7 +34,7 @@
         const tags = {};
 
         function updateTagRow(tag) {
-            let rowId = 'tag-' + tag.tag_id.replace(/[^a-zA-Z0-9]/g, '_');
+            let rowId = 'tag-' + tag.datapoint_identifier.replace(/[^a-zA-Z0-9]/g, '_');
             let row = document.getElementById(rowId);
             // Use 'None' if value is undefined, null, or empty string
             let valueDisplay = (tag.value === undefined || tag.value === null || tag.value === '') ? 'None' : tag.value;
@@ -42,7 +42,7 @@
                 row = document.createElement('tr');
                 row.id = rowId;
                 row.innerHTML = `
-                    <td>${tag.tag_id}</td>
+                    <td>${tag.datapoint_identifier}</td>
                     <td><input type="text" value="${valueDisplay}" /></td>
                     <td class="quality"></td>
                     <td class="timestamp"></td>
@@ -53,13 +53,13 @@
                 // Update on Enter key
                 row.querySelector('input').addEventListener('keydown', function(e) {
                     if (e.key === 'Enter') {
-                        sendUpdate(tag.tag_id, this.value);
+                        sendUpdate(tag.datapoint_identifier, this.value);
                     }
                 });
                 // Update on button click
                 row.querySelector('button').addEventListener('click', function() {
                     const val = row.querySelector('input').value;
-                    sendUpdate(tag.tag_id, val);
+                    sendUpdate(tag.datapoint_identifier, val);
                 });
             }
             // Always update the input value and other fields
@@ -84,13 +84,13 @@
         socket.on('initial_state', function(tagList) {
             tagTableBody.innerHTML = '';
             tagList.forEach(tag => {
-                tags[tag.tag_id] = tag;
+                tags[tag.datapoint_identifier] = tag;
                 updateTagRow(tag);
             });
         });
 
         socket.on('datapoint_update', function(tag) {
-            tags[tag.tag_id] = tag;
+            tags[tag.datapoint_identifier] = tag;
             updateTagRow(tag);
         });
     </script>

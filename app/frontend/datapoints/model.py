@@ -19,7 +19,7 @@ class DatapointModel:
         now = datetime.now(timezone.utc).isoformat()
         for tag_id in self._allowed_tags:
             self._tags[tag_id] = TagUpdateMsg(
-                tag_id=tag_id,
+                datapoint_identifier=tag_id,
                 value=None,
                 quality="unknown",
                 timestamp=now
@@ -33,10 +33,10 @@ class DatapointModel:
 
     def _should_accept_update(self, tag: TagUpdateMsg) -> bool:
         # Condition 1: Tag must be allowed
-        if tag.tag_id not in self._allowed_tags:
+        if tag.datapoint_identifier not in self._allowed_tags:
             return False
         # Condition 2: Ignore older updates or tags that are not in the _tags
-        old_tag = self._tags.get(tag.tag_id)
+        old_tag = self._tags.get(tag.datapoint_identifier)
         if old_tag and tag.timestamp is not None and old_tag.timestamp is not None:
             if tag.timestamp < old_tag.timestamp:
                 return False
@@ -46,5 +46,5 @@ class DatapointModel:
     def set_tag(self, tag: TagUpdateMsg):
         if not self._should_accept_update(tag):
             return False
-        self._tags[tag.tag_id] = tag
+        self._tags[tag.datapoint_identifier] = tag
         return True

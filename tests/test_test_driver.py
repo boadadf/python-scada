@@ -20,7 +20,7 @@ async def test_test_driver_value_callback():
 
     await driver.disconnect()
     assert len(results) > 0
-    assert results[0].tag_id == "Server1@TANK1_LEVEL"
+    assert results[0].datapoint_identifier == "Server1@TANK1_LEVEL"
 
 @pytest.mark.asyncio
 async def test_test_driver_command_feedback():
@@ -37,6 +37,6 @@ async def test_test_driver_command_feedback():
     await asyncio.sleep(0.1)
     await driver.disconnect()
 
-    assert feedback[0].tag_id == "Server1@TANK1_LEVEL"
+    assert feedback[0].datapoint_identifier == "Server1@TANK1_LEVEL"
     assert feedback[0].status == "OK"
     assert feedback[0].command_id is not None

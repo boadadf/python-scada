@@ -1,11 +1,11 @@
 import asyncio
 import pytest
-from common.bus.event_bus import EventBus
-from frontend.tags.model import DatapointModel
-from frontend.tags.service import DatapointService
-from app.common.bus.event_types import RAW_TAG_UPDATE, TAG_UPDATE
+from app.common.bus.event_bus import EventBus
+from app.frontend.datapoints.model import DatapointModel
+from app.frontend.datapoints.service import DatapointService
+from app.common.bus.event_types import EventType
 from app.common.models.dtos import TagUpdateMsg
-from common.config.config import Config
+from app.common.config.config import Config
 
 @pytest.fixture(autouse=True)
 def reset_config_singleton():
@@ -30,10 +30,10 @@ async def test_driver_to_datapoint_integration():
     async def rule_engine_sim(msg: TagUpdateMsg):
         received.append(msg)
 
-    bus.subscribe(TAG_UPDATE, rule_engine_sim)
+    bus.subscribe(EventType.TAG_UPDATE, rule_engine_sim)
 
     # Simulate a driver publishing a tag update with correct namespaced tag_id
-    await bus.publish(RAW_TAG_UPDATE, TagUpdateMsg(tag_id=tag_id, value=75.5))
+    await bus.publish(EventType.RAW_TAG_UPDATE, TagUpdateMsg(datapoint_identifier=tag_id, value=75.5))
     await asyncio.sleep(0.01)
 
     # DatapointEngine updated internal state
@@ -41,5 +41,5 @@ async def test_driver_to_datapoint_integration():
     assert tag.value == 75.5
 
     # RuleEngine also received update
-    assert received[0].tag_id == tag_id
+    assert received[0].datapoint_identifier == tag_id
     assert received[0].value == 75.5

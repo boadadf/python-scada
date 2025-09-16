@@ -6,7 +6,7 @@ import threading
 import time
 import requests
 import socketio
-from frontend.app import app, socketio as flask_socketio
+from app import app, socketio as flask_socketio
 from common.config.config import Config
 
 SERVER_URL = "http://localhost:5000"
@@ -51,19 +51,19 @@ def test_live_feed_and_set_tag_real():
             expected_tags.append(f"{driver['name']}@{dp}")
 
     assert received_initial, "No initial_state received"
-    initial_tags = {dp['tag_id'] for dp in received_initial[0]}
+    initial_tags = {dp['datapoint_identifier'] for dp in received_initial[0]}
     for tag in expected_tags:
         assert tag in initial_tags
 
     # Set a value for one tag using HTTP POST (if you have a REST endpoint), or via WebSocket
     test_tag = expected_tags[0]
     test_value = 123.45
-    sio.emit('set_tag', {"tag_id": test_tag, "value": test_value, "quality": "good"})
+    sio.emit('set_tag', {"datapoint_identifier": test_tag, "value": test_value, "quality": "good"})
     time.sleep(1)  # Wait for update
 
     assert received_updates, "No datapoint_update received after set_tag"
     update = received_updates[-1]
-    assert update['tag_id'] == test_tag
+    assert update['datapoint_identifier'] == test_tag
     assert update['value'] == test_value
 
     sio.disconnect()

@@ -1,8 +1,8 @@
 import asyncio
 from datetime import UTC, datetime
-from common.bus.event_bus import EventBus
-from common.bus.event_types import ALARM_UPDATE, LOWER_ALARM, RAISE_ALARM, ACK_ALARM
-from common.models.entities import AlarmOccurrence
+from app.common.bus.event_bus import EventBus
+from app.common.bus.event_types import EventType
+from app.common.models.entities import AlarmOccurrence
 from app.common.models.dtos import RaiseAlarmMsg, LowerAlarmMsg, AckAlarmMsg, AlarmUpdateMsg
 
 class AlarmEngine:
@@ -17,9 +17,9 @@ class AlarmEngine:
         self.occurrences = []
 
         # Subscribe to rule engine events
-        event_bus.subscribe(RAISE_ALARM, self.on_alarm_active)
-        event_bus.subscribe(LOWER_ALARM, self.on_alarm_inactive)
-        event_bus.subscribe(ACK_ALARM, self.on_alarm_ack)
+        event_bus.subscribe(EventType.RAISE_ALARM, self.on_alarm_active)
+        event_bus.subscribe(EventType.LOWER_ALARM, self.on_alarm_inactive)
+        event_bus.subscribe(EventType.ACK_ALARM, self.on_alarm_ack)
 
     async def on_alarm_active(self, data: RaiseAlarmMsg):
         """
@@ -27,7 +27,7 @@ class AlarmEngine:
         Always creates a new AlarmOccurrence.
         """
         occ = AlarmOccurrence(
-            tag_id=data.tag_id,
+            datapoint_identifier=data.datapoint_identifier,
             timestamp=datetime.now(UTC)
         )
         self.occurrences.append(occ)
@@ -39,7 +39,7 @@ class AlarmEngine:
         Marks matching active occurrences as inactive.
         """
         for occ in self.occurrences:
-            if occ.tag_id == data.tag_id and occ.active and not occ.finished:
+            if occ.datapoint_identifier == data.datapoint_identifier and occ.active and not occ.finished:
                 occ.active = False
         await self.publish_update()
 
@@ -48,7 +48,7 @@ class AlarmEngine:
         Operator acknowledges an active or inactive alarm.
         """
         for occ in self.occurrences:
-            if occ.tag_id == data.tag_id and not occ.finished:
+            if occ.datapoint_identifier == data.datapoint_identifier and not occ.finished:
                 occ.acknowledged = True
                 # Determine if finished
                 if not occ.active:
@@ -60,7 +60,7 @@ class AlarmEngine:
         Publishes current snapshot of alarms to EventBus.
         """
         snapshot = [occ.to_dict() for occ in self.occurrences if not occ.finished]
-        await self.event_bus.publish(ALARM_UPDATE, snapshot)
+        await self.event_bus.publish(EventType.ALARM_UPDATE, snapshot)
 
     def get_active_alarms(self):
         """

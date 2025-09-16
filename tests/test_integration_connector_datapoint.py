@@ -1,14 +1,14 @@
 import asyncio
 import uuid
 import pytest
-from common.bus.event_bus import EventBus
-from frontend.tags.model import DatapointModel
-from frontend.tags.service import DatapointService
-from backend.communications.drivers.test_driver import TestDriver
-from backend.communications.connector_manager import ConnectorManager
-from common.bus.event_types import COMMAND_FEEDBACK
+from app.common.bus.event_bus import EventBus
+from app.frontend.datapoints.model import DatapointModel
+from app.frontend.datapoints.service import DatapointService
+from app.backend.communications.drivers.test_driver import TestDriver
+from app.backend.communications.connector_manager import ConnectorManager
+from app.common.bus.event_types import EventType
 from app.common.models.dtos import CommandFeedbackMsg
-from common.config.config import Config
+from app.common.config.config import Config
 
 @pytest.fixture(autouse=True)
 def reset_config_singleton():
@@ -50,7 +50,7 @@ async def test_send_command_routing():
     config = Config.get_instance()
     drivers_config = config.get_drivers()
     connector_manager = ConnectorManager(bus, drivers_config)
-
+    
     await connector_manager.start_all()
     
     # Prepare feedback capture BEFORE sending the command
@@ -60,7 +60,7 @@ async def test_send_command_routing():
         if isinstance(msg, dict):
             msg = CommandFeedbackMsg(**msg)
         feedback.append(msg)
-    bus.subscribe(COMMAND_FEEDBACK, capture)
+    bus.subscribe(EventType.COMMAND_FEEDBACK, capture)
     
     command_id = uuid.uuid4()
     # Send a command to Server1@TANK1_LEVEL
