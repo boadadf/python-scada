@@ -25,16 +25,19 @@ class Config:
     def get_drivers(self):
         return self._config.get("drivers", [])
 
+    def get_types(self):
+        return self._config.get("dp_types", [])
+
     def get_rules(self):
         rules = self._config.get("rules", [])
         return [Rule(**r) for r in rules]
     
-    def get_allowed_tags(self):
-        """Return fully qualified tag_ids: driver_name@tag_id"""
-        tags = []
+    def get_allowed_datapoint_identifiers(self):
+        """Return fully qualified tag_ids: driver_name@datapoint_identifier"""
+        datapoint_identifiers = []
         for driver in self.get_drivers():
             driver_name = driver["name"]
-            for tag_id in driver.get("datapoints", []):
-                tags.append(f"{driver_name}@{tag_id}")
-        return tags
+            for datapoint_identifier in driver.get("datapoints", []):
+                datapoint_identifiers.append(f"{driver_name}@{datapoint_identifier['name']}")
+        return datapoint_identifiers
 

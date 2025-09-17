@@ -1,6 +1,6 @@
 import pytest
 import asyncio
-from datetime import datetime, timezone
+import datetime
 
 from app.common.config.config import Config
 from app.frontend.datapoints.model import DatapointModel
@@ -28,7 +28,7 @@ async def test_update_tag_quality_and_timestamp():
 
     bus.subscribe(EventType.TAG_UPDATE, capture)
 
-    now = datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
+    now = datetime.datetime.now()
     await dp_engine.update_tag("Server1@TANK1_LEVEL", 55.5, quality="bad", timestamp=now)
     tag = dp_engine.model.get_tag("Server1@TANK1_LEVEL")
     assert tag.value == 55.5

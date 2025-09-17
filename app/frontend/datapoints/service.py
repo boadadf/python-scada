@@ -18,13 +18,18 @@ class DatapointService:
         tag = TagUpdateMsg(datapoint_identifier=tag_id, value=value, quality=quality, timestamp=timestamp)
         await self.on_tag_update(tag)
 
-    async def on_tag_update(self, msg: TagUpdateMsg):        
+    async def on_tag_update(self, msg: TagUpdateMsg):    
+        print(f"DatapointService received tag update: {msg}")    
         result = self.model.set_tag(msg)
         if result:
+            print(f"DatapointService accepted tag update: {msg}")
             await self._event_bus.publish(EventType.TAG_UPDATE, msg)
+            print(f"DatapointService published tag update: {msg}")
             if self._controller:
-                self._controller.publish_tag(msg)
+                await self._controller.publish_tag(msg)
+            print(f"DatapointService processed tag update: {msg}")
         else:
             print(f"Warning: Received unknown tag_id {msg.datapoint_identifier}")
+        print(f"DatapointService finished processing tag update: {msg}")
 
 

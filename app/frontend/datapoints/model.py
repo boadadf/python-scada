@@ -1,7 +1,8 @@
+import datetime
 from typing import Dict
 from app.common.models.dtos import TagUpdateMsg
 from app.common.config.config import Config
-from datetime import datetime, timezone
+
 
 class DatapointModel:
     """
@@ -9,14 +10,14 @@ class DatapointModel:
     """
     def __init__(self):
         self._tags: Dict[str, TagUpdateMsg] = {}
-        self._allowed_tags = set(Config.get_instance().get_allowed_tags())
+        self._allowed_tags = set(Config.get_instance().get_allowed_datapoint_identifiers())
         self.initial_load()
 
     def initial_load(self):
         """
         Initializes all allowed tags with value=None, quality='unknown', and current timestamp.
         """
-        now = datetime.now(timezone.utc).isoformat()
+        now = datetime.datetime.now()
         for tag_id in self._allowed_tags:
             self._tags[tag_id] = TagUpdateMsg(
                 datapoint_identifier=tag_id,

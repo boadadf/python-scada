@@ -3,6 +3,7 @@ import uuid
 import pytest
 from backend.communications.drivers.test_driver import TestDriver
 from app.common.models.dtos import TagUpdateMsg, CommandFeedbackMsg
+from common.models.entities import Datapoint
 
 @pytest.mark.asyncio
 async def test_test_driver_value_callback():
@@ -10,10 +11,10 @@ async def test_test_driver_value_callback():
     results = []
     async def cb(msg: TagUpdateMsg):
         results.append(msg)
-    await driver.register_value_listener(cb)
+    driver.register_value_listener(cb)
 
     await driver.connect()
-    await driver.subscribe(["TANK1_LEVEL"])
+    driver.subscribe([Datapoint(name="TANK1_LEVEL", type={"default": 0})])
     
     # Let it publish once
     await asyncio.sleep(1.1)
@@ -30,7 +31,7 @@ async def test_test_driver_command_feedback():
     async def cb(msg: CommandFeedbackMsg):
         feedback.append(msg)
 
-    await driver.register_command_feedback(cb)
+    driver.register_command_feedback(cb)
     await driver.connect()
     await driver.send_command("TANK1_LEVEL", 50, uuid.uuid4())
 

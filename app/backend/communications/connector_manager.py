@@ -1,51 +1,57 @@
 import asyncio
-from typing import Any
+from typing import Any, Dict
 from app.backend.communications.drivers import DRIVER_REGISTRY
 from app.common.bus.event_types import EventType
 from app.common.bus.event_bus import EventBus
+from app.common.models.entities import Datapoint
+from app.backend.communications.drivers.driver_protocol import DriverProtocol
+from app.common.config.config import Config
 
 class ConnectorManager:
-    def __init__(self, event_bus: EventBus, drivers_config: list):
+    def __init__(self, event_bus: EventBus):
+        config = Config.get_instance()
         self.event_bus = event_bus
         self.event_bus.subscribe(EventType.DRIVER_CONNECT, self.handle_driver_connect)
-        self.drivers = []
-        for cfg in drivers_config:
-            print(f"Loading driver config: {cfg}")
-            driver_class_name = cfg["driver_class"]
-            driver_cls = DRIVER_REGISTRY.get(driver_class_name)
+        self.driver_instances: Dict[str, DriverProtocol] = {}  # key: driver name
+        self.types = config.get_types()
+
+        for cfg in config.get_drivers():
+            datapoint_objs = []
+            for dp in cfg.get("datapoints", []):
+                name = dp["name"]
+                type_ref = dp["type"]
+                dp_type = self.types.get(type_ref)
+                if dp_type:
+                    datapoint_objs.append(Datapoint(name=name, type=dp_type))
+                else:
+                    print(f"WARNING: Datapoint type '{type_ref}' for '{name}' not found in dp_types config!")                        
+            driver_cls = DRIVER_REGISTRY.get(cfg["driver_class"])
             if not driver_cls:
-                raise ValueError(f"Unknown driver class: {driver_class_name}")
-            driver_instance = driver_cls(**cfg.get("connection_info", {}))
-            driver_name = cfg["name"]
-            self.drivers.append({
-                "driver": driver_instance,
-                "datapoints": cfg.get("datapoints", [])
-            })
-            print(f"Driver {driver_name} of class {driver_class_name} loaded")
+                raise ValueError(f"Unknown driver class: {cfg['driver_class']}")
+            driver_instance: DriverProtocol = driver_cls(**cfg.get("connection_info", {}))
+            driver_instance.subscribe(datapoint_objs)        
+            # Optionally assign datapoints to driver_instance if needed
+            self.driver_instances[cfg["name"]] = driver_instance
+
 
     async def init_drivers(self):
-        for d in self.drivers:            
-            await d["driver"].register_value_listener(self.emit_value)            
-            await d["driver"].register_command_feedback(self.emit_command_feedback)
-            await d["driver"].register_communication_status_listener(self.emit_communication_status)
-            await d["driver"].subscribe(d["datapoints"])
+        for driver in self.driver_instances.values():
+            driver.register_value_listener(self.emit_value)
+            driver.register_command_feedback(self.emit_command_feedback)
+            await driver.register_communication_status_listener(self.emit_communication_status)
 
     async def handle_driver_connect(self, data):
         driver_name = data["server_name"]
         status = data["status"]
-        for d in self.drivers:
-            if getattr(d["driver"], "server_name", None) == driver_name:
-                #TODO: Handle already connected/disconnected states
-                #TODO: The connect/disconnect should be sent from the driver
-                #TODO: Is there a way to have an interface for Driver?
-                if status == "connect":
-                    await d["driver"].connect()
-                elif status == "disconnect":
-                    await d["driver"].disconnect()
-                # Publish status after action
-                break
+        driver = self.driver_instances.get(driver_name)
+        if driver:
+            if status == "connect":
+                await driver.connect()
+            elif status == "disconnect":
+                await driver.disconnect()
 
     async def emit_value(self, data: dict):
+        print(f"Emitting value: {data}")
         await self.event_bus.publish(EventType.RAW_TAG_UPDATE, data)
 
     async def emit_command_feedback(self, data: dict):
@@ -54,19 +60,16 @@ class ConnectorManager:
     async def emit_communication_status(self, data: dict):
         await self.event_bus.publish(EventType.DRIVER_CONNECT_STATUS, data)
 
-    #For testing purposes
     async def start_all(self):
         await self.init_drivers()
-        for d in self.drivers:            
-            await d["driver"].connect()            
+        for driver in self.driver_instances.values():
+            await driver.connect()
 
     async def stop_all(self):
-        for d in self.drivers:
-            await d["driver"].disconnect()
+        for driver in self.driver_instances.values():
+            await driver.disconnect()
 
     async def send_command(self, server_id: str, tag_id: str, command: Any, command_id: str):
-        # Find driver by tag namespace
-        for d in self.drivers:
-            if d["driver"].server_name == server_id:
-                await d["driver"].send_command(tag_id, command, command_id)
-                break
+        driver = self.driver_instances.get(server_id)
+        if driver:
+            await driver.send_command(tag_id, command, command_id)

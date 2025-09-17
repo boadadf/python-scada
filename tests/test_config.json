@@ -1,16 +1,32 @@
 {
+  "dp_types": {
+    "LEVEL":      { "type": "float", "min": 0, "max": 100, "default": 0.0 },
+    "STATUS":     { "type": "enum", "values": ["ON", "OFF"], "default": "OFF" },
+    "BOOL":       { "type": "bool", "default": false },
+    "POSITION":   { "type": "int", "min": 0, "max": 100, "default": 0 },
+    "PRESSURE":   { "type": "float", "min": 0, "max": 200, "default": 0.0 },
+    "TEMPERATURE":{ "type": "float", "min": -40, "max": 150, "default": 20.0 }
+  },
   "drivers": [
     {
       "name": "Server1",
       "driver_class": "TestDriver",
       "connection_info": { "server_name": "Server1" },
-      "datapoints": ["TANK1_LEVEL", "PUMP1_STATUS", "DOOR1_OPEN"]
+      "datapoints": [
+        { "name": "TANK1_LEVEL", "type": "LEVEL" },
+        { "name": "PUMP1_STATUS", "type": "STATUS" },
+        { "name": "DOOR1_OPEN", "type": "BOOL" }
+      ]
     },
     {
       "name": "Server2",
       "driver_class": "TestDriver",
       "connection_info": { "server_name": "Server2" },
-      "datapoints": ["VALVE1_POS", "PRESSURE", "TEMPERATURE"]
+      "datapoints": [
+        { "name": "VALVE1_POS", "type": "POSITION" },
+        { "name": "PRESSURE", "type": "PRESSURE" },
+        { "name": "TEMPERATURE", "type": "TEMPERATURE" }
+      ]
     }
   ],
   "rules": [

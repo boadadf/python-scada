@@ -26,8 +26,9 @@ class EventBus:
     async def publish(self, event_type: EventType, data: Any):
         """Publish an event to all subscribers asynchronously."""
         tasks = []
+        print(f"Publishing event {event_type} with data: {data}")
         for callback in self._subscribers[event_type]:
-            tasks.append(asyncio.create_task(callback(data)))
-        if tasks:
-            await asyncio.gather(*tasks)
+            print(f"Scheduling callback {callback} for event {event_type}")
+            await callback(data)
+        print(f"Finished publishing event {event_type} with data: {data}")
 

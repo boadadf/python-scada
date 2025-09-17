@@ -33,11 +33,7 @@ communicationController = CommunicationsController(communicationModel,socketio)
 communicationService = CommunicationsService(event_bus, communicationModel, communicationController)
 
 
-
-config = Config.get_instance()
-drivers_config = config.get_drivers()
-
-connector_manager = ConnectorManager(event_bus, drivers_config)
+connector_manager = ConnectorManager(event_bus)
 asyncio.run(connector_manager.init_drivers())
 
 if __name__ == "__main__":

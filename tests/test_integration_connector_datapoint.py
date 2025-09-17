@@ -22,12 +22,9 @@ def setup_function():
 @pytest.mark.asyncio
 async def test_connector_drivers_publish_to_datapoint_engine():
     bus = EventBus()
-    dp_engine = DatapointService(bus, DatapointModel(), None)
-
-    config = Config.get_instance()
-    drivers_config = config.get_drivers()
-    connector_manager = ConnectorManager(bus, drivers_config)
-
+    dp_engine = DatapointService(bus, DatapointModel(), None)   
+    connector_manager = ConnectorManager(bus)
+    await connector_manager.init_drivers()
     await connector_manager.start_all()
 
     # Let TestDrivers publish some values
@@ -47,9 +44,7 @@ async def test_send_command_routing():
     bus = EventBus()
     dp_engine = DatapointService(bus, DatapointModel(), None)
 
-    config = Config.get_instance()
-    drivers_config = config.get_drivers()
-    connector_manager = ConnectorManager(bus, drivers_config)
+    connector_manager = ConnectorManager(bus)
     
     await connector_manager.start_all()
     

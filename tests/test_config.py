@@ -19,8 +19,8 @@ def test_get_drivers(sample_config_file):
     assert isinstance(drivers, list)
     assert drivers[0]["name"] == "Server1"
     assert drivers[1]["name"] == "Server2"
-    assert "TANK1_LEVEL" in drivers[0]["datapoints"]
-    assert "TEMPERATURE" in drivers[1]["datapoints"]
+    assert any(dp["name"] == "TANK1_LEVEL" for dp in drivers[0]["datapoints"])
+    assert any(dp["name"] == "TEMPERATURE" for dp in drivers[1]["datapoints"])
 
 def test_get_rules(sample_config_file):
     config = Config(sample_config_file)
@@ -31,7 +31,7 @@ def test_get_rules(sample_config_file):
 
 def test_get_allowed_tags(sample_config_file):
     config = Config(sample_config_file)
-    tags = config.get_allowed_tags()
+    tags = config.get_allowed_datapoint_identifiers()
     # Should include all tags in the config
     for tag in [
         "Server1@TANK1_LEVEL",

@@ -155,8 +155,7 @@ async def test_driver_publishes_disconnected_status_on_start():
     Config.get_instance("tests/test_config.json")
 
     bus = EventBus()
-    drivers_config = Config.get_instance().get_drivers()
-    connector_manager = ConnectorManager(bus, drivers_config)
+    connector_manager = ConnectorManager(bus)
 
     status_events = []
 

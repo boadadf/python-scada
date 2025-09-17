@@ -1,7 +1,6 @@
 import asyncio
 from datetime import datetime, timezone
 from flask_socketio import emit, join_room
-from threading import Lock
 
 import socketio
 from app.common.models.dtos import TagUpdateMsg
@@ -12,19 +11,22 @@ class DatapointController:
         self.model = model
         self.socketio = socketio
         self._initializing_clients = set()
-        self._lock = Lock()
         self.service = None
         self.register_socketio()
 
     def handle_subscribe_live_feed(self):
         sid = getattr(emit, 'sid', None) or None
         join_room('datapoint_live_feed')
-        with self._lock:
-            self._initializing_clients.add(sid)
+        self._initializing_clients.add(sid)
         all_tags = self.model.get_all_tags()
-        self.socketio.emit('initial_state', [v.__dict__ for v in all_tags.values()])
-        with self._lock:
-            self._initializing_clients.discard(sid)
+        # Convert datetimes to ISO strings
+        def serialize(obj):
+            d = obj.__dict__.copy()
+            if "timestamp" in d and d["timestamp"] is not None:
+                d["timestamp"] = d["timestamp"].isoformat()
+            return d
+        self.socketio.emit('initial_state', [serialize(v) for v in all_tags.values()])
+        self._initializing_clients.discard(sid)
 
     def run_async_update(self, tag_id, value, quality, timestamp):
         asyncio.run(self.service.update_tag(tag_id, value, quality, timestamp))
@@ -54,16 +56,23 @@ class DatapointController:
         @self.socketio.on('disconnect')
         def handle_disconnect():
             sid = getattr(socketio, 'sid', None) or getattr(emit, 'sid', None) or None
-            with self._lock:
-                self._initializing_clients.discard(sid)
+            self._initializing_clients.discard(sid)
 
         @self.socketio.on('set_tag')
         def _handler(data):
             self.handle_set_tag(data)
 
-    def publish_tag(self, tag: TagUpdateMsg):
-        # Block if any client is currently receiving initial state
-        with self._lock:
+    async def publish_tag(self, tag: TagUpdateMsg):
+        print(f"DatapointController publishing tag: {tag}")
+        try:
             if self._initializing_clients:
-                return  # Optionally, queue updates if you want to send them after init
-        self.socketio.emit('datapoint_update', tag.__dict__, room='datapoint_live_feed')
+                print("Client initializing, skipping live feed publish")
+                return
+            print("Here")
+            d = tag.__dict__.copy()
+            if "timestamp" in d and d["timestamp"] is not None:
+                d["timestamp"] = d["timestamp"].isoformat()
+            self.socketio.emit('datapoint_update', d, room='datapoint_live_feed')
+            print("Sent")
+        except Exception as e:
+            print(f"Exception in publish_tag: {e}")

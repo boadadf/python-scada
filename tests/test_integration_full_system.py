@@ -31,7 +31,7 @@ async def test_full_system_with_recursive_alarms_and_feedback():
     # Configuration & Connector
     Config.reset_instance()
     config = Config.get_instance("tests/test_config.json")
-    connector_manager = ConnectorManager(bus, config.get_drivers())
+    connector_manager = ConnectorManager(bus)
     await connector_manager.start_all()
 
     # Rule Engine
@@ -65,7 +65,7 @@ async def test_full_system_with_recursive_alarms_and_feedback():
     bus.subscribe(EventType.LOWER_ALARM, capture_alarm_inactive)
     bus.subscribe(EventType.COMMAND_FEEDBACK, capture_feedback)
 
-    driver = connector_manager.drivers[1]["driver"]
+    driver = connector_manager.driver_instances["Server2"]
 
     # --- Simulate driver updates ---
     # Trigger first alarm    

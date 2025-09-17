@@ -7,7 +7,12 @@ class TagUpdateMsg:
     value: Any
     quality: str = "good"
     timestamp: Optional[str] = None
-
+    def to_dict(self):
+        d = self.__dict__.copy()
+        if "timestamp" in d and d["timestamp"] is not None:
+            d["timestamp"] = d["timestamp"].isoformat()
+        return d
+    
 @dataclass
 class SendCommandMsg:
     command_id: str
