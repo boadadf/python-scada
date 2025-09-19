@@ -1,11 +1,11 @@
 import asyncio
 import pytest
 
-from app.common.bus.event_bus import EventBus
-from app.backend.rule.rule_manager import RuleEngine
-from app.common.bus.event_types import EventType
-from app.common.models.entities import Rule
-from app.common.models.dtos import SendCommandMsg, RaiseAlarmMsg, LowerAlarmMsg, TagUpdateMsg
+from openscada_lite.common.bus.event_bus import EventBus
+from openscada_lite.backend.rule.rule_manager import RuleEngine
+from openscada_lite.common.bus.event_types import EventType
+from openscada_lite.common.models.entities import Rule
+from openscada_lite.common.models.dtos import SendCommandMsg, RaiseAlarmMsg, LowerAlarmMsg, TagUpdateMsg
 
 @pytest.mark.asyncio
 async def test_send_command_triggered():
@@ -34,7 +34,7 @@ async def test_send_command_triggered():
 
     assert len(received) == 1
     assert received[0].datapoint_identifier == "Server1@VALVE1_POS"
-    assert received[0].command == 0
+    assert received[0].value == 0
     assert received[0].command_id is not None
 
 
@@ -116,7 +116,7 @@ async def test_multiple_actions():
 
     assert len(commands) == 1
     assert commands[0].datapoint_identifier == "Server2@VALVE1_POS"
-    assert commands[0].command == 0
+    assert commands[0].value == 0
     assert len(alarms) == 1
     assert alarms[0].datapoint_identifier == "Server1@pressure"
 

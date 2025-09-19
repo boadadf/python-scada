@@ -1,13 +1,12 @@
+import asyncio
 import os
 os.environ["SCADA_CONFIG_FILE"] = "tests/test_config.json"
 
 import pytest
 import threading
 import time
-import requests
 import socketio
-from app import app, socketio as flask_socketio
-from common.config.config import Config
+from openscada_lite.app import app, socketio as flask_socketio
 
 SERVER_URL = "http://localhost:5000"
 
@@ -23,7 +22,8 @@ def run_server():
     yield
     # No explicit shutdown; daemon thread will exit with pytest
 
-def test_live_feed_and_set_tag_real():
+@pytest.mark.asyncio
+async def test_live_feed_and_set_tag_real():
     # Connect to the live feed using a real SocketIO client
     sio = socketio.Client()
     received_initial = []
@@ -39,16 +39,17 @@ def test_live_feed_and_set_tag_real():
 
     sio.connect(SERVER_URL)
     sio.emit('subscribe_live_feed')
-    time.sleep(1)  # Wait for initial state
+    await asyncio.sleep(1)  # Wait for initial state
 
     # Check initial state contains all tags from test_config.json
     import json, os
     with open(os.path.join(os.path.dirname(__file__), "test_config.json")) as f:
         config = json.load(f)
+
     expected_tags = []
     for driver in config["drivers"]:
         for dp in driver["datapoints"]:
-            expected_tags.append(f"{driver['name']}@{dp}")
+            expected_tags.append(f"{driver['name']}@{dp['name']}")
 
     assert received_initial, "No initial_state received"
     initial_tags = {dp['datapoint_identifier'] for dp in received_initial[0]}

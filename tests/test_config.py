@@ -1,7 +1,7 @@
 import os
 import pytest
 
-from common.config.config import Config
+from openscada_lite.common.config.config import Config
 
 @pytest.fixture
 def sample_config_file():
@@ -19,7 +19,7 @@ def test_get_drivers(sample_config_file):
     assert isinstance(drivers, list)
     assert drivers[0]["name"] == "Server1"
     assert drivers[1]["name"] == "Server2"
-    assert any(dp["name"] == "TANK1_LEVEL" for dp in drivers[0]["datapoints"])
+    assert any(dp["name"] == "TANK" for dp in drivers[0]["datapoints"])
     assert any(dp["name"] == "TEMPERATURE" for dp in drivers[1]["datapoints"])
 
 def test_get_rules(sample_config_file):
@@ -34,10 +34,10 @@ def test_get_allowed_tags(sample_config_file):
     tags = config.get_allowed_datapoint_identifiers()
     # Should include all tags in the config
     for tag in [
-        "Server1@TANK1_LEVEL",
-        "Server1@PUMP1_STATUS",
-        "Server1@DOOR1_OPEN",
-        "Server2@VALVE1_POS",
+        "Server1@TANK",
+        "Server1@PUMP",
+        "Server1@DOOR",
+        "Server2@VALVE",
         "Server2@PRESSURE",
         "Server2@TEMPERATURE"
     ]:

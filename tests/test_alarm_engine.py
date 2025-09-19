@@ -2,10 +2,10 @@ import pytest
 import asyncio
 from datetime import datetime
 
-from backend.alarm.alarm_engine import AlarmEngine
-from app.common.bus.event_bus import EventBus
-from app.common.bus.event_types import EventType
-from app.common.models.dtos import RaiseAlarmMsg, LowerAlarmMsg, AckAlarmMsg, AlarmUpdateMsg
+from openscada_lite.backend.alarm.alarm_engine import AlarmEngine
+from openscada_lite.common.bus.event_bus import EventBus
+from openscada_lite.common.bus.event_types import EventType
+from openscada_lite.common.models.dtos import RaiseAlarmMsg, LowerAlarmMsg, AckAlarmMsg, AlarmUpdateMsg
 
 @pytest.mark.asyncio
 async def test_alarm_active_creation():

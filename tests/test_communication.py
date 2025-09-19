@@ -1,13 +1,13 @@
 import asyncio
 import pytest
 from unittest.mock import MagicMock, patch
-from app.frontend.communications.controller import CommunicationsController
-from app.frontend.communications.service import CommunicationsService
-from app.frontend.communications.model import CommunicationsModel
-from app.common.bus.event_types import EventType
-from app.backend.communications.connector_manager import ConnectorManager
-from app.common.bus.event_bus import EventBus
-from app.common.config.config import Config
+from openscada_lite.frontend.communications.controller import CommunicationsController
+from openscada_lite.frontend.communications.service import CommunicationsService
+from openscada_lite.frontend.communications.model import CommunicationsModel
+from openscada_lite.common.bus.event_types import EventType
+from openscada_lite.backend.communications.connector_manager import ConnectorManager
+from openscada_lite.common.bus.event_bus import EventBus
+from openscada_lite.common.config.config import Config
 
 @pytest.fixture
 def controller():
@@ -90,7 +90,7 @@ async def test_handle_subscribe_driver_status(controller):
     controller.register_socketio()
 
     # Patch join_room where it is imported in the controller module
-    with patch("app.frontend.communications.controller.join_room", MagicMock()):
+    with patch("openscada_lite.frontend.communications.controller.join_room", MagicMock()):
         handlers["subscribe_driver_status"]()  # <-- No await here
 
     controller.socketio.emit.assert_any_call("driver_status_all", {"Server1": "connect"}, room="driver_status_room")
@@ -136,7 +136,7 @@ def test_driver_initial_status_is_disconnected():
     """
     When a driver is started, it should always send a status event that it's 'disconnect'.
     """
-    from app.frontend.communications.model import CommunicationsModel
+    from frontend.communications.model import CommunicationsModel
 
     model = CommunicationsModel()
     # Simulate driver startup
@@ -158,16 +158,17 @@ async def test_driver_publishes_disconnected_status_on_start():
     connector_manager = ConnectorManager(bus)
 
     status_events = []
+    waitEvent = asyncio.Event()
 
     async def status_handler(event):
         status_events.append(event)
-
+        waitEvent.set()  # signal that we got something
     # Subscribe to DRIVER_STATUS events
     bus.subscribe(EventType.DRIVER_CONNECT_STATUS, status_handler)
 
     await connector_manager.start_all()
     # Give some time for status events to be published
-    await asyncio.sleep(0.2)
+    await asyncio.wait_for(waitEvent.wait(), timeout=2.0)
 
     # There should be at least one status event with 'offline'
     assert any(

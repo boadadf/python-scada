@@ -1,8 +1,8 @@
 import asyncio
 import pytest
-from app.common.bus.event_bus import EventBus
-from app.common.bus.event_types import EventType
-from app.common.models.dtos import TagUpdateMsg
+from openscada_lite.common.bus.event_bus import EventBus
+from openscada_lite.common.bus.event_types import EventType
+from openscada_lite.common.models.dtos import TagUpdateMsg
 
 @pytest.mark.asyncio
 async def test_publish_and_subscribe():

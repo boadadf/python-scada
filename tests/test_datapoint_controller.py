@@ -1,9 +1,10 @@
 import pytest
+import datetime
 from unittest.mock import AsyncMock, patch, MagicMock
-from app.common.models.dtos import TagUpdateMsg
-from app.common.config.config import Config
-from app.frontend.datapoints.model import DatapointModel
-from app.frontend.datapoints.controller import DatapointController
+from openscada_lite.common.models.dtos import TagUpdateMsg
+from openscada_lite.common.config.config import Config
+from openscada_lite.frontend.datapoints.model import DatapointModel
+from openscada_lite.frontend.datapoints.controller import DatapointController
 
 @pytest.fixture(autouse=True)
 def reset_config_singleton():
@@ -31,16 +32,17 @@ def test_publish_tag_blocks_when_initializing(controller):
     controller.publish_tag(TagUpdateMsg(datapoint_identifier="Test@TAG", value=456, quality="good", timestamp="2025-09-15T12:01:00Z"))
     controller.socketio.emit.assert_not_called()
 
-def test_publish_tag_emits_when_no_initializing(controller):
+@pytest.mark.asyncio
+async def test_publish_tag_emits_when_no_initializing(controller):
     controller.socketio.emit.reset_mock()  # Ensure clean state
-    controller.publish_tag(TagUpdateMsg(datapoint_identifier="Test@TAG", value=456, quality="good", timestamp="2025-09-15T12:01:00Z"))
+    controller.publish_tag(TagUpdateMsg(datapoint_identifier="Test@TAG", value=456, quality="good", timestamp=datetime.datetime.now()))
     controller.socketio.emit.assert_called_once()
     args, kwargs = controller.socketio.emit.call_args
     assert args[0] == "datapoint_update"
     assert args[1]["datapoint_identifier"] == "Test@TAG"
 
 def test_handle_subscribe_live_feed_emits_initial_state(controller):
-    with patch("app.frontend.datapoints.controller.join_room") as mock_join_room:
+    with patch("openscada_lite.frontend.datapoints.controller.join_room") as mock_join_room:
         controller.socketio.emit.reset_mock()
         controller.handle_subscribe_live_feed()
         mock_join_room.assert_called_once_with("datapoint_live_feed")

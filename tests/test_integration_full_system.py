@@ -1,16 +1,15 @@
 import uuid
 import pytest
 import asyncio
-from app.common import bus
-from app.common.bus.event_bus import EventBus
-from app.frontend.datapoints.model import DatapointModel
-from app.frontend.datapoints.service import DatapointService
-from app.backend.communications.connector_manager import ConnectorManager
-from app.backend.rule.rule_manager import RuleEngine
-from app.backend.alarm.alarm_engine import AlarmEngine
-from app.common.bus.event_types import EventType
-from app.common.models.dtos import CommandFeedbackMsg, LowerAlarmMsg, RaiseAlarmMsg, SendCommandMsg
-from app.common.config.config import Config
+from openscada_lite.common.bus.event_bus import EventBus
+from openscada_lite.frontend.datapoints.model import DatapointModel
+from openscada_lite.frontend.datapoints.service import DatapointService
+from openscada_lite.backend.communications.connector_manager import ConnectorManager
+from openscada_lite.backend.rule.rule_manager import RuleEngine
+from openscada_lite.backend.alarm.alarm_engine import AlarmEngine
+from openscada_lite.common.bus.event_types import EventType
+from openscada_lite.common.models.dtos import CommandFeedbackMsg, LowerAlarmMsg, RaiseAlarmMsg, SendCommandMsg
+from openscada_lite.common.config.config import Config
 
 @pytest.fixture(autouse=True)
 def reset_config_singleton():

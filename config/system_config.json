@@ -1,31 +1,38 @@
 {
   "dp_types": {
     "LEVEL":      { "type": "float", "min": 0, "max": 100, "default": 0.0 },
-    "STATUS":     { "type": "enum", "values": ["ON", "OFF"], "default": "OFF" },
-    "BOOL":       { "type": "bool", "default": false },
-    "POSITION":   { "type": "int", "min": 0, "max": 100, "default": 0 },
-    "PRESSURE":   { "type": "float", "min": 0, "max": 200, "default": 0.0 },
-    "TEMPERATURE":{ "type": "float", "min": -40, "max": 150, "default": 20.0 }
+    "STATUS":     { "type": "enum", "values": ["OPENED", "CLOSED"], "default": "CLOSED" },
+    "PRESSURE":   { "type": "float", "min": 0, "max": 200, "default": 50.0 },
+    "TEMPERATURE":{ "type": "float", "min": 100, "max": 150, "default": 120.0 }
   },
   "drivers": [
     {
       "name": "Server1",
-      "driver_class": "TestDriver",
+      "driver_class": "TankTestDriver",
       "connection_info": { "server_name": "Server1" },
       "datapoints": [
-        { "name": "TANK1_LEVEL", "type": "LEVEL" },
-        { "name": "PUMP1_STATUS", "type": "STATUS" },
-        { "name": "DOOR1_OPEN", "type": "BOOL" }
+        { "name": "TANK", "type": "LEVEL" },
+        { "name": "PUMP", "type": "STATUS" },
+        { "name": "DOOR", "type": "STATUS" }
+      ],
+      "command_datapoints": [
+        { "name": "PUMP_CMD", "type": "STATUS" },
+        { "name": "DOOR_CMD", "type": "STATUS" }
       ]
     },
     {
       "name": "Server2",
-      "driver_class": "TestDriver",
+      "driver_class": "BoilerTestDriver",
       "connection_info": { "server_name": "Server2" },
       "datapoints": [
-        { "name": "VALVE1_POS", "type": "POSITION" },
+        { "name": "VALVE", "type": "STATUS" },
         { "name": "PRESSURE", "type": "PRESSURE" },
-        { "name": "TEMPERATURE", "type": "TEMPERATURE" }
+        { "name": "TEMPERATURE", "type": "TEMPERATURE" },
+        { "name": "HEATER", "type": "STATUS" }
+      ],
+      "command_datapoints": [
+        { "name": "VALVE_CMD", "type": "STATUS" },
+        { "name": "HEATER_CMD", "type": "STATUS" }
       ]
     }
   ],

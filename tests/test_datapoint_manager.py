@@ -2,12 +2,12 @@ import pytest
 import asyncio
 import datetime
 
-from app.common.config.config import Config
-from app.frontend.datapoints.model import DatapointModel
-from app.frontend.datapoints.service import DatapointService
-from app.common.bus.event_bus import EventBus
-from app.common.bus.event_types import EventType
-from app.common.models.dtos import TagUpdateMsg
+from openscada_lite.common.config.config import Config
+from openscada_lite.frontend.datapoints.model import DatapointModel
+from openscada_lite.frontend.datapoints.service import DatapointService
+from openscada_lite.common.bus.event_bus import EventBus
+from openscada_lite.common.bus.event_types import EventType
+from openscada_lite.common.models.dtos import TagUpdateMsg
 
 @pytest.fixture(autouse=True)
 def reset_config_singleton():
@@ -29,8 +29,8 @@ async def test_update_tag_quality_and_timestamp():
     bus.subscribe(EventType.TAG_UPDATE, capture)
 
     now = datetime.datetime.now()
-    await dp_engine.update_tag("Server1@TANK1_LEVEL", 55.5, quality="bad", timestamp=now)
-    tag = dp_engine.model.get_tag("Server1@TANK1_LEVEL")
+    await dp_engine.update_tag("Server1@TANK", 55.5, quality="bad", timestamp=now)
+    tag = dp_engine.model.get_tag("Server1@TANK")
     assert tag.value == 55.5
     assert tag.quality == "bad"
     assert tag.timestamp == now
@@ -57,12 +57,12 @@ async def test_multiple_tag_updates():
 
     bus.subscribe(EventType.TAG_UPDATE, capture)
 
-    await dp_engine.update_tag("Server1@TANK1_LEVEL", 10)
-    await dp_engine.update_tag("Server1@TANK1_LEVEL", 20)
-    await dp_engine.update_tag("Server1@TANK1_LEVEL", 15)
+    await dp_engine.update_tag("Server1@TANK", 10)
+    await dp_engine.update_tag("Server1@TANK", 20)
+    await dp_engine.update_tag("Server1@TANK", 15)
 
     await asyncio.sleep(0.01)
-    assert dp_engine.model.get_tag("Server1@TANK1_LEVEL").value == 15
+    assert dp_engine.model.get_tag("Server1@TANK").value == 15
     assert results[0].value == 10
     assert results[1].value == 20
     assert results[2].value == 15
@@ -78,8 +78,8 @@ async def test_update_tag_without_optional_fields():
 
     bus.subscribe(EventType.TAG_UPDATE, capture)
     
-    await dp_engine.update_tag("Server1@TANK1_LEVEL", 99)
-    tag = dp_engine.model.get_tag("Server1@TANK1_LEVEL")
+    await dp_engine.update_tag("Server1@TANK", 99)
+    tag = dp_engine.model.get_tag("Server1@TANK")
     assert tag.value == 99
     assert tag.quality == "good" # Default quality
     assert tag.timestamp is None

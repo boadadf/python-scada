@@ -1,11 +1,11 @@
 import asyncio
 import pytest
-from app.common.bus.event_bus import EventBus
-from app.frontend.datapoints.model import DatapointModel
-from app.frontend.datapoints.service import DatapointService
-from app.common.bus.event_types import EventType
-from app.common.models.dtos import TagUpdateMsg
-from app.common.config.config import Config
+from openscada_lite.common.bus.event_bus import EventBus
+from openscada_lite.frontend.datapoints.model import DatapointModel
+from openscada_lite.frontend.datapoints.service import DatapointService
+from openscada_lite.common.bus.event_types import EventType
+from openscada_lite.common.models.dtos import TagUpdateMsg
+from openscada_lite.common.config.config import Config
 
 @pytest.fixture(autouse=True)
 def reset_config_singleton():
@@ -23,7 +23,7 @@ async def test_driver_to_datapoint_integration():
     # Use namespaced IDs from config
     config = Config.get_instance()
     driver_name = config.get_drivers()[0]["name"]  # e.g., "Server1"
-    tag_id = f"{driver_name}@TANK1_LEVEL"
+    tag_id = f"{driver_name}@TANK"
 
     received = []
 
