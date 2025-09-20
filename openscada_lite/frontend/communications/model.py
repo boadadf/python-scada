@@ -1,9 +1,7 @@
-class CommunicationsModel:
-    def __init__(self):
-        self.driver_status = {}  # {driver_name: "connect"/"disconnect"}
+# communications_model.py
+from openscada_lite.frontend.base_model import BaseModel
+from openscada_lite.common.models.dtos import DriverConnectStatus
 
-    def set_status(self, driver_name, status):
-        self.driver_status[driver_name] = status
-
-    def get_all_status(self):
-        return self.driver_status.copy()
+class CommunicationsModel(BaseModel[DriverConnectStatus]):
+    def get_id(self, msg: DriverConnectStatus) -> str:
+        return msg.driver_name

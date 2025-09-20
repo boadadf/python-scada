@@ -10,7 +10,7 @@ class ConnectorManager:
     def __init__(self, event_bus: EventBus):
         config = Config.get_instance()
         self.event_bus = event_bus
-        self.event_bus.subscribe(EventType.DRIVER_CONNECT, self.handle_driver_connect)
+        self.event_bus.subscribe(EventType.DRIVER_CONNECT_COMMAND, self.handle_driver_connect)
         self.driver_instances: Dict[str, DriverProtocol] = {}  # key: driver name
         self.types = config.get_types()
 
@@ -40,7 +40,7 @@ class ConnectorManager:
             await driver.register_communication_status_listener(self.emit_communication_status)
 
     async def handle_driver_connect(self, data):
-        driver_name = data["server_name"]
+        driver_name = data["driver_name"]
         status = data["status"]
         driver = self.driver_instances.get(driver_name)
         if driver:

@@ -13,5 +13,5 @@ class EventType(Enum):
     LOWER_ALARM = "lower_alarm"
     ACK_ALARM = "ack_alarm"
     ALARM_UPDATE = "alarm_update"
-    DRIVER_CONNECT = "driver_connect"
+    DRIVER_CONNECT_COMMAND = "driver_connect"
     DRIVER_CONNECT_STATUS = "driver_connect_status"

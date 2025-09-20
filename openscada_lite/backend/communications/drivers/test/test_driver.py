@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 import threading
 from typing import Dict, List, Callable, Any
 
-from openscada_lite.common.models.dtos import CommunicationStatusMsg, TagUpdateMsg, CommandFeedbackMsg
+from openscada_lite.common.models.dtos import DriverConnectStatus, TagUpdateMsg, CommandFeedbackMsg
 from openscada_lite.backend.communications.drivers.driver_protocol import DriverProtocol
 from openscada_lite.common.models.entities import Datapoint
 
@@ -16,7 +16,7 @@ class TestDriver(DriverProtocol, ABC):
         self._server_name = server_name
         self._tags: Dict[str, TagUpdateMsg] = {}
         self._value_callback: Callable[[TagUpdateMsg], Any] | None = None
-        self._communication_status_callback: Callable[[CommunicationStatusMsg], Any] | None = None
+        self._communication_status_callback: Callable[[DriverConnectStatus], Any] | None = None
         self._command_feedback_callback: Callable[[CommandFeedbackMsg], Any] | None = None
         self._running = False
         self._task: asyncio.Task | None = None
@@ -73,7 +73,7 @@ class TestDriver(DriverProtocol, ABC):
         self._value_callback = callback
 
     async def register_communication_status_listener(
-        self, callback: Callable[[CommunicationStatusMsg], Any]
+        self, callback: Callable[[DriverConnectStatus], Any]
     ):
         self._communication_status_callback = callback
         publish_state = "online" if self._running else "offline"
@@ -86,7 +86,7 @@ class TestDriver(DriverProtocol, ABC):
     # Driver interaction
     # -------------------------
     async def publish_driver_state(self, state: str):
-        msg = CommunicationStatusMsg(server_name=self._server_name, status=state)
+        msg = DriverConnectStatus(driver_name=self._server_name, status=state)
         await self._safe_invoke(self._communication_status_callback, msg)
 
     async def send_command(self, datapoint_identifier: str, value: str, command_id: str):
