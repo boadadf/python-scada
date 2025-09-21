@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 import threading
 from typing import Dict, List, Callable, Any
 
-from openscada_lite.common.models.dtos import DriverConnectStatus, TagUpdateMsg, CommandFeedbackMsg
+from openscada_lite.common.models.dtos import DriverConnectStatus, RawTagUpdateMsg, TagUpdateMsg, CommandFeedbackMsg
 from openscada_lite.backend.communications.drivers.driver_protocol import DriverProtocol
 from openscada_lite.common.models.entities import Datapoint
 
@@ -90,16 +90,35 @@ class TestDriver(DriverProtocol, ABC):
         await self._safe_invoke(self._communication_status_callback, msg)
 
     async def send_command(self, datapoint_identifier: str, value: str, command_id: str):
-        if self._command_feedback_callback:
-            full_tag_id = f"{self._server_name}@{datapoint_identifier}"
-            msg = CommandFeedbackMsg(
-                command_id=command_id,
-                datapoint_identifier=full_tag_id,
-                feedback="OK",
-                value=value,
-                timestamp=datetime.datetime.now()
-            )
-            await self._safe_invoke(self._command_feedback_callback, msg)
+
+            if self._command_feedback_callback:
+                # Remove server_name prefix if present
+                if "@" in datapoint_identifier:
+                    _, dp_name = datapoint_identifier.split("@", 1)
+                else:
+                    dp_name = datapoint_identifier
+
+                exists = dp_name in self._tags
+                full_tag_id = f"{self._server_name}@{dp_name}"
+                feedback = "OK" if exists else "NOK"
+                msg = CommandFeedbackMsg(
+                    command_id=command_id,
+                    datapoint_identifier=full_tag_id,
+                    feedback=feedback,
+                    value=value,
+                    timestamp=datetime.datetime.now()
+                )
+                await self._safe_invoke(self._command_feedback_callback, msg)
+
+                # If the datapoint exists, also publish a RawTagUpdateMsg
+                if exists and self._value_callback:
+                    tag_msg = RawTagUpdateMsg(
+                        datapoint_identifier=full_tag_id,
+                        value=value,
+                        quality="good",
+                        timestamp=datetime.datetime.now().isoformat()
+                    )
+                    await self._safe_invoke(self._value_callback, tag_msg)
 
     async def simulate_value(self, tag_id: str, value: Any):
         if self._value_callback:

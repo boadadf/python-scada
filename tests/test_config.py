@@ -8,6 +8,25 @@ def sample_config_file():
     # Path to test_config.json in the tests directory
     return os.path.join(os.path.dirname(__file__), "test_config.json")
 
+def test_validate_value(sample_config_file):
+    config = Config(sample_config_file)
+
+    # Float type: valid and invalid
+    assert config.validate_value("Server1@TANK", 50.0) is True  # within range
+    assert config.validate_value("Server1@TANK", 0.0) is True   # min
+    assert config.validate_value("Server1@TANK", 100.0) is True # max
+    assert config.validate_value("Server1@TANK", -1) is False   # below min
+    assert config.validate_value("Server1@TANK", 101) is False  # above max
+    assert config.validate_value("Server1@TANK", "not_a_float") is False
+
+    # Enum type: valid and invalid
+    assert config.validate_value("Server1@PUMP", "OPENED") is True
+    assert config.validate_value("Server1@PUMP", "CLOSED") is True
+    assert config.validate_value("Server1@PUMP", "INVALID") is False
+
+    # Unknown tag
+    assert config.validate_value("ServerX@UNKNOWN", 42) is False
+
 def test_get_instance_returns_singleton(sample_config_file):
     c1 = Config.get_instance(sample_config_file)
     c2 = Config.get_instance(sample_config_file)

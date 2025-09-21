@@ -29,7 +29,6 @@ async def test_full_system_with_recursive_alarms_and_feedback():
 
     # Configuration & Connector
     Config.reset_instance()
-    config = Config.get_instance("tests/test_config.json")
     connector_manager = ConnectorManager(bus)
     await connector_manager.start_all()
 
@@ -56,7 +55,9 @@ async def test_full_system_with_recursive_alarms_and_feedback():
     async def capture_alarm_inactive(msg: LowerAlarmMsg):
         alarms_inactive.append(msg)
 
-    async def capture_feedback(msg: CommandFeedbackMsg):
+    async def capture_feedback(msg):
+        if isinstance(msg, dict):
+            msg = CommandFeedbackMsg(**msg)
         feedback.append(msg)
 
     bus.subscribe(EventType.SEND_COMMAND, capture_command)
@@ -78,7 +79,7 @@ async def test_full_system_with_recursive_alarms_and_feedback():
     await asyncio.sleep(0.05)
 
     # Send a command through connector
-    await connector_manager.send_command("Server2", "VALVE1_POS", 0, uuid.uuid4())
+    await connector_manager.send_command(SendCommandMsg(uuid.uuid4(), "Server2@VALVE1_POS", 0))
     await asyncio.sleep(0.05)
 
     # Command feedback captured

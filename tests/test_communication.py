@@ -140,7 +140,7 @@ def test_driver_initial_status_is_disconnected():
     """
     When a driver is started, it should always send a status event that it's 'disconnect'.
     """
-    from frontend.communications.model import CommunicationsModel
+    from openscada_lite.modules.communications.model import CommunicationsModel
 
     model = CommunicationsModel()
     # Simulate driver startup

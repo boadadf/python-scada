@@ -1,8 +1,10 @@
 import copy
 from typing import TypeVar, Generic, Dict, Optional
-from abc import ABC, abstractmethod
+from abc import ABC
 
-T = TypeVar('T')
+from openscada_lite.common.models.dtos import DTO
+
+T = TypeVar('T', bound=DTO)
 
 class BaseModel(ABC, Generic[T]):
     """
@@ -18,7 +20,7 @@ class BaseModel(ABC, Generic[T]):
         """
         accept_update = self.should_accept_update(msg)            
         if accept_update:
-            self._store[self.get_id(msg)] = msg
+            self._store[msg.get_id()] = msg
         return accept_update
 
     def get(self, msg_id: str) -> Optional[T]:
@@ -32,14 +34,6 @@ class BaseModel(ABC, Generic[T]):
         Retrieve all messages.
         """
         return copy.deepcopy(self._store)
-
-    @abstractmethod
-    def get_id(self, msg: T) -> str:
-        """
-        Extract the unique ID from a message.
-        Must be implemented by subclasses.
-        """
-        pass
 
     def should_accept_update(self, msg: T) -> bool:
         """

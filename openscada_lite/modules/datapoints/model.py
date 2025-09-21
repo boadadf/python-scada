@@ -29,9 +29,5 @@ class DatapointModel(BaseModel[TagUpdateMsg]):
             )
 
     @override
-    def get_id(self, msg: TagUpdateMsg) -> str:
-        return msg.datapoint_identifier
-
-    @override
     def should_accept_update(self, tag: TagUpdateMsg) -> bool:
         return Util.is_valid(self, tag)

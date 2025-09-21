@@ -13,6 +13,10 @@ class DTO(ABC):
         pass
 
     @abstractmethod
+    def get_id(self) -> str:
+        pass
+
+    @abstractmethod
     def to_dict(self):
         pass
 
@@ -38,6 +42,9 @@ class TagUpdateMsg(DTO):
     def to_dict(self):
         return self._default_to_dict()
 
+    def get_id(self) -> str:
+        return self.datapoint_identifier
+
 @dataclass
 class RawTagUpdateMsg(DTO):
     datapoint_identifier: str
@@ -52,6 +59,9 @@ class RawTagUpdateMsg(DTO):
     def to_dict(self):
         return self._default_to_dict()
 
+    def get_id(self) -> str:
+        return self.datapoint_identifier
+
 @dataclass
 class SendCommandMsg(DTO):
     command_id: str
@@ -64,6 +74,9 @@ class SendCommandMsg(DTO):
 
     def to_dict(self):
         return self._default_to_dict()
+
+    def get_id(self) -> str:
+        return self.command_id
 
 @dataclass
 class CommandFeedbackMsg(DTO):
@@ -80,6 +93,9 @@ class CommandFeedbackMsg(DTO):
     def to_dict(self):
         return self._default_to_dict()
 
+    def get_id(self) -> str:
+        return self.command_id
+
 @dataclass
 class RaiseAlarmMsg(DTO):
     datapoint_identifier: str
@@ -91,6 +107,9 @@ class RaiseAlarmMsg(DTO):
 
     def to_dict(self):
         return self._default_to_dict()
+
+    def get_id(self) -> str:
+        return self.datapoint_identifier
 
 @dataclass
 class LowerAlarmMsg(DTO):
@@ -104,6 +123,9 @@ class LowerAlarmMsg(DTO):
     def to_dict(self):
         return self._default_to_dict()
 
+    def get_id(self) -> str:
+        return self.datapoint_identifier
+
 @dataclass
 class AckAlarmMsg(DTO):
     datapoint_identifier: str
@@ -115,6 +137,9 @@ class AckAlarmMsg(DTO):
 
     def to_dict(self):
         return self._default_to_dict()
+
+    def get_id(self) -> str:
+        return self.datapoint_identifier
 
 @dataclass
 class AlarmUpdateMsg(DTO):
@@ -129,6 +154,9 @@ class AlarmUpdateMsg(DTO):
     def to_dict(self):
         return self._default_to_dict()
 
+    def get_id(self) -> str:
+        return self.datapoint_identifier
+
 @dataclass
 class DriverConnectStatus(DTO):
     driver_name: str
@@ -140,6 +168,9 @@ class DriverConnectStatus(DTO):
 
     def to_dict(self):
         return self._default_to_dict()
+
+    def get_id(self) -> str:
+        return self.driver_name
 
 @dataclass
 class DriverConnectCommand(DTO):
@@ -153,6 +184,9 @@ class DriverConnectCommand(DTO):
     def to_dict(self):
         return self._default_to_dict()
     
+    def get_id(self) -> str:
+        return self.driver_name
+
 @dataclass
 class StatusDTO():
     status: str
@@ -163,3 +197,6 @@ class StatusDTO():
             "status": self.status,
             "reason": self.reason
         }
+
+    def get_id(self) -> str:
+        return self.status

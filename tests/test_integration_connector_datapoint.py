@@ -7,7 +7,7 @@ from openscada_lite.modules.datapoints.service import DatapointService
 from backend.communications.drivers.test.test_driver import TestDriver
 from openscada_lite.backend.communications.connector_manager import ConnectorManager
 from openscada_lite.common.bus.event_types import EventType
-from openscada_lite.common.models.dtos import CommandFeedbackMsg
+from openscada_lite.common.models.dtos import CommandFeedbackMsg, SendCommandMsg
 from openscada_lite.common.config.config import Config
 
 @pytest.fixture(autouse=True)
@@ -61,7 +61,7 @@ async def test_send_command_routing():
     
     command_id = uuid.uuid4()
     # Send a command to Server1@TANK1_LEVEL
-    await connector_manager.send_command("Server1", "TANK", 99, command_id)
+    await connector_manager.send_command(SendCommandMsg(command_id, "Server1@TANK", 99))
 
     # Wait for feedback
     await asyncio.wait_for(event.wait(), timeout=2.0)

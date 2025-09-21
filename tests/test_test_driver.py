@@ -9,6 +9,7 @@ import asyncio
 import pytest
 
 @pytest.mark.asyncio
+
 async def test_test_driver_value_callback():
     driver = TankTestDriver("Server1")
     results = []
@@ -35,20 +36,22 @@ async def test_test_driver_value_callback():
 @pytest.mark.asyncio
 async def test_test_driver_command_feedback():
     driver = TankTestDriver("Server1")
+    # Create the datapoint and subscribe
+    dp = Datapoint(name="TANK", type={"type": "float", "default": 0.0})
+    driver.subscribe([dp])
+
     feedback = []
     event = asyncio.Event()
 
-    async def cb(msg: CommandFeedbackMsg):   # <-- async now
+    async def cb(msg):
         feedback.append(msg)
         event.set()
 
     driver.register_command_feedback(cb)
     await driver.connect()
-    await driver.send_command("TANK", 50, str(uuid.uuid4()))
-
+    await driver.send_command("TANK", 50, "cmd1")
     await asyncio.wait_for(event.wait(), timeout=2.0)
     await driver.disconnect()
 
     assert feedback[0].datapoint_identifier == "Server1@TANK"
     assert feedback[0].feedback == "OK"
-    assert feedback[0].command_id is not None

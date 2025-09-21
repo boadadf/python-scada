@@ -1,17 +1,19 @@
 from typing import Any, Dict
-from openscada_lite.common.models.dtos import DriverConnectCommand
+from openscada_lite.common.models.dtos import DriverConnectCommand, CommandFeedbackMsg, SendCommandMsg
 from openscada_lite.backend.communications.drivers import DRIVER_REGISTRY
 from openscada_lite.common.bus.event_types import EventType
 from openscada_lite.common.bus.event_bus import EventBus
 from openscada_lite.common.models.entities import Datapoint
 from openscada_lite.backend.communications.drivers.driver_protocol import DriverProtocol
 from openscada_lite.common.config.config import Config
+import datetime
 
 class ConnectorManager:
     def __init__(self, event_bus: EventBus):
         config = Config.get_instance()
         self.event_bus = event_bus
         self.event_bus.subscribe(EventType.DRIVER_CONNECT_COMMAND, self.handle_driver_connect)
+        self.event_bus.subscribe(EventType.SEND_COMMAND, self.send_command)
         self.driver_instances: Dict[str, DriverProtocol] = {}  # key: driver name
         self.types = config.get_types()
 
@@ -69,7 +71,21 @@ class ConnectorManager:
         for driver in self.driver_instances.values():
             await driver.disconnect()
 
-    async def send_command(self, server_id: str, tag_id: str, command: Any, command_id: str):
+    async def send_command(self, data: SendCommandMsg):
+        config = Config.get_instance()
+        server_id, simple_datapoint_identifier = data.datapoint_identifier.split("@", 1)
+
+        if not config.validate_value(data.datapoint_identifier, data.value):
+            # Value is invalid, send NOK feedback immediately
+            feedback = CommandFeedbackMsg(
+                command_id=data.command_id,
+                datapoint_identifier=data.datapoint_identifier,
+                value=data.value,
+                feedback="NOK",
+                timestamp=datetime.datetime.now()
+            )
+            await self.emit_command_feedback(feedback.to_dict())
+            return
         driver = self.driver_instances.get(server_id)
         if driver:
-            await driver.send_command(tag_id, command, command_id)
+            await driver.send_command(simple_datapoint_identifier, data.value, data.command_id)
