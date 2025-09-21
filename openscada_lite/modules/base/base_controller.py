@@ -1,16 +1,19 @@
 # base_controller.py
-from typing import Generic, TypeVar, Optional, Type, TYPE_CHECKING
+from abc import ABC, abstractmethod
+import asyncio
+from typing import Generic, TypeVar, Optional, Type, TYPE_CHECKING, Union
 from flask_socketio import SocketIO, join_room, emit
-from openscada_lite.frontend.base_model import BaseModel
-from openscada_lite.frontend.base_service import BaseService
+from openscada_lite.common.models.dtos import StatusDTO
+from openscada_lite.modules.base.base_model import BaseModel
+from openscada_lite.modules.base.base_service import BaseService
 
 T = TypeVar('T')  # Outgoing message type (to client)
-U = TypeVar('U')  # Incoming message type (from client)
+U = TypeVar('U')  # Request data type (from client)
 
 if TYPE_CHECKING:
     from .base_service import BaseService
 
-class BaseController(Generic[T, U]):
+class BaseController(ABC, Generic[T, U]):
     """
     Generic controller for handling frontend-backend communication with room support.
     """
@@ -38,18 +41,22 @@ class BaseController(Generic[T, U]):
 
         @self.socketio.on(f'{self.base_event}_send_{self.U_cls.__name__.lower()}')
         def _incoming_handler(data):
-            error = self.validate_incoming_data(data)
-            if error:
-                self.socketio.emit(f'{self.base_event}_ack', error)
-                return
-            if self.service:
-                self.socketio.start_background_task(self.service.handle_incoming, data)
-            self.socketio.emit(
-                f'{self.base_event}_ack',
-                {"status": "ok"}
-            )
+            self.handle_request(data)
            
-           
+    def handle_request(self, data):
+        obj_data = self.U_cls(**data) if isinstance(data, dict) else data
+        result = self.validate_request_data(obj_data)
+        if isinstance(result, StatusDTO):
+            self.socketio.emit(f'{self.base_event}_ack', result)
+            return
+        if self.service:
+            print("BaseController.handle_request: passing to service")
+            asyncio.run(self.service.handle_controller_message(result))
+        self.socketio.emit(
+            f'{self.base_event}_ack',
+            StatusDTO(status="ok", reason="Request accepted.").to_dict()
+        )
+        
     def handle_subscribe_live_feed(self):
         """
         Adds the client to the room and sends all current T messages.
@@ -78,10 +85,10 @@ class BaseController(Generic[T, U]):
             room=self.room
         )
 
-    def validate_incoming_data(self, data: dict) -> Optional[dict]:
+    @abstractmethod
+    def validate_request_data(self, data: U) -> Union[U, StatusDTO]:
         """
         Validate incoming data from the client.
-        Return an error dict to emit if invalid, or None if valid.
-        Override in concrete controllers.
+        Return an instance of U if valid, or a StatusDTO with error details if invalid.
         """
-        return None        
+        pass        

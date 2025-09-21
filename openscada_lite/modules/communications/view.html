@@ -25,14 +25,15 @@
     <script>
         const socket = io();
 
-        // Store driver statuses
-        let driverStatus = {};
+        // Store driver statuses as an array of objects
+        let driverStatusList = [];
 
         function renderDrivers() {
             const list = document.getElementById('driver-list');
             list.innerHTML = '';
-            Object.keys(driverStatus).forEach(driver => {
-                const status = driverStatus[driver];
+            driverStatusList.forEach(driverObj => {
+                const driver = driverObj.driver_name;
+                const status = driverObj.status;
                 const row = document.createElement('div');
                 row.className = 'driver-row';
 
@@ -74,26 +75,39 @@
         }
 
         function setDriverStatus(driver, status) {
-            socket.emit('connect_driver', { driver_name: driver, status: status });
+            socket.emit('driver_connect_send_driverconnectcommand', { driver_name: driver, status: status });
         }
 
-        // Listen for all driver statuses
-        socket.on('driver_status_all', function(statuses) {
-            driverStatus = statuses;
+        // Listen for all driver statuses (initial state)
+        socket.on('driver_connect_initial_state', function(data) {
+            console.log("Initial driver statuses:", data);
+            driverStatusList = data; // data is now an array
             renderDrivers();
         });
 
         // Listen for individual driver status updates
-        socket.on('driver_status_update', function(data) {
+        socket.on('driver_connect_driverconnectstatus', function(data) {
             if (data.driver_name && data.status) {
-                driverStatus[data.driver_name] = data.status;
+                // Update the status in the array
+                let found = false;
+                for (let i = 0; i < driverStatusList.length; i++) {
+                    if (driverStatusList[i].driver_name === data.driver_name) {
+                        driverStatusList[i].status = data.status;
+                        found = true;
+                        break;
+                    }
+                }
+                // If not found, add new driver
+                if (!found) {
+                    driverStatusList.push({ driver_name: data.driver_name, status: data.status });
+                }
                 renderDrivers();
             }
         });
 
         // Request initial status on connect
         socket.on('connect', function() {
-            socket.emit('subscribe_driver_status');
+            socket.emit('driver_connect_subscribe_live_feed');
         });
     </script>
 </body>

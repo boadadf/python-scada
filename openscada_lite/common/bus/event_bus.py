@@ -25,7 +25,7 @@ class EventBus:
 
     async def publish(self, event_type: EventType, data: Any):
         """Publish an event to all subscribers asynchronously."""
-        tasks = []
+        print(f"[EVENT BUS] Publishing event {event_type} to {len(self._subscribers[event_type])} subscribers")
         for callback in self._subscribers[event_type]:
             await callback(data)
 

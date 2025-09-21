@@ -1,4 +1,5 @@
 from typing import Any, Dict
+from openscada_lite.common.models.dtos import DriverConnectCommand
 from openscada_lite.backend.communications.drivers import DRIVER_REGISTRY
 from openscada_lite.common.bus.event_types import EventType
 from openscada_lite.common.bus.event_bus import EventBus
@@ -39,9 +40,10 @@ class ConnectorManager:
             driver.register_command_feedback(self.emit_command_feedback)
             await driver.register_communication_status_listener(self.emit_communication_status)
 
-    async def handle_driver_connect(self, data):
-        driver_name = data["driver_name"]
-        status = data["status"]
+    async def handle_driver_connect(self, data: DriverConnectCommand):
+        print(f"[CONNECT MANAGER] Handling driver connect command: {data}")
+        driver_name = data.driver_name
+        status = data.status
         driver = self.driver_instances.get(driver_name)
         if driver:
             if status == "connect":

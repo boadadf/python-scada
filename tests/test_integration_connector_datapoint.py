@@ -2,8 +2,8 @@ import asyncio
 import uuid
 import pytest
 from openscada_lite.common.bus.event_bus import EventBus
-from openscada_lite.frontend.datapoints.model import DatapointModel
-from openscada_lite.frontend.datapoints.service import DatapointService
+from openscada_lite.modules.datapoints.model import DatapointModel
+from openscada_lite.modules.datapoints.service import DatapointService
 from backend.communications.drivers.test.test_driver import TestDriver
 from openscada_lite.backend.communications.connector_manager import ConnectorManager
 from openscada_lite.common.bus.event_types import EventType
@@ -32,7 +32,7 @@ async def test_connector_drivers_publish_to_datapoint_engine():
     await asyncio.sleep(2)
 
     # Check that DatapointEngine received updates
-    all_tags = dp_engine.model.get_all_tags()
+    all_tags = dp_engine.model.get_all()
     assert len(all_tags) > 0
     for tag_id in all_tags:
         assert all_tags[tag_id].value is not None

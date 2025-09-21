@@ -2,8 +2,8 @@ import uuid
 import pytest
 import asyncio
 from openscada_lite.common.bus.event_bus import EventBus
-from openscada_lite.frontend.datapoints.model import DatapointModel
-from openscada_lite.frontend.datapoints.service import DatapointService
+from openscada_lite.modules.datapoints.model import DatapointModel
+from openscada_lite.modules.datapoints.service import DatapointService
 from openscada_lite.backend.communications.connector_manager import ConnectorManager
 from openscada_lite.backend.rule.rule_manager import RuleEngine
 from openscada_lite.backend.alarm.alarm_engine import AlarmEngine

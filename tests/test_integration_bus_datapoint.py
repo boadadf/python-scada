@@ -1,10 +1,10 @@
 import asyncio
 import pytest
 from openscada_lite.common.bus.event_bus import EventBus
-from openscada_lite.frontend.datapoints.model import DatapointModel
-from openscada_lite.frontend.datapoints.service import DatapointService
+from openscada_lite.modules.datapoints.model import DatapointModel
+from openscada_lite.modules.datapoints.service import DatapointService
 from openscada_lite.common.bus.event_types import EventType
-from openscada_lite.common.models.dtos import TagUpdateMsg
+from openscada_lite.common.models.dtos import RawTagUpdateMsg, TagUpdateMsg
 from openscada_lite.common.config.config import Config
 
 @pytest.fixture(autouse=True)
@@ -30,14 +30,14 @@ async def test_driver_to_datapoint_integration():
     async def rule_engine_sim(msg: TagUpdateMsg):
         received.append(msg)
 
-    bus.subscribe(EventType.TAG_UPDATE, rule_engine_sim)
+    bus.subscribe(EventType.RAW_TAG_UPDATE, rule_engine_sim)
 
     # Simulate a driver publishing a tag update with correct namespaced tag_id
-    await bus.publish(EventType.RAW_TAG_UPDATE, TagUpdateMsg(datapoint_identifier=tag_id, value=75.5))
+    await bus.publish(EventType.RAW_TAG_UPDATE, RawTagUpdateMsg(datapoint_identifier=tag_id, value=75.5))
     await asyncio.sleep(0.01)
 
     # DatapointEngine updated internal state
-    tag = dp_engine.model.get_tag(tag_id)
+    tag = dp_engine.model.get(tag_id)
     assert tag.value == 75.5
 
     # RuleEngine also received update

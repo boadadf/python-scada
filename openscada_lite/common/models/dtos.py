@@ -39,6 +39,20 @@ class TagUpdateMsg(DTO):
         return self._default_to_dict()
 
 @dataclass
+class RawTagUpdateMsg(DTO):
+    datapoint_identifier: str
+    value: Any
+    quality: str = "good"
+    timestamp: Optional[str] = None
+
+    @classmethod
+    def get_event_type(cls) -> EventType:
+        return EventType.RAW_TAG_UPDATE
+
+    def to_dict(self):
+        return self._default_to_dict()
+
+@dataclass
 class SendCommandMsg(DTO):
     command_id: str
     datapoint_identifier: str
@@ -138,3 +152,14 @@ class DriverConnectCommand(DTO):
 
     def to_dict(self):
         return self._default_to_dict()
+    
+@dataclass
+class StatusDTO():
+    status: str
+    reason: str
+
+    def to_dict(self):
+        return {
+            "status": self.status,
+            "reason": self.reason
+        }

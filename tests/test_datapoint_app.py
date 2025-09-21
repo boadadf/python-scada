@@ -1,5 +1,7 @@
 import asyncio
 import os
+
+from common.models.dtos import RawTagUpdateMsg
 os.environ["SCADA_CONFIG_FILE"] = "tests/test_config.json"
 
 import pytest
@@ -17,10 +19,18 @@ def run_server():
        target=lambda: flask_socketio.run(app, port=5000, allow_unsafe_werkzeug=True),
        daemon=True
     )
+    flask_socketio.start_background_task = immediate_call
     thread.start()
     time.sleep(1)  # Give the server time to start
     yield
     # No explicit shutdown; daemon thread will exit with pytest
+
+def immediate_call(func, *args, **kwargs):
+    import asyncio
+    if asyncio.iscoroutinefunction(func):
+        asyncio.run(func(*args, **kwargs))
+    else:
+        func(*args, **kwargs)
 
 @pytest.mark.asyncio
 async def test_live_feed_and_set_tag_real():
@@ -29,16 +39,16 @@ async def test_live_feed_and_set_tag_real():
     received_initial = []
     received_updates = []
 
-    @sio.on('initial_state')
+    @sio.on('datapoint_initial_state')
     def on_initial_state(data):
         received_initial.append(data)
 
-    @sio.on('datapoint_update')
+    @sio.on('datapoint_tagupdatemsg')
     def on_datapoint_update(data):
         received_updates.append(data)
 
     sio.connect(SERVER_URL)
-    sio.emit('subscribe_live_feed')
+    sio.emit('datapoint_subscribe_live_feed')
     await asyncio.sleep(1)  # Wait for initial state
 
     # Check initial state contains all tags from test_config.json
@@ -59,7 +69,7 @@ async def test_live_feed_and_set_tag_real():
     # Set a value for one tag using HTTP POST (if you have a REST endpoint), or via WebSocket
     test_tag = expected_tags[0]
     test_value = 123.45
-    sio.emit('set_tag', {"datapoint_identifier": test_tag, "value": test_value, "quality": "good"})
+    sio.emit('datapoint_send_rawtagupdatemsg', RawTagUpdateMsg(test_tag, test_value, "good", None).to_dict())
     time.sleep(1)  # Wait for update
 
     assert received_updates, "No datapoint_update received after set_tag"

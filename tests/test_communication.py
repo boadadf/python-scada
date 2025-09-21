@@ -1,11 +1,10 @@
 import asyncio
 import pytest
 from unittest.mock import MagicMock, patch
-from common.bus import event_bus
-from common.models.dtos import DriverConnectCommand, DriverConnectStatus
-from openscada_lite.frontend.communications.controller import CommunicationsController
-from openscada_lite.frontend.communications.service import CommunicationsService
-from openscada_lite.frontend.communications.model import CommunicationsModel
+from openscada_lite.common.models.dtos import DriverConnectCommand, DriverConnectStatus, StatusDTO
+from openscada_lite.modules.communications.controller import CommunicationsController
+from openscada_lite.modules.communications.service import CommunicationsService
+from openscada_lite.modules.communications.model import CommunicationsModel
 from openscada_lite.common.bus.event_types import EventType
 from openscada_lite.backend.communications.connector_manager import ConnectorManager
 from openscada_lite.common.bus.event_bus import EventBus
@@ -32,9 +31,9 @@ def service():
 
 def test_handle_connect_driver_valid_status(controller):
     from unittest.mock import AsyncMock
-    controller.service.handle_incoming = AsyncMock()
+    controller.service.handle_controller_message = AsyncMock()
     controller.socketio.emit = MagicMock()
-    data = {"driver_name": "Server1", "status": "connect"}
+    data = DriverConnectCommand(driver_name="Server1", status="connect")
 
     handlers = {}
     def fake_on(event):
@@ -46,13 +45,13 @@ def test_handle_connect_driver_valid_status(controller):
     controller.register_socketio()
     controller.socketio.start_background_task = lambda fn, *args, **kwargs: asyncio.run(fn(*args, **kwargs))
     handlers["driver_connect_send_driverconnectcommand"](data)
-    controller.service.handle_incoming.assert_called_once_with({"driver_name": "Server1", "status": "connect"})
-    controller.socketio.emit.assert_any_call("driver_connect_ack", {"status": "ok"})
+    controller.service.handle_controller_message.assert_called_once_with(data)
+    controller.socketio.emit.assert_any_call("driver_connect_ack", StatusDTO(status="ok", reason="Request accepted.").to_dict())
 
 def test_handle_connect_driver_invalid_status(controller):
-    controller.service.handle_incoming = MagicMock()
+    controller.service.handle_controller_message = MagicMock()
     controller.socketio.emit = MagicMock()
-    data = {"driver_name": "Server1", "status": "bad_status"}
+    data = DriverConnectCommand(driver_name="Server1", status="bad_status")
 
     handlers = {}
     def fake_on(event):
@@ -64,14 +63,13 @@ def test_handle_connect_driver_invalid_status(controller):
     controller.register_socketio()
     handlers["driver_connect_send_driverconnectcommand"](data)
 
-    controller.service.handle_incoming.assert_not_called()
+    controller.service.handle_controller_message.assert_not_called()
     controller.socketio.emit.assert_any_call(
         "driver_connect_ack",
-        {
-            "status": "error",
-            "reason": "Invalid status. Must be 'connect' or 'disconnect'.",
-            "driver_name": "Server1"
-        }
+        StatusDTO(
+            status="error",
+            reason="Invalid status. Must be 'connect' or 'disconnect'."
+        )
     )
 
 @pytest.mark.asyncio
@@ -91,7 +89,7 @@ async def test_handle_subscribe_driver_status(controller):
     controller.socketio.sid = sid
     controller.register_socketio()
 
-    with patch("openscada_lite.frontend.base_controller.join_room", MagicMock()):
+    with patch("openscada_lite.modules.base.base_controller.join_room", MagicMock()):
         handlers["driver_connect_subscribe_live_feed"]()
 
     controller.socketio.emit.assert_any_call(
@@ -112,7 +110,7 @@ def test_publish_status(controller):
 @pytest.mark.asyncio
 async def test_send_connect_command_publishes_event(service):
     svc, event_bus, _ = service
-    await svc.handle_incoming(DriverConnectCommand("Server1", "connect"))
+    await svc.handle_controller_message(DriverConnectCommand("Server1", "connect"))
     event_bus.publish.assert_called_once_with(
         EventType.DRIVER_CONNECT_COMMAND,
         DriverConnectCommand(driver_name="Server1", status="connect")
@@ -123,7 +121,7 @@ async def test_on_driver_connect_status_updates_model_and_notifies_controller(se
     svc, _, model = service
     svc.controller = MagicMock()
     data = DriverConnectStatus(driver_name="Server1", status="connect")
-    await svc.on_bus_msg(data)
+    await svc.handle_bus_message(data)
     model.update.assert_called_once_with(DriverConnectStatus(driver_name="Server1", status="connect"))
     svc.controller.publish.assert_called_once_with(DriverConnectStatus(driver_name="Server1", status="connect"))
 

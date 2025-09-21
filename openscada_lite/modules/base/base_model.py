@@ -12,11 +12,14 @@ class BaseModel(ABC, Generic[T]):
     def __init__(self):
         self._store: Dict[str, T] = {}
 
-    def update(self, msg: T):
+    def update(self, msg: T) -> bool:
         """
         Store or update a message.
         """
-        self._store[self.get_id(msg)] = msg
+        accept_update = self.should_accept_update(msg)            
+        if accept_update:
+            self._store[self.get_id(msg)] = msg
+        return accept_update
 
     def get(self, msg_id: str) -> Optional[T]:
         """
@@ -37,3 +40,11 @@ class BaseModel(ABC, Generic[T]):
         Must be implemented by subclasses.
         """
         pass
+
+    def should_accept_update(self, msg: T) -> bool:
+        """
+        Determine if an incoming message should be accepted.
+        Can be overridden by subclasses for custom logic.
+        By default, all messages are accepted.
+        """
+        return True

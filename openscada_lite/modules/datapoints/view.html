@@ -78,10 +78,10 @@
         }
 
         socket.on('connect', () => {
-            socket.emit('subscribe_live_feed');
+            socket.emit('datapoint_subscribe_live_feed');
         });
 
-        socket.on('initial_state', function(tagList) {
+        socket.on('datapoint_initial_state', function(tagList) {
             tagTableBody.innerHTML = '';
             tagList.forEach(tag => {
                 tags[tag.datapoint_identifier] = tag;
@@ -89,7 +89,7 @@
             });
         });
 
-        socket.on('datapoint_update', function(tag) {
+        socket.on('datapoint_tagupdatemsg', function(tag) {
             tags[tag.datapoint_identifier] = tag;
             updateTagRow(tag);
         });
