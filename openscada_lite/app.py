@@ -7,15 +7,15 @@ from openscada_lite.modules.datapoints.controller import DatapointController
 from openscada_lite.modules.communications.model import CommunicationsModel
 from openscada_lite.modules.communications.service import CommunicationsService
 from openscada_lite.modules.communications.controller import CommunicationsController
-from openscada_lite.modules.commands.model import CommunicationsModel as CommandModel
-from openscada_lite.modules.commands.service import CommunicationsService as CommandService
+from openscada_lite.modules.commands.model import CommandModel
+from openscada_lite.modules.commands.service import CommandService
 from openscada_lite.modules.commands.controller import CommandController
 from openscada_lite.common.bus.event_bus import EventBus
 from openscada_lite.backend.communications.connector_manager import ConnectorManager
 
 app = Flask(
     __name__,
-    static_folder="frontend",  # <-- adjust this path as needed
+    static_folder="web",  # <-- adjust this path as needed
     static_url_path="/static"
 )
 socketio = SocketIO(app, cors_allowed_origins="*")

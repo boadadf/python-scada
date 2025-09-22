@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import TypeVar, Generic, Type
+from typing import List, TypeVar, Generic, Type, Union
 from openscada_lite.common.models.dtos import DTO
 from openscada_lite.modules.base.base_model import BaseModel
 from openscada_lite.common.bus.event_bus import EventBus
@@ -15,28 +15,44 @@ if TYPE_CHECKING:
 
 class BaseService(ABC, Generic[T, U, V]):
     """
-    Generic service for handling bus messages of type T and controller messages of type U.
+    Generic service for handling bus messages of type T (or multiple types) and controller messages of type U.
     """
-    def __init__(self, event_bus: EventBus, model: BaseModel, controller: 'BaseController', T_cls: Type[T], U_cls: Type[U], V_cls: Type[V]=None):
+    def __init__(
+        self,
+        event_bus: EventBus,
+        model: BaseModel,
+        controller: 'BaseController',
+        T_cls: Union[Type[T], List[Type[T]]],
+        U_cls: Type[U],
+        V_cls: Type[V] = None
+    ):
         self.event_bus = event_bus
         self.model = model
         self.controller = controller
         if controller:
             controller.set_service(self)
 
-        # Subscribe to bus for T
-        self.event_bus.subscribe(T_cls.get_event_type(), self.handle_bus_message)
-        self.T_cls = T_cls
+        # Support single or multiple T_cls
+        if not isinstance(T_cls, list):
+            T_cls = [T_cls]
+        self.T_cls_list = T_cls
         self.U_cls = U_cls
         self.V_cls = V_cls
 
-    async def handle_bus_message(self, data:T):        
+        # Subscribe to all event types
+        for t_cls in self.T_cls_list:
+            self.event_bus.subscribe(t_cls.get_event_type(), self.handle_bus_message)
+
+    async def handle_bus_message(self, data:T):
+        accept_update = self.should_accept_update(data)
+        if not accept_update:
+            print(f"BaseService.handle_bus_message: {data} update not accepted by model")
+            return
         processed_msg = self.process_msg(data)
-        accepted = self.model.update(processed_msg)
-        if accepted:
-            await self.on_model_accepted_bus_update(processed_msg)
-            if self.controller:
-                self.controller.publish(processed_msg)
+        self.model.update(processed_msg)        
+        await self.on_model_accepted_bus_update(processed_msg)
+        if self.controller:
+            self.controller.publish(processed_msg)
 
     async def handle_controller_message(self, data:U):
         print("DatapointService.on_model_accepted_bus_update CALLED")
@@ -53,5 +69,14 @@ class BaseService(ABC, Generic[T, U, V]):
         """
         Hook for subclasses: called when the model accepts an update.
         Override in subclass if needed.
+        """
+        pass
+
+    @abstractmethod
+    def should_accept_update(self, msg: T) -> bool:
+        """
+        Determine if an incoming message should be accepted.
+        Must be implemented by subclasses.
+        By default, all messages are accepted.
         """
         pass

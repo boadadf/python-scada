@@ -1,9 +1,11 @@
 import asyncio
 import os
 
-from backend.communications.drivers.test.test_driver import TestDriver
-from common.models.dtos import SendCommandMsg
-from openscada_lite.common.models.entities import Datapoint
+from openscada_lite.common.bus.event_bus import EventBus
+from openscada_lite.modules.commands.service import CommandService
+from openscada_lite.common.config.config import Config
+from openscada_lite.common.models.dtos import CommandFeedbackMsg, SendCommandMsg
+from openscada_lite.modules.commands.model import CommandModel
 
 os.environ["SCADA_CONFIG_FILE"] = "tests/test_config.json"
 
@@ -78,3 +80,47 @@ async def test_command_live_feed_and_feedback():
     # Optionally check feedback['feedback'] or other fields
 
     sio.disconnect()
+
+def test_command_model_initial_load(monkeypatch):
+    # Mock Config.get_instance().get_allowed_command_identifiers()
+    allowed = ["Server1@CMD1", "Server2@CMD2"]
+    class DummyConfig:
+        def get_allowed_command_identifiers(self):
+            return allowed
+    monkeypatch.setattr(Config, "get_instance", lambda: DummyConfig())
+
+    model = CommandModel()
+    # The model should have all allowed commands in its _store
+    for cmd_id in allowed:
+        assert cmd_id in model._store
+        feedback = model._store[cmd_id]
+        assert feedback.datapoint_identifier == cmd_id
+        assert feedback.feedback is None    
+
+@pytest.mark.asyncio
+async def test_command_service_handle_bus_message(monkeypatch):
+    allowed = ["Server1@CMD1"]
+    class DummyConfig:
+        def get_allowed_command_identifiers(self):
+            return allowed
+    monkeypatch.setattr(Config, "get_instance", lambda: DummyConfig())
+
+    bus = EventBus()
+    model = CommandModel()
+    service = CommandService(bus, model, controller=None)
+
+    msg = CommandFeedbackMsg(
+        command_id="cmd123",
+        datapoint_identifier="Server1@CMD1",
+        value=42,
+        feedback="OK",
+        timestamp=None
+    )
+
+    await service.handle_bus_message(msg)
+
+    stored = model._store.get("Server1@CMD1")
+    assert stored is not None
+    assert stored.command_id == "cmd123"
+    assert stored.value == 42
+    assert stored.feedback == "OK"

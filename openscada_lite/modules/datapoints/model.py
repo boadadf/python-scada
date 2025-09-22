@@ -27,7 +27,3 @@ class DatapointModel(BaseModel[TagUpdateMsg]):
                 quality="unknown",
                 timestamp=now
             )
-
-    @override
-    def should_accept_update(self, tag: TagUpdateMsg) -> bool:
-        return Util.is_valid(self, tag)

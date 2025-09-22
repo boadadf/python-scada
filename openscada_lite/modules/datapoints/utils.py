@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from frontend.datapoints.model import DatapointModel
+    from openscada_lite.modules.datapoints.model import DatapointModel
 
 from openscada_lite.common.models.dtos import RawTagUpdateMsg
 
@@ -12,6 +12,7 @@ class Util:
             return False
         old_tag = model._store.get(tag.datapoint_identifier)
         if old_tag and tag.timestamp is not None and old_tag.timestamp is not None:
+            print(f"Old timestamp: {old_tag.timestamp}, New timestamp: {tag.timestamp}")
             if tag.timestamp < old_tag.timestamp:
                 return False
         return True

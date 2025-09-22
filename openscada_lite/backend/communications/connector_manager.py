@@ -1,5 +1,5 @@
 from typing import Any, Dict
-from openscada_lite.common.models.dtos import DriverConnectCommand, CommandFeedbackMsg, SendCommandMsg
+from openscada_lite.common.models.dtos import DriverConnectCommand, CommandFeedbackMsg, DriverConnectStatus, RawTagUpdateMsg, SendCommandMsg
 from openscada_lite.backend.communications.drivers import DRIVER_REGISTRY
 from openscada_lite.common.bus.event_types import EventType
 from openscada_lite.common.bus.event_bus import EventBus
@@ -10,14 +10,15 @@ import datetime
 
 class ConnectorManager:
     def __init__(self, event_bus: EventBus):
-        config = Config.get_instance()
+        self.config = Config.get_instance()
         self.event_bus = event_bus
         self.event_bus.subscribe(EventType.DRIVER_CONNECT_COMMAND, self.handle_driver_connect)
         self.event_bus.subscribe(EventType.SEND_COMMAND, self.send_command)
         self.driver_instances: Dict[str, DriverProtocol] = {}  # key: driver name
-        self.types = config.get_types()
+        self.types = self.config.get_types()
+        self.driver_status: Dict[str, str] = {}  # key: driver name, value: last status
 
-        for cfg in config.get_drivers():
+        for cfg in self.config.get_drivers():
             datapoint_objs = []
             for dp in cfg.get("datapoints", []):
                 name = dp["name"]
@@ -34,7 +35,7 @@ class ConnectorManager:
             driver_instance.subscribe(datapoint_objs)        
             # Optionally assign datapoints to driver_instance if needed
             self.driver_instances[cfg["name"]] = driver_instance
-
+            self.driver_status[cfg["name"]] = "offline"
 
     async def init_drivers(self):
         for driver in self.driver_instances.values():
@@ -59,8 +60,30 @@ class ConnectorManager:
     async def emit_command_feedback(self, data: dict):
         await self.event_bus.publish(EventType.COMMAND_FEEDBACK, data)
 
-    async def emit_communication_status(self, data: dict):
+    async def emit_communication_status(self, data: DriverConnectStatus):
         await self.event_bus.publish(EventType.DRIVER_CONNECT_STATUS, data)
+        # If the driver went offline, publish all tags as unknown
+        driver_name = data.driver_name
+        status = data.status
+        prev_status = self.driver_status.get(driver_name)
+        self.driver_status[driver_name] = status  # update status
+
+        # Only publish unknowns if going from online to offline
+        if status == "offline" and prev_status == "online":
+            await self.publish_unknown_for_driver(driver_name)
+
+    async def publish_unknown_for_driver(self, driver_name: str):
+        now = datetime.datetime.now()
+        datapoint_types = self.config.get_datapoint_types_for_driver(driver_name, self.types)
+        for tag_name, dp_type in datapoint_types.items():
+            default_value = dp_type.get("default") if dp_type and "default" in dp_type else None
+            tag_msg = RawTagUpdateMsg(
+                datapoint_identifier=f"{driver_name}@{tag_name}",
+                value=default_value,
+                quality="unknown",
+                timestamp=now
+            )
+            await self.emit_value(tag_msg)
 
     async def start_all(self):
         await self.init_drivers()
@@ -81,11 +104,22 @@ class ConnectorManager:
                 command_id=data.command_id,
                 datapoint_identifier=data.datapoint_identifier,
                 value=data.value,
-                feedback="NOK",
+                feedback="NOK-wrong-value",
                 timestamp=datetime.datetime.now()
             )
-            await self.emit_command_feedback(feedback.to_dict())
+            await self.emit_command_feedback(feedback)
             return
         driver = self.driver_instances.get(server_id)
         if driver:
-            await driver.send_command(simple_datapoint_identifier, data.value, data.command_id)
+            if driver.is_connected:
+                await driver.send_command(simple_datapoint_identifier, data.value, data.command_id)
+            else:
+                print(f"Driver '{server_id}' is not connected. Cannot send command.")
+                feedback = CommandFeedbackMsg(
+                    command_id=data.command_id,
+                    datapoint_identifier=data.datapoint_identifier,
+                    value=data.value,
+                    feedback="NOK-driver-offline",
+                    timestamp=datetime.datetime.now()
+                )
+                await self.emit_command_feedback(feedback)

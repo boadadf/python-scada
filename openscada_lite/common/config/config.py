@@ -32,6 +32,18 @@ class Config:
         rules = self._config.get("rules", [])
         return [Rule(**r) for r in rules]
     
+    def get_datapoint_types_for_driver(self, driver_name: str, types: dict) -> dict:
+        """
+        Returns a dict {tag_name: dp_type_dict} for the given driver.
+        """
+        for drv in self.get_drivers():
+            if drv["name"] == driver_name:
+                return {
+                    dp["name"]: types.get(dp["type"])
+                    for dp in drv.get("datapoints", [])
+                }
+        return {}
+    
     def get_allowed_datapoint_identifiers(self):
         """Return fully qualified tag_ids: driver_name@datapoint_identifier"""
         datapoint_identifiers = []

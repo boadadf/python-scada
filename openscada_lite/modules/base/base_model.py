@@ -14,14 +14,11 @@ class BaseModel(ABC, Generic[T]):
     def __init__(self):
         self._store: Dict[str, T] = {}
 
-    def update(self, msg: T) -> bool:
+    def update(self, msg: T):
         """
         Store or update a message.
         """
-        accept_update = self.should_accept_update(msg)            
-        if accept_update:
-            self._store[msg.get_id()] = msg
-        return accept_update
+        self._store[msg.get_id()] = msg        
 
     def get(self, msg_id: str) -> Optional[T]:
         """
@@ -34,11 +31,3 @@ class BaseModel(ABC, Generic[T]):
         Retrieve all messages.
         """
         return copy.deepcopy(self._store)
-
-    def should_accept_update(self, msg: T) -> bool:
-        """
-        Determine if an incoming message should be accepted.
-        Can be overridden by subclasses for custom logic.
-        By default, all messages are accepted.
-        """
-        return True

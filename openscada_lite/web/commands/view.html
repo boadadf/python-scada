@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Command List</title>
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 1em; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #bbb; padding: 0.5em; text-align: left; }
+        input[type="text"] { width: 80px; }
+        button { padding: 0.2em 0.8em; }
+    </style>
+</head>
+<body>
+    <h2>Command List</h2>
+    <table id="command-table">
+        <thead>
+            <tr>
+                <th>Command</th>
+                <th>Value</th>
+                <th>Feedback</th>
+                <th>Timestamp</th>
+                <th>Send</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Command rows will be inserted here -->
+        </tbody>
+    </table>
+    <script>
+        const socket = io();
+        const commandTableBody = document.querySelector('#command-table tbody');
+        const commands = {};
+
+        function updateCommandRow(cmd) {
+            let rowId = 'cmd-' + cmd.datapoint_identifier.replace(/[^a-zA-Z0-9]/g, '_');
+            let row = document.getElementById(rowId);
+            let valueDisplay = (cmd.value === undefined || cmd.value === null || cmd.value === '') ? '' : cmd.value;
+            let feedbackDisplay = (cmd.feedback === undefined || cmd.feedback === null) ? 'None' : cmd.feedback;
+            let timestampDisplay = (cmd.timestamp === undefined || cmd.timestamp === null) ? 'None' : cmd.timestamp;
+            if (!row) {
+                row = document.createElement('tr');
+                row.id = rowId;
+                row.innerHTML = `
+                    <td>${cmd.datapoint_identifier}</td>
+                    <td><input type="text" value="${valueDisplay}" /></td>
+                    <td class="feedback">${feedbackDisplay}</td>
+                    <td class="timestamp">${timestampDisplay}</td>
+                    <td><button>Send</button></td>
+                `;
+                commandTableBody.appendChild(row);
+
+                // Send on Enter key
+                row.querySelector('input').addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter') {
+                        sendCommand(cmd.datapoint_identifier, this.value);
+                    }
+                });
+                // Send on button click
+                row.querySelector('button').addEventListener('click', function() {
+                    const val = row.querySelector('input').value;
+                    sendCommand(cmd.datapoint_identifier, val);
+                });
+            }
+            // Always update the input value and other fields
+            row.querySelector('input').value = valueDisplay;
+            row.querySelector('.feedback').textContent = feedbackDisplay;
+            row.querySelector('.timestamp').textContent = timestampDisplay;
+        }
+
+        function sendCommand(datapoint_identifier, value) {
+            // Generate a random command_id for demo purposes
+            const command_id = 'cmd_' + Math.random().toString(36).substring(2, 10);
+            socket.emit('command_send_sendcommandmsg', {
+                command_id: command_id,
+                datapoint_identifier: datapoint_identifier,
+                value: value
+            });
+        }
+
+        socket.on('connect', () => {
+            socket.emit('command_subscribe_live_feed');
+        });
+
+        socket.on('command_initial_state', function(cmdList) {
+            commandTableBody.innerHTML = '';
+            cmdList.forEach(cmd => {
+                commands[cmd.datapoint_identifier] = cmd;
+                updateCommandRow(cmd);
+            });
+        });
+
+        socket.on('command_commandfeedbackmsg', function(cmd) {
+            commands[cmd.datapoint_identifier] = cmd;
+            updateCommandRow(cmd);
+        });
+    </script>
+</body>
+</html>

@@ -65,9 +65,10 @@ class BaseController(ABC, Generic[T, U]):
         join_room(self.room)
         self._initializing_clients.add(sid)
         all_msgs = self.model.get_all()
+        sorted_msgs = sorted(all_msgs.values(), key=lambda v: v.get_id())
         self.socketio.emit(
             f'{self.base_event}_initial_state',
-            [v.to_dict() for v in all_msgs.values()],
+            [v.to_dict() for v in sorted_msgs],
             room=self.room
         )
         self._initializing_clients.discard(sid)

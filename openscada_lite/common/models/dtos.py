@@ -33,7 +33,7 @@ class TagUpdateMsg(DTO):
     datapoint_identifier: str
     value: Any
     quality: str = "good"
-    timestamp: Optional[str] = None
+    timestamp: Optional[datetime.datetime] = None
 
     @classmethod
     def get_event_type(cls) -> EventType:
@@ -50,7 +50,7 @@ class RawTagUpdateMsg(DTO):
     datapoint_identifier: str
     value: Any
     quality: str = "good"
-    timestamp: Optional[str] = None
+    timestamp: Optional[datetime.datetime] = None
 
     @classmethod
     def get_event_type(cls) -> EventType:
@@ -76,7 +76,7 @@ class SendCommandMsg(DTO):
         return self._default_to_dict()
 
     def get_id(self) -> str:
-        return self.command_id
+        return self.datapoint_identifier
 
 @dataclass
 class CommandFeedbackMsg(DTO):
@@ -94,7 +94,7 @@ class CommandFeedbackMsg(DTO):
         return self._default_to_dict()
 
     def get_id(self) -> str:
-        return self.command_id
+        return self.datapoint_identifier
 
 @dataclass
 class RaiseAlarmMsg(DTO):

@@ -1,29 +1,43 @@
 # tank_test_driver.py
-import asyncio
 import datetime
-import random
 from openscada_lite.backend.communications.drivers.test.test_driver import TestDriver
 
 class TankTestDriver(TestDriver):
     async def _simulate_values(self):
-            now = datetime.datetime.now()
+        now = datetime.datetime.now()
 
-            # current states
-            level_tag = self._tags["TANK"]
-            pump_tag = self._tags["PUMP"]
-            door_tag = self._tags["DOOR"]
+        # current states
+        level_tag = self._tags.get("TANK")
+        pump_tag = self._tags.get("PUMP")
+        door_tag = self._tags.get("DOOR")
 
-            level = float(level_tag.value or 0.0)
-            pump = pump_tag.value or "CLOSED"
-            door = door_tag.value or "CLOSED"
+        if not (level_tag and pump_tag and door_tag):
+            print("[SIM] Missing tag(s):", {
+                "TANK": bool(level_tag),
+                "PUMP": bool(pump_tag),
+                "DOOR": bool(door_tag)
+            })
+            return
 
-            # --- compute next level ---
-            if pump == "OPEN": 
-                level += 1.0
-            if door == "OPEN":
-                level -= 2.0
+        try:
+            level = float(level_tag.value) if level_tag.value not in (None, "") else 0.0
+        except Exception as e:
+            print(f"[SIM] Error parsing level value: {level_tag.value} ({e})")
+            level = 0.0
+        pump = pump_tag.value if pump_tag.value else "CLOSED"
+        door = door_tag.value if door_tag.value else "CLOSED"
 
-            # clamp between 0 and 100
-            level = max(0.0, min(100.0, level))
-            level_tag.value = level
-            level_tag.timestamp = now
+        print(f"[SIM] Before: level={level}, pump={pump}, door={door}")
+
+        # --- compute next level ---
+        if pump == "OPENED":
+            level += 1.0
+        if door == "OPENED":
+            level -= 2.0
+
+        # clamp between 0 and 100
+        level = max(0.0, min(100.0, level))
+        print(f"[SIM] After: level={level}")
+
+        level_tag.value = level
+        level_tag.timestamp = now

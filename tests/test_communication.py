@@ -1,7 +1,7 @@
 import asyncio
 import pytest
 from unittest.mock import MagicMock, patch
-from openscada_lite.common.models.dtos import DriverConnectCommand, DriverConnectStatus, StatusDTO
+from openscada_lite.common.models.dtos import DriverConnectCommand, DriverConnectStatus, RawTagUpdateMsg, StatusDTO
 from openscada_lite.modules.communications.controller import CommunicationsController
 from openscada_lite.modules.communications.service import CommunicationsService
 from openscada_lite.modules.communications.model import CommunicationsModel
@@ -9,6 +9,14 @@ from openscada_lite.common.bus.event_types import EventType
 from openscada_lite.backend.communications.connector_manager import ConnectorManager
 from openscada_lite.common.bus.event_bus import EventBus
 from openscada_lite.common.config.config import Config
+
+class DummyEventBus(EventBus):
+    def __init__(self):
+        super().__init__()
+        self.published = []
+
+    async def publish(self, event_type, data):
+        self.published.append((event_type, data))
 
 @pytest.fixture
 def controller():
@@ -181,3 +189,41 @@ async def test_driver_publishes_disconnected_status_on_start():
     ), f"No 'offline' status event found in: {status_events}"
 
     await connector_manager.stop_all()
+
+def test_emit_communication_status_sets_unknown(monkeypatch):
+    # Mock config to return known datapoints and types for the driver
+    class DummyConfig:
+        def get_datapoint_types_for_driver(self, driver_name, types):
+            if driver_name == "TestDriver":
+                # Simulate two datapoints with default values
+                return {
+                    "TANK": {"default": 0.0},
+                    "PUMP": {"default": "CLOSED"}
+                }
+            return {}
+        def get_drivers(self): return []
+        def get_types(self): return {}
+
+    monkeypatch.setattr("openscada_lite.common.config.config.Config.get_instance", lambda: DummyConfig())
+
+    bus = DummyEventBus()
+    manager = ConnectorManager(bus)
+    #Force online
+    manager.driver_status["TestDriver"] = "online"
+    # Simulate driver disconnect
+    status = DriverConnectStatus(driver_name="TestDriver", status="offline")
+    import asyncio
+    asyncio.run(manager.emit_communication_status(status))
+
+    # Check that RawTagUpdateMsg was published for each datapoint with quality unknown and default value
+    raw_updates = [d for e, d in bus.published if e == EventType.RAW_TAG_UPDATE]
+    assert len(raw_updates) == 2
+    for msg in raw_updates:
+        assert isinstance(msg, RawTagUpdateMsg)
+        assert msg.quality == "unknown"
+        assert msg.datapoint_identifier in ["TestDriver@TANK", "TestDriver@PUMP"]
+        # Check default values
+        if msg.datapoint_identifier.endswith("TANK"):
+            assert msg.value == 0.0
+        elif msg.datapoint_identifier.endswith("PUMP"):
+            assert msg.value == "CLOSED"

@@ -4,6 +4,7 @@ animations (SVG? Canvas?)
 Add feedback reson to command
 add trackingID to all data.
 add log service that
+DriverConnectStatus make status an enum
 
 
 raw to non raw conversion
