@@ -2,15 +2,19 @@ import asyncio
 import pytest
 
 from openscada_lite.common.bus.event_bus import EventBus
-from openscada_lite.backend.rule.rule_manager import RuleEngine
+from openscada_lite.core.rule.rule_manager import RuleEngine
 from openscada_lite.common.bus.event_types import EventType
 from openscada_lite.common.models.entities import Rule
 from openscada_lite.common.models.dtos import SendCommandMsg, RaiseAlarmMsg, LowerAlarmMsg, TagUpdateMsg
 
+@pytest.fixture(scope="session")
+def test_bus():
+    # Create a single EventBus instance for all tests in the session
+    return EventBus.get_instance()
+
 @pytest.mark.asyncio
-async def test_send_command_triggered():
-    bus = EventBus()
-    engine = RuleEngine(bus)
+async def test_send_command_triggered(test_bus: EventBus):
+    engine = RuleEngine.get_instance(event_bus=test_bus)
     engine.rules = [
         Rule(
             rule_id="test_command",
@@ -19,17 +23,16 @@ async def test_send_command_triggered():
         )
     ]
     engine.build_tag_to_rules_index()
-    engine.subscribe_to_eventbus()
 
     received = []
 
     async def capture(msg: SendCommandMsg):
         received.append(msg)
 
-    bus.subscribe(EventType.SEND_COMMAND, capture)
+    test_bus.subscribe(EventType.SEND_COMMAND, capture)
 
     # Trigger condition
-    await bus.publish(EventType.TAG_UPDATE, TagUpdateMsg(datapoint_identifier="Server1@pressure", value=60))
+    await test_bus.publish(EventType.TAG_UPDATE, TagUpdateMsg(datapoint_identifier="Server1@pressure", value=60))
     await asyncio.sleep(0.01)
 
     assert len(received) == 1
@@ -39,9 +42,8 @@ async def test_send_command_triggered():
 
 
 @pytest.mark.asyncio
-async def test_alarm_active_inactive():
-    bus = EventBus()
-    engine = RuleEngine(bus)
+async def test_alarm_active_inactive(test_bus: EventBus):
+    engine = RuleEngine.get_instance(event_bus=test_bus)
     engine.rules = [
         Rule(
             rule_id="test_alarm",
@@ -52,7 +54,6 @@ async def test_alarm_active_inactive():
         )
     ]
     engine.build_tag_to_rules_index()
-    engine.subscribe_to_eventbus()
 
     alarms_active = []
     alarms_inactive = []
@@ -63,18 +64,18 @@ async def test_alarm_active_inactive():
     async def capture_alarm_inactive(msg: LowerAlarmMsg):
         alarms_inactive.append(msg)
 
-    bus.subscribe(EventType.RAISE_ALARM, capture_alarm_active)
-    bus.subscribe(EventType.LOWER_ALARM, capture_alarm_inactive)
+    test_bus.subscribe(EventType.RAISE_ALARM, capture_alarm_active)
+    test_bus.subscribe(EventType.LOWER_ALARM, capture_alarm_inactive)
 
     # Condition true → alarm_active
-    await bus.publish(EventType.TAG_UPDATE, TagUpdateMsg(datapoint_identifier="Server1@temperature", value=90))
+    await test_bus.publish(EventType.TAG_UPDATE, TagUpdateMsg(datapoint_identifier="Server1@temperature", value=90))
     await asyncio.sleep(0.01)
 
     assert len(alarms_active) == 1
     assert alarms_active[0].datapoint_identifier == "Server1@temperature"
 
     # Condition false → alarm_inactive
-    await bus.publish(EventType.TAG_UPDATE, TagUpdateMsg(datapoint_identifier="Server1@temperature", value=70))
+    await test_bus.publish(EventType.TAG_UPDATE, TagUpdateMsg(datapoint_identifier="Server1@temperature", value=70))
     await asyncio.sleep(0.01)
 
     assert len(alarms_inactive) == 1
@@ -82,9 +83,8 @@ async def test_alarm_active_inactive():
 
 
 @pytest.mark.asyncio
-async def test_multiple_actions():
-    bus = EventBus()
-    engine = RuleEngine(bus)
+async def test_multiple_actions(test_bus: EventBus):
+    engine = RuleEngine.get_instance(event_bus=test_bus)
     engine.rules = [
         Rule(
             rule_id="multi_action_rule",
@@ -96,7 +96,6 @@ async def test_multiple_actions():
         )
     ]
     engine.build_tag_to_rules_index()
-    engine.subscribe_to_eventbus()
 
     commands = []
     alarms = []
@@ -107,11 +106,11 @@ async def test_multiple_actions():
     async def capture_alarm(msg: RaiseAlarmMsg):
         alarms.append(msg)
 
-    bus.subscribe(EventType.SEND_COMMAND, capture_command)
-    bus.subscribe(EventType.RAISE_ALARM, capture_alarm)
+    test_bus.subscribe(EventType.SEND_COMMAND, capture_command)
+    test_bus.subscribe(EventType.RAISE_ALARM, capture_alarm)
 
     # Trigger condition
-    await bus.publish(EventType.TAG_UPDATE, TagUpdateMsg(datapoint_identifier="Server1@pressure", value=120))
+    await test_bus.publish(EventType.TAG_UPDATE, TagUpdateMsg(datapoint_identifier="Server1@pressure", value=120))
     await asyncio.sleep(0.01)
 
     assert len(commands) == 1
@@ -121,9 +120,8 @@ async def test_multiple_actions():
     assert alarms[0].datapoint_identifier == "Server1@pressure"
 
 @pytest.mark.asyncio
-async def test_on_action_triggers_every_time_without_off():
-    bus = EventBus()
-    engine = RuleEngine(bus)
+async def test_on_action_triggers_every_time_without_off(test_bus: EventBus):
+    engine = RuleEngine.get_instance(event_bus=test_bus)
     engine.rules = [
         Rule(
             rule_id="repeat_on_rule",
@@ -133,20 +131,19 @@ async def test_on_action_triggers_every_time_without_off():
         )
     ]
     engine.build_tag_to_rules_index()
-    engine.subscribe_to_eventbus()
 
     alarms = []
 
     async def capture_alarm(msg: RaiseAlarmMsg):
         alarms.append(msg)
 
-    bus.subscribe(EventType.RAISE_ALARM, capture_alarm)
+    test_bus.subscribe(EventType.RAISE_ALARM, capture_alarm)
 
     # First trigger
-    await bus.publish(EventType.TAG_UPDATE, TagUpdateMsg(datapoint_identifier="Server1@level", value=15))
+    await test_bus.publish(EventType.TAG_UPDATE, TagUpdateMsg(datapoint_identifier="Server1@level", value=15))
     await asyncio.sleep(0.01)
     # Second trigger (should trigger again)
-    await bus.publish(EventType.TAG_UPDATE, TagUpdateMsg(datapoint_identifier="Server1@level", value=20))
+    await test_bus.publish(EventType.TAG_UPDATE, TagUpdateMsg(datapoint_identifier="Server1@level", value=20))
     await asyncio.sleep(0.01)
 
     assert len(alarms) == 2

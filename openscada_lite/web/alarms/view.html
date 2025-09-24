@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Active Alarms</title>
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 1em; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #bbb; padding: 0.5em; text-align: left; }
+        button { padding: 0.2em 0.8em; }
+    </style>
+</head>
+<body>
+    <h2>Active Alarms</h2>
+    <table id="alarm-table">
+        <thead>
+            <tr>
+                <th>Datapoint</th>
+                <th>Activation Time</th>
+                <th>Deactivation Time</th>
+                <th>Acknowledge Time</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Alarm rows will be inserted here -->
+        </tbody>
+    </table>
+    <script>
+        const socket = io();
+        const alarmTableBody = document.querySelector('#alarm-table tbody');
+        const alarms = {};
+
+        function formatTime(val) {
+            return val ? val : 'None';
+        }
+
+        function updateAlarmRow(alarm) {
+            const id = alarm.alarm_occurrence_id || (alarm.datapoint_identifier + '@' + alarm.activation_time);
+            let row = document.getElementById('alarm-' + id.replace(/[^a-zA-Z0-9]/g, '_'));
+            if (!row) {
+                row = document.createElement('tr');
+                row.id = 'alarm-' + id.replace(/[^a-zA-Z0-9]/g, '_');
+                row.innerHTML = `
+                    <td>${alarm.datapoint_identifier}</td>
+                    <td class="activation_time"></td>
+                    <td class="deactivation_time"></td>
+                    <td class="acknowledge_time"></td>
+                    <td><button>Ack</button></td>
+                `;
+                alarmTableBody.appendChild(row);
+
+                // Ack button
+                row.querySelector('button').addEventListener('click', function() {
+                    sendAck(id);
+                });
+            }
+            row.querySelector('.activation_time').textContent = formatTime(alarm.activation_time);
+            row.querySelector('.deactivation_time').textContent = formatTime(alarm.deactivation_time);
+            row.querySelector('.acknowledge_time').textContent = formatTime(alarm.acknowledge_time);
+        }
+
+        function removeAlarmRow(id) {
+            const rowId = 'alarm-' + id.replace(/[^a-zA-Z0-9]/g, '_');
+            const row = document.getElementById(rowId);
+            if (row) row.remove();
+        }
+
+        function sendAck(alarm_occurrence_id) {
+            socket.emit('alarm_send_ackalarmmsg', {
+                alarm_occurrence_id: alarm_occurrence_id
+            });
+        }
+
+        socket.on('connect', () => {
+            socket.emit('alarm_subscribe_live_feed');
+        });
+
+        socket.on('alarm_initial_state', function(alarmList) {
+            alarmTableBody.innerHTML = '';
+            for (const alarm of alarmList) {
+                const id = alarm.alarm_occurrence_id || (alarm.datapoint_identifier + '@' + alarm.activation_time);
+                alarms[id] = alarm;
+                updateAlarmRow(alarm);
+            }
+        });
+
+        socket.on('alarm_alarmupdatemsg', function(alarmList) {
+            // Remove all rows first
+            for (const id in alarms) {
+                removeAlarmRow(id);
+            }
+            // Clear and re-add only active alarms
+            Object.keys(alarms).forEach(k => delete alarms[k]);
+            for (const alarm of alarmList) {
+                const id = alarm.alarm_occurrence_id || (alarm.datapoint_identifier + '@' + alarm.activation_time);
+                alarms[id] = alarm;
+                updateAlarmRow(alarm);
+            }
+        });
+    </script>
+</body>
+</html>

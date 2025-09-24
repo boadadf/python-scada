@@ -1,4 +1,17 @@
 {
+ "modules": [
+  { "name": "alarm" },
+  { "name": "command" },
+  { "name": "communication" },
+  { "name": "datapoint" },
+  { 
+    "name": "tracking",
+    "config": {
+      "mode": "file",  
+      "file_path": "flow_events.log"
+    }
+  }
+],
   "dp_types": {
     "LEVEL":      { "type": "float", "min": 0, "max": 100, "default": 0.0 },
     "STATUS":     { "type": "enum", "values": ["OPENED", "CLOSED"], "default": "CLOSED" },

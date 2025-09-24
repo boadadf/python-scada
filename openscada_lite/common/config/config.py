@@ -5,6 +5,11 @@ from openscada_lite.common.models.entities import Rule
 class Config:
     _instance = None
 
+    def __new__(cls, *args, **kwargs):
+        if cls._instance is not None:
+            raise RuntimeError("Use Config.get_instance() instead of direct instantiation.")
+        return super().__new__(cls)
+
     def __init__(self, config_file: str):
         with open(config_file) as f:
             self._config = json.load(f)
@@ -95,3 +100,13 @@ class Config:
                     return True
         # If not found, invalid
         return False
+
+    def get_module_config(self, module_name: str) -> dict:
+        """
+        Returns the config dict for a module by name, or an empty dict if not found.
+        """
+        modules = self._config.get("modules", [])
+        for module in modules:
+            if isinstance(module, dict) and module.get("name") == module_name:
+                return module.get("config", {})
+        return {}

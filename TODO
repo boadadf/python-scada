@@ -1,12 +1,14 @@
-move Alarms + Rules
+add log service that
 
 animations (SVG? Canvas?)
-Add feedback reson to command
+Add feedback resson to command
 add trackingID to all data.
-add log service that
+
+add configurator
+add user
+
+
 DriverConnectStatus make status an enum
-
-
 raw to non raw conversion
 Release to Railway v1.0
 Anounce linkedin

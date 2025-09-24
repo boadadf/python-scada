@@ -1,14 +1,15 @@
-import asyncio
-import os
 
-from common.models.dtos import RawTagUpdateMsg
+import os
 os.environ["SCADA_CONFIG_FILE"] = "tests/test_config.json"
 
+
+import asyncio
 import pytest
 import threading
 import time
 import socketio
 from openscada_lite.app import app, socketio as flask_socketio
+from common.models.dtos import RawTagUpdateMsg
 
 SERVER_URL = "http://localhost:5000"
 

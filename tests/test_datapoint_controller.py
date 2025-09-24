@@ -3,8 +3,8 @@ import datetime
 from unittest.mock import AsyncMock, patch, MagicMock
 from openscada_lite.common.models.dtos import RawTagUpdateMsg, StatusDTO, TagUpdateMsg
 from openscada_lite.common.config.config import Config
-from openscada_lite.modules.datapoints.model import DatapointModel
-from openscada_lite.modules.datapoints.controller import DatapointController
+from openscada_lite.modules.datapoint.model import DatapointModel
+from openscada_lite.modules.datapoint.controller import DatapointController
 
 @pytest.fixture(autouse=True)
 def reset_config_singleton():
@@ -64,8 +64,8 @@ def test_set_tag_calls_service_and_emits_ack(controller):
         func(*args, **kwargs)
     controller.socketio.start_background_task.side_effect = immediate_call
     now = datetime.datetime.now()
-    test_data = RawTagUpdateMsg("Test@TAG", 42, "good", now)
+    test_data = RawTagUpdateMsg(track_id="1234", datapoint_identifier="Test@TAG", value=42, quality="good", timestamp=now)
     controller.handle_request(test_data)
 
-    controller.service.handle_controller_message.assert_called_once_with(RawTagUpdateMsg("Test@TAG", 42, "good", now))
+    controller.service.handle_controller_message.assert_called_once_with(RawTagUpdateMsg(track_id="1234", datapoint_identifier="Test@TAG", value=42, quality="good", timestamp=now))
     controller.socketio.emit.assert_any_call("datapoint_ack", StatusDTO(status="ok", reason="Request accepted.").to_dict())

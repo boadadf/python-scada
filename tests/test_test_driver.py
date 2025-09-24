@@ -1,7 +1,7 @@
 import asyncio
 import uuid
 import pytest
-from backend.communications.drivers.test.tank_test_driver import TankTestDriver
+from core.communications.drivers.test.tank_test_driver import TankTestDriver
 from openscada_lite.common.models.dtos import TagUpdateMsg, CommandFeedbackMsg
 from openscada_lite.common.models.entities import Datapoint
 
@@ -9,7 +9,6 @@ import asyncio
 import pytest
 
 @pytest.mark.asyncio
-
 async def test_test_driver_value_callback():
     driver = TankTestDriver("Server1")
     results = []

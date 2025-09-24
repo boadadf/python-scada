@@ -1,23 +1,26 @@
-import asyncio
 import os
-
-from openscada_lite.common.bus.event_bus import EventBus
-from openscada_lite.modules.commands.service import CommandService
-from openscada_lite.common.config.config import Config
-from openscada_lite.common.models.dtos import CommandFeedbackMsg, SendCommandMsg
-from openscada_lite.modules.commands.model import CommandModel
-
 os.environ["SCADA_CONFIG_FILE"] = "tests/test_config.json"
 
+import asyncio
 import pytest
 import threading
 import time
 import socketio
+
+from openscada_lite.common.bus.event_bus import EventBus
+from openscada_lite.modules.command.service import CommandService
+from openscada_lite.common.config.config import Config
+from openscada_lite.common.models.dtos import CommandFeedbackMsg, SendCommandMsg
+from openscada_lite.modules.command.model import CommandModel
 from openscada_lite.app import app, socketio as flask_socketio
 
 SERVER_URL = "http://localhost:5000"
 
-
+@pytest.fixture(autouse=True)
+def reset_event_bus(monkeypatch):
+    # Reset the singleton before each test
+    monkeypatch.setattr(EventBus, "_instance", None)
+    
 @pytest.fixture(scope="module", autouse=True)
 def run_server():
     # Start the Flask app in a background thread
@@ -71,7 +74,7 @@ async def test_command_live_feed_and_feedback():
         value=42,
     )
     sio.emit("command_send_sendcommandmsg", test_command.to_dict())
-    await asyncio.sleep(5)  # Wait for initial state
+    await asyncio.sleep(1)  # Wait for initial state
 
     assert received_feedback, "No command feedback received after sending command"
     feedback = received_feedback[-1]
@@ -105,7 +108,7 @@ async def test_command_service_handle_bus_message(monkeypatch):
             return allowed
     monkeypatch.setattr(Config, "get_instance", lambda: DummyConfig())
 
-    bus = EventBus()
+    bus = EventBus.get_instance()
     model = CommandModel()
     service = CommandService(bus, model, controller=None)
 

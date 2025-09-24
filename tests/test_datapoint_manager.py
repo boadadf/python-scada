@@ -3,8 +3,8 @@ import asyncio
 import datetime
 
 from openscada_lite.common.config.config import Config
-from openscada_lite.modules.datapoints.model import DatapointModel
-from openscada_lite.modules.datapoints.service import DatapointService
+from openscada_lite.modules.datapoint.model import DatapointModel
+from openscada_lite.modules.datapoint.service import DatapointService
 from openscada_lite.common.bus.event_bus import EventBus
 from openscada_lite.common.bus.event_types import EventType
 from openscada_lite.common.models.dtos import RawTagUpdateMsg, TagUpdateMsg
@@ -17,9 +17,15 @@ def reset_config_singleton():
 def setup_function():
     Config.reset_instance()
 
+#Reset the bus for each test
+@pytest.fixture(autouse=True)
+def reset_event_bus(monkeypatch):
+    # Reset the singleton before each test
+    monkeypatch.setattr(EventBus, "_instance", None)
+
 @pytest.mark.asyncio
 async def test_update_tag_quality_and_timestamp():
-    bus = EventBus()
+    bus = EventBus.get_instance()
     dp_engine = DatapointService(bus, DatapointModel(), None)
     results = []
 
@@ -41,14 +47,14 @@ async def test_update_tag_quality_and_timestamp():
 
 @pytest.mark.asyncio
 async def test_get_tag_returns_none_for_missing_tag():
-    bus = EventBus()
+    bus = EventBus.get_instance()
     dp_engine = DatapointService(bus, DatapointModel(), None)
     tag = dp_engine.model.get("Server2@NON_EXISTENT")
     assert tag is None
 
 @pytest.mark.asyncio
 async def test_multiple_tag_updates():
-    bus = EventBus()
+    bus = EventBus.get_instance()
     dp_engine = DatapointService(bus, DatapointModel(), None)
     results = []
 
@@ -69,7 +75,7 @@ async def test_multiple_tag_updates():
 
 @pytest.mark.asyncio
 async def test_update_tag_without_optional_fields():
-    bus = EventBus()
+    bus = EventBus.get_instance()
     dp_engine = DatapointService(bus, DatapointModel(), None)
     results = []
 
@@ -89,7 +95,7 @@ async def test_update_tag_without_optional_fields():
 
 @pytest.mark.asyncio
 async def test_update_invalid_tag():
-    bus = EventBus()
+    bus = EventBus.get_instance()
     dp_engine = DatapointService(bus, DatapointModel(), None)
 
     # Attempt to update a tag not in config

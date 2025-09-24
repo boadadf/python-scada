@@ -15,3 +15,4 @@ class EventType(Enum):
     ALARM_UPDATE = "alarm_update"
     DRIVER_CONNECT_COMMAND = "driver_connect"
     DRIVER_CONNECT_STATUS = "driver_connect_status"
+    FLOW_EVENT = "flow_event"

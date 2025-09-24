@@ -1,31 +1,33 @@
 import uuid
 import pytest
 import asyncio
+from openscada_lite.modules.alarm.model import AlarmModel
 from openscada_lite.common.bus.event_bus import EventBus
-from openscada_lite.modules.datapoints.model import DatapointModel
-from openscada_lite.modules.datapoints.service import DatapointService
-from openscada_lite.backend.communications.connector_manager import ConnectorManager
-from openscada_lite.backend.rule.rule_manager import RuleEngine
-from openscada_lite.backend.alarm.alarm_engine import AlarmEngine
+from openscada_lite.modules.datapoint.model import DatapointModel
+from openscada_lite.modules.datapoint.service import DatapointService
+from openscada_lite.core.communications.connector_manager import ConnectorManager
+from openscada_lite.core.rule.rule_manager import RuleEngine
+from openscada_lite.modules.alarm.service import AlarmService
 from openscada_lite.common.bus.event_types import EventType
 from openscada_lite.common.models.dtos import CommandFeedbackMsg, LowerAlarmMsg, RaiseAlarmMsg, SendCommandMsg
 from openscada_lite.common.config.config import Config
 
+#Reset the bus for each test
 @pytest.fixture(autouse=True)
-def reset_config_singleton():
-    Config.reset_instance()
+def reset_event_bus(monkeypatch):
+    # Reset the singleton before each test
     Config.get_instance("tests/test_config.json")
-
-def setup_function():
-    Config.reset_instance()
 
 @pytest.mark.asyncio
 async def test_full_system_with_recursive_alarms_and_feedback():
     # EventBus
-    bus = EventBus()
+    bus = EventBus.get_instance()
 
-    # Datapoint Engine
-    dp_engine = DatapointService(bus, DatapointModel(), None)
+    model = AlarmModel()
+    AlarmService(bus, model, controller=None)
+
+    datapointModel = DatapointModel()
+    DatapointService(bus, datapointModel, controller=None)
 
     # Configuration & Connector
     Config.reset_instance()
@@ -33,12 +35,7 @@ async def test_full_system_with_recursive_alarms_and_feedback():
     await connector_manager.start_all()
 
     # Rule Engine
-    rule_engine = RuleEngine(bus)
-    rule_engine.load_rules()
-    rule_engine.subscribe_to_eventbus()
-
-    # Alarm Engine
-    alarm_engine = AlarmEngine(bus)
+    RuleEngine.get_instance()
 
     # Capture outputs
     commands = []
