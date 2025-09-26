@@ -59,9 +59,9 @@ def test_handle_connect_driver_valid_status(controller):
     controller.socketio.on = fake_on
     controller.register_socketio()
     controller.socketio.start_background_task = lambda fn, *args, **kwargs: asyncio.run(fn(*args, **kwargs))
-    handlers["driver_connect_send_driverconnectcommand"](data)
+    handlers["communication_send_driverconnectcommand"](data)
     controller.service.handle_controller_message.assert_called_once_with(data)
-    controller.socketio.emit.assert_any_call("driver_connect_ack", StatusDTO(status="ok", reason="Request accepted.").to_dict())
+    controller.socketio.emit.assert_any_call("communication_ack", StatusDTO(status="ok", reason="Request accepted.").to_dict())
 
 def test_handle_connect_driver_invalid_status(controller):
     controller.service.handle_controller_message = MagicMock()
@@ -76,11 +76,11 @@ def test_handle_connect_driver_invalid_status(controller):
         return decorator
     controller.socketio.on = fake_on
     controller.register_socketio()
-    handlers["driver_connect_send_driverconnectcommand"](data)
+    handlers["communication_send_driverconnectcommand"](data)
 
     controller.service.handle_controller_message.assert_not_called()
     controller.socketio.emit.assert_any_call(
-        "driver_connect_ack",
+        "communication_ack",
         StatusDTO(
             status="error",
             reason="Invalid status. Must be 'connect' or 'disconnect'."
@@ -105,21 +105,21 @@ async def test_handle_subscribe_driver_status(controller):
     controller.register_socketio()
 
     with patch("openscada_lite.modules.base.base_controller.join_room", MagicMock()):
-        handlers["driver_connect_subscribe_live_feed"]()
+        handlers["communication_subscribe_live_feed"]()
 
     controller.socketio.emit.assert_any_call(
-        "driver_connect_initial_state",
+        "communication_initial_state",
         [v.to_dict() for v in controller.model.get_all().values()],
-        room="driver_connect_room"
+        room="communication_room"
     )
 
 def test_publish_status(controller):
     controller.socketio.emit = MagicMock()
     controller.publish(DriverConnectCommand(track_id="1234", driver_name="Server1", status="connect"))
     controller.socketio.emit.assert_called_once_with(
-        "driver_connect_driverconnectstatus",
+        "communication_driverconnectstatus",
         {"track_id": "1234", "driver_name": "Server1", "status": "connect"},
-        room="driver_connect_room"
+        room="communication_room"
     )
 
 @pytest.mark.asyncio

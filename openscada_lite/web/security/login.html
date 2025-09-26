@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>Login</title>
+  <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+<h2>Login</h2>
+
+<form id="loginForm">
+  <input id="username" placeholder="Username" required />
+  <input id="password" type="password" placeholder="Password" required />
+  <button type="submit">Login</button>
+</form>
+
+<div id="status"></div>
+
+<script>
+const socket = io();
+
+document.getElementById("loginForm").onsubmit = (e) => {
+  e.preventDefault();
+  const username = document.getElementById("username").value;
+  const password = document.getElementById("password").value;
+
+  socket.emit("security_login", { username, password });
+};
+
+socket.on("security_login_response", (resp) => {
+  const statusDiv = document.getElementById("status");
+  if (resp.status === "ok") {
+    statusDiv.textContent = `Logged in as ${resp.username}`;
+  } else {
+    statusDiv.textContent = `Login failed: ${resp.reason}`;
+  }
+});
+</script>
+</body>
+</html>

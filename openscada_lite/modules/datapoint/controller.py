@@ -4,8 +4,8 @@ from openscada_lite.modules.base.base_controller import BaseController
 from openscada_lite.common.models.dtos import StatusDTO, TagUpdateMsg, RawTagUpdateMsg
 
 class DatapointController(BaseController[TagUpdateMsg, RawTagUpdateMsg]):
-    def __init__(self, model, socketio):
-        super().__init__(model, socketio, TagUpdateMsg, RawTagUpdateMsg, base_event="datapoint")
+    def __init__(self, model, socketio, base_event="datapoint"):
+        super().__init__(model, socketio, TagUpdateMsg, RawTagUpdateMsg, base_event=base_event)
 
     @override
     def validate_request_data(self, data: RawTagUpdateMsg) -> Union[TagUpdateMsg, StatusDTO]:

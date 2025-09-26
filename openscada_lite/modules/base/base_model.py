@@ -18,6 +18,7 @@ class BaseModel(ABC, Generic[T]):
         """
         Store or update a message.
         """
+        print(f"BaseModel.update: Storing message {msg}")
         self._store[msg.get_id()] = msg        
 
     def get(self, msg_id: str) -> Optional[T]:

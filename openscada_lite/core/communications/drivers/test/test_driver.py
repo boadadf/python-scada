@@ -131,10 +131,11 @@ class TestDriver(DriverProtocol, ABC):
             )
             await self._safe_invoke(self._command_feedback_callback, msg)            
 
-    async def simulate_value(self, tag_id: str, value: Any):
+    # For testing: simulate a value change
+    async def simulate_value(self, tag_id: str, value: Any, track_id: str):
         if self._value_callback:
-            msg = TagUpdateMsg(
-                datapoint_identifier=f"{self._server_name}@{tag_id}", value=value
+            msg = RawTagUpdateMsg(
+                datapoint_identifier=f"{self._server_name}@{tag_id}", value=value, track_id=track_id
             )
             await self._safe_invoke(self._value_callback, msg)
 

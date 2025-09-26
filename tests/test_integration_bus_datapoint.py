@@ -49,3 +49,5 @@ async def test_driver_to_datapoint_integration():
     # RuleEngine also received update
     assert received[0].datapoint_identifier == tag_id
     assert received[0].value == 75.5
+
+    bus.unsubscribe(EventType.RAW_TAG_UPDATE, rule_engine_sim)

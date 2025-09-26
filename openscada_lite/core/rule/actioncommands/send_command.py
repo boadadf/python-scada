@@ -4,7 +4,7 @@ from openscada_lite.common.models.dtos import SendCommandMsg
 import uuid
 
 class SendCommandAction(Action):
-    def get_event_data(self, datapoint_identifier, params, track_id) -> tuple[EventType, SendCommandMsg]:
+    def get_event_data(self, datapoint_identifier, params, track_id) -> tuple[SendCommandMsg, EventType]:
         datapoint_identifier, value = params
         command_id = str(uuid.uuid4())
-        return EventType.SEND_COMMAND, SendCommandMsg(command_id=command_id, datapoint_identifier=datapoint_identifier, value=value, track_id=track_id)
+        return SendCommandMsg(command_id=command_id, datapoint_identifier=datapoint_identifier, value=value, track_id=track_id), EventType.SEND_COMMAND

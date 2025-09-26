@@ -75,18 +75,18 @@
         }
 
         function setDriverStatus(driver, status) {
-            socket.emit('driver_connect_send_driverconnectcommand', { driver_name: driver, status: status });
+            socket.emit('communication_send_driverconnectcommand', { driver_name: driver, status: status });
         }
 
         // Listen for all driver statuses (initial state)
-        socket.on('driver_connect_initial_state', function(data) {
+        socket.on('communication_initial_state', function(data) {
             console.log("Initial driver statuses:", data);
             driverStatusList = data; // data is now an array
             renderDrivers();
         });
 
         // Listen for individual driver status updates
-        socket.on('driver_connect_driverconnectstatus', function(data) {
+        socket.on('communication_driverconnectstatus', function(data) {
             if (data.driver_name && data.status) {
                 // Update the status in the array
                 let found = false;
@@ -107,7 +107,7 @@
 
         // Request initial status on connect
         socket.on('connect', function() {
-            socket.emit('driver_connect_subscribe_live_feed');
+            socket.emit('communication_subscribe_live_feed');
         });
     </script>
 </body>

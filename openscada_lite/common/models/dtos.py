@@ -19,7 +19,7 @@ class DTO(ABC):
         """Return a serializable representation for tracking."""
         return ""
 
-    @classmethod
+    @classmethod 
     @abstractmethod
     def get_event_type(cls) -> EventType:
         pass
@@ -34,11 +34,21 @@ class DTO(ABC):
 
     def _default_to_dict(self):
         d = asdict(self)
-        # Convert datetime to isoformat if present
-        for k, v in d.items():
-            if isinstance(v, datetime.datetime):
-                d[k] = v.isoformat()
-        return d
+        return make_json_serializable(d)
+
+def make_json_serializable(obj):
+    if isinstance(obj, uuid.UUID):
+        return str(obj)
+    elif isinstance(obj, Enum):
+        return obj.value
+    elif isinstance(obj, datetime.datetime):
+        return obj.isoformat()
+    elif isinstance(obj, dict):
+        return {k: make_json_serializable(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [make_json_serializable(v) for v in obj]
+    else:
+        return obj
 
 @dataclass
 class TagUpdateMsg(DTO):

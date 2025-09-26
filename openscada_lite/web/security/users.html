@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>Users</title>
+  <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+<h2>Users</h2>
+
+<form id="createUserForm">
+  <input id="username" placeholder="Username" required />
+  <input id="password" type="password" placeholder="Password" required />
+  <div id="groupCheckboxes"></div>
+  <button type="submit">Create User</button>
+</form>
+
+<h3>Existing Users</h3>
+<ul id="userList"></ul>
+
+<script>
+const socket = io();
+
+function fetchGroups() { socket.emit("security_get_groups"); }
+function fetchUsers() { socket.emit("security_get_users"); }
+
+socket.on("security_groups", (groups) => {
+  const container = document.getElementById("groupCheckboxes");
+  container.innerHTML = "";
+  groups.forEach(g => {
+    const id = `group_${g.name}`;
+    const label = document.createElement("label");
+    label.innerHTML = `<input type="checkbox" id="${id}" value="${g.name}"> ${g.name}`;
+    container.appendChild(label);
+    container.appendChild(document.createElement("br"));
+  });
+});
+
+socket.on("security_users", (users) => {
+  const list = document.getElementById("userList");
+  list.innerHTML = "";
+  users.forEach(u => {
+    const li = document.createElement("li");
+    li.textContent = `${u.username} (groups: ${u.groups.join(", ")}) `;
+    const editBtn = document.createElement("button");
+    editBtn.textContent = "Edit groups";
+    editBtn.onclick = () => editUserGroups(u.username, u.groups);
+    li.appendChild(editBtn);
+    list.appendChild(li);
+  });
+});
+
+function editUserGroups(username, currentGroups) {
+  fetchGroups();
+  const newGroups = prompt("Comma separated groups for " + username, currentGroups.join(","));
+  if (newGroups !== null) {
+    const groupsArr = newGroups.split(",").map(s => s.trim()).filter(Boolean);
+    socket.emit("security_update_user", { username, groups: groupsArr });
+  }
+}
+
+document.getElementById("createUserForm").onsubmit = (e) => {
+  e.preventDefault();
+  const username = document.getElementById("username").value;
+  const password = document.getElementById("password").value;
+  const chosen = Array.from(document.querySelectorAll("#groupCheckboxes input[type=checkbox]:checked")).map(i => i.value);
+  socket.emit("security_create_user", { username, password, groups: chosen });
+  document.getElementById("username").value = "";
+  document.getElementById("password").value = "";
+};
+
+fetchGroups();
+fetchUsers();
+</script>
+</body>
+</html>

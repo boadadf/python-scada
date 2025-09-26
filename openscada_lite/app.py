@@ -74,9 +74,10 @@ def initialize_modules(config: dict, socketio: SocketIO, event_bus: EventBus) ->
         controller_cls = getattr(importlib.import_module(f"{base_path}.controller"), f"{class_prefix}Controller")
         service_cls = getattr(importlib.import_module(f"{base_path}.service"), f"{class_prefix}Service")
 
+        print(f"Instantiating: {module_name}")
         # Instantiate
         model = model_cls()
-        controller = controller_cls(model, socketio)
+        controller = controller_cls(model, socketio, module_name)
         service = service_cls(event_bus, model, controller)
 
         module_instances[module_name] = {

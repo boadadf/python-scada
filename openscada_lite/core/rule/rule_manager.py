@@ -8,7 +8,7 @@ the lifecycle state for each rule.
 
 import re
 from asteval import Interpreter
-from openscada_lite.common.tracking.decorators import publish_data_flow_from_arg
+from openscada_lite.common.tracking.decorators import publish_data_flow_from_arg_async
 from openscada_lite.core.rule.actioncommands.action import Action
 from openscada_lite.common.tracking.tracking_types import DataFlowStatus
 from openscada_lite.common.bus.event_types import EventType
@@ -31,6 +31,10 @@ class RuleEngine:
             raise RuntimeError("Use RuleManager.get_instance() instead of direct instantiation.")
         cls._instance = super().__new__(cls)
         return cls._instance
+
+    @classmethod
+    def reset_instance(cls):
+        cls._instance = None
 
     @classmethod
     def get_instance(cls, *args, **kwargs):
@@ -88,7 +92,7 @@ class RuleEngine:
         """
         self.event_bus.subscribe(EventType.TAG_UPDATE, self.on_tag_update)
 
-    @publish_data_flow_from_arg(status=DataFlowStatus.RECEIVED)
+    @publish_data_flow_from_arg_async(status=DataFlowStatus.RECEIVED)
     async def on_tag_update(self, msg: TagUpdateMsg):
         """
         Callback for tag update events. Evaluates rules impacted by the tag and executes actions.

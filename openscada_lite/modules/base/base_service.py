@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import List, TypeVar, Generic, Type, Union
-from openscada_lite.common.models.dtos import DTO
+from openscada_lite.common.tracking.decorators import publish_data_flow_from_arg_async, publish_data_flow_from_return_sync
+from openscada_lite.common.tracking.tracking_types import DataFlowStatus
+from openscada_lite.common.models.dtos import DTO, DataFlowEventMsg
 from openscada_lite.modules.base.base_model import BaseModel
 from openscada_lite.common.bus.event_bus import EventBus
 
@@ -42,22 +44,34 @@ class BaseService(ABC, Generic[T, U, V]):
         # Subscribe to all event types
         for t_cls in self.T_cls_list:
             self.event_bus.subscribe(t_cls.get_event_type(), self.handle_bus_message)
-
+            
+    @publish_data_flow_from_arg_async(status=DataFlowStatus.RECEIVED)
     async def handle_bus_message(self, data:T):
+        print(f"====>BaseService.handle_bus_message: Received bus message {data}")
         accept_update = self.should_accept_update(data)
         if not accept_update:
-            print(f"BaseService.handle_bus_message: {data} update not accepted by model")
+            if (isinstance(data, DataFlowEventMsg)):
+                print(f"BaseService.handle_bus_message: {data} update not accepted by model")
             return
         processed_msg = self.process_msg(data)
+        if (isinstance(data, DataFlowEventMsg)):
+            print("A")
         self.model.update(processed_msg)        
+        print("B")
         await self.on_model_accepted_bus_update(processed_msg)
+        print(f"BaseService.handle_bus_message: Published processed message {processed_msg} to model and view")
         if self.controller:
+            print(f"C {processed_msg}")
             self.controller.publish(processed_msg)
+        else:
+            print(f"No controller to publish {processed_msg} to view")
 
+    @publish_data_flow_from_arg_async(status=DataFlowStatus.RECEIVED)
     async def handle_controller_message(self, data:U):
         print("DatapointService.on_model_accepted_bus_update CALLED")
         await self.event_bus.publish(self.U_cls.get_event_type(), data)
 
+    @publish_data_flow_from_return_sync(status=DataFlowStatus.CREATED)
     def process_msg(self, msg: T) -> V:
         """
         Convert the incoming bus message to the type the model expects.

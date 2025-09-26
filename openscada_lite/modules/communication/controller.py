@@ -4,8 +4,8 @@ from openscada_lite.modules.base.base_controller import BaseController
 from openscada_lite.common.models.dtos import DriverConnectStatus, DriverConnectCommand, StatusDTO
 
 class CommunicationController(BaseController[DriverConnectStatus, DriverConnectCommand]):
-    def __init__(self, model, socketio):
-        super().__init__(model, socketio, DriverConnectStatus, DriverConnectCommand, base_event="driver_connect")
+    def __init__(self, model, socketio, base_event="communication"):
+        super().__init__(model, socketio, DriverConnectStatus, DriverConnectCommand, base_event=base_event)
 
     @override
     def validate_request_data(self, driver_connected_command: DriverConnectCommand) -> Union[DriverConnectCommand, StatusDTO]:

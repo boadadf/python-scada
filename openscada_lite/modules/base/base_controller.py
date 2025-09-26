@@ -39,9 +39,18 @@ class BaseController(ABC, Generic[T, U]):
         def _subscribe_handler():
             self.handle_subscribe_live_feed()
 
-        @self.socketio.on(f'{self.base_event}_send_{self.U_cls.__name__.lower()}')
-        def _incoming_handler(data):
-            self.handle_request(data)
+        if self.U_cls is not None:
+            @self.socketio.on(f'{self.base_event}_send_{self.U_cls.__name__.lower()}')
+            def _incoming_handler(data):
+                # Security check (agnostic if security is enabled)
+                endpoint_name = f"{self.base_event}_send_{self.U_cls.__name__.lower()}"
+                if not self.is_allowed("",endpoint_name):
+                    self.socketio.emit(
+                        f"{self.base_event}_ack",
+                        StatusDTO(status="error", reason="Unauthorized").to_dict()
+                    )
+                    return
+                self.handle_request(data)
            
     def handle_request(self, data):
         obj_data = self.U_cls(**data) if isinstance(data, dict) else data
@@ -49,6 +58,7 @@ class BaseController(ABC, Generic[T, U]):
         if isinstance(result, StatusDTO):
             self.socketio.emit(f'{self.base_event}_ack', result)
             return
+
         if self.service:
             print("BaseController.handle_request: passing to service")
             asyncio.run(self.service.handle_controller_message(result))
@@ -78,8 +88,10 @@ class BaseController(ABC, Generic[T, U]):
         Publishes a T message to all subscribed clients in the room.
         """
         # Optionally block if initializing clients (like your old code)
+        print(f"*********** {msg}")
         if self._initializing_clients:
             return
+        print(f"BaseController.publish: Emitting {msg} to room {self.room}")
         self.socketio.emit(
             f'{self.base_event}_{self.T_cls.__name__.lower()}',
             msg.to_dict(),
@@ -92,4 +104,17 @@ class BaseController(ABC, Generic[T, U]):
         Validate incoming data from the client.
         Return an instance of U if valid, or a StatusDTO with error details if invalid.
         """
-        pass        
+        pass
+
+    @classmethod
+    def is_allowed(cls, username: str, endpoint_name: str) -> bool:
+        try:
+            from openscada_lite.modules.security.service import SecurityService
+            # Call SecurityService's classmethod, not BaseController's
+            return SecurityService.is_allowed(username, endpoint_name)
+        except ImportError:
+            # Security module not present, allow everything
+            return True
+        except Exception as e:
+            # Log or handle unexpected errors, but allow by default
+            return True

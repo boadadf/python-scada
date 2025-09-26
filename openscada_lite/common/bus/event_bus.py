@@ -25,6 +25,10 @@ class EventBus:
         # Each event type has a list of subscriber callbacks
         self._subscribers: Dict[EventType, List[Callable[[Any], Any]]] = defaultdict(list)
 
+    def clear_subscribers(self):
+        """Remove all subscribers (for test isolation)."""
+        self._subscribers.clear()
+
     def subscribe(self, event_type: EventType, callback: Callable[[Any], Any]):
         """
         Subscribe a callback to an event type.

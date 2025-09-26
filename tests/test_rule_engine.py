@@ -7,14 +7,15 @@ from openscada_lite.common.bus.event_types import EventType
 from openscada_lite.common.models.entities import Rule
 from openscada_lite.common.models.dtos import SendCommandMsg, RaiseAlarmMsg, LowerAlarmMsg, TagUpdateMsg
 
-@pytest.fixture(scope="session")
-def test_bus():
-    # Create a single EventBus instance for all tests in the session
-    return EventBus.get_instance()
+@pytest.fixture(autouse=True)
+def clear_test():
+    EventBus.get_instance().clear_subscribers()
+    RuleEngine.reset_instance()
 
 @pytest.mark.asyncio
-async def test_send_command_triggered(test_bus: EventBus):
-    engine = RuleEngine.get_instance(event_bus=test_bus)
+async def test_send_command_triggered():
+    test_bus = EventBus.get_instance()
+    engine = RuleEngine.get_instance()
     engine.rules = [
         Rule(
             rule_id="test_command",
@@ -42,8 +43,9 @@ async def test_send_command_triggered(test_bus: EventBus):
 
 
 @pytest.mark.asyncio
-async def test_alarm_active_inactive(test_bus: EventBus):
-    engine = RuleEngine.get_instance(event_bus=test_bus)
+async def test_alarm_active_inactive():
+    test_bus = EventBus.get_instance()
+    engine = RuleEngine.get_instance()
     engine.rules = [
         Rule(
             rule_id="test_alarm",
@@ -83,8 +85,9 @@ async def test_alarm_active_inactive(test_bus: EventBus):
 
 
 @pytest.mark.asyncio
-async def test_multiple_actions(test_bus: EventBus):
-    engine = RuleEngine.get_instance(event_bus=test_bus)
+async def test_multiple_actions():
+    test_bus = EventBus.get_instance()
+    engine = RuleEngine.get_instance()
     engine.rules = [
         Rule(
             rule_id="multi_action_rule",
@@ -120,8 +123,9 @@ async def test_multiple_actions(test_bus: EventBus):
     assert alarms[0].datapoint_identifier == "Server1@pressure"
 
 @pytest.mark.asyncio
-async def test_on_action_triggers_every_time_without_off(test_bus: EventBus):
-    engine = RuleEngine.get_instance(event_bus=test_bus)
+async def test_on_action_triggers_every_time_without_off():
+    test_bus = EventBus.get_instance()
+    engine = RuleEngine.get_instance()
     engine.rules = [
         Rule(
             rule_id="repeat_on_rule",

@@ -1,6 +1,7 @@
 import uuid
 import pytest
 import asyncio
+from openscada_lite.core.communications.drivers.test.test_driver import TestDriver
 from openscada_lite.modules.alarm.model import AlarmModel
 from openscada_lite.common.bus.event_bus import EventBus
 from openscada_lite.modules.datapoint.model import DatapointModel
@@ -12,17 +13,16 @@ from openscada_lite.common.bus.event_types import EventType
 from openscada_lite.common.models.dtos import CommandFeedbackMsg, LowerAlarmMsg, RaiseAlarmMsg, SendCommandMsg
 from openscada_lite.common.config.config import Config
 
-#Reset the bus for each test
 @pytest.fixture(autouse=True)
-def reset_event_bus(monkeypatch):
-    # Reset the singleton before each test
-    Config.get_instance("tests/test_config.json")
+def clear_event_bus():
+    EventBus.get_instance().clear_subscribers()
+    RuleEngine.reset_instance()
 
 @pytest.mark.asyncio
 async def test_full_system_with_recursive_alarms_and_feedback():
+    Config.get_instance("tests/test_config.json")
     # EventBus
     bus = EventBus.get_instance()
-
     model = AlarmModel()
     AlarmService(bus, model, controller=None)
 
@@ -30,12 +30,12 @@ async def test_full_system_with_recursive_alarms_and_feedback():
     DatapointService(bus, datapointModel, controller=None)
 
     # Configuration & Connector
-    Config.reset_instance()
     connector_manager = ConnectorManager(bus)
     await connector_manager.start_all()
 
     # Rule Engine
-    RuleEngine.get_instance()
+    rule_engine = RuleEngine.get_instance()
+    rule_engine.event_bus = bus
 
     # Capture outputs
     commands = []
@@ -62,17 +62,17 @@ async def test_full_system_with_recursive_alarms_and_feedback():
     bus.subscribe(EventType.LOWER_ALARM, capture_alarm_inactive)
     bus.subscribe(EventType.COMMAND_FEEDBACK, capture_feedback)
 
-    driver = connector_manager.driver_instances["Server2"]
+    driver: TestDriver = connector_manager.driver_instances["Server2"]
 
     # --- Simulate driver updates ---
     # Trigger first alarm    
-    await driver.simulate_value("PRESSURE", 120)
+    await driver.simulate_value("PRESSURE", 120, "123")
 
     # Alarm is deactivated
-    await driver.simulate_value("PRESSURE", 70)
+    await driver.simulate_value("PRESSURE", 70, "124")
 
     # Alarm is activated again -> 2nd instance is created
-    await driver.simulate_value("PRESSURE", 140)
+    await driver.simulate_value("PRESSURE", 140, "125")
     await asyncio.sleep(0.05)
 
     # Send a command through connector
@@ -95,12 +95,14 @@ async def test_full_system_with_recursive_alarms_and_feedback():
     # --- Alarms captured (recursive) ---
     # Expect at least 2 active occurrences
     high_pressure_alarms = [
-        a for a in alarms_active if hasattr(a, "datapoint_identifier") and a.datapoint_identifier == "Server2@PRESSURE"
+        a for a in alarms_active if hasattr(a, "datapoint_identifier") \
+        and a.datapoint_identifier == "Server2@PRESSURE" and a.track_id in ["125","123"]
     ]
     assert len(high_pressure_alarms) == 2
 
     # --- Check inactive alarms ---
     inactive_occurrences = [
-        a for a in alarms_inactive if hasattr(a, "datapoint_identifier") and a.datapoint_identifier == "Server2@PRESSURE"
+        a for a in alarms_inactive if hasattr(a, "datapoint_identifier") \
+        and a.datapoint_identifier == "Server2@PRESSURE" and a.track_id in ["124"]
     ]
-    assert len(inactive_occurrences) >= 1
+    assert len(inactive_occurrences) == 1

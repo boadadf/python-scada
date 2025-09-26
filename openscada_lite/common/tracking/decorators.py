@@ -1,49 +1,79 @@
 from functools import wraps
 from typing import Any, Awaitable, Callable, Optional
 
+from openscada_lite.common.models.dtos import DataFlowEventMsg
 from openscada_lite.common.tracking.tracking_types import DataFlowStatus
 from openscada_lite.common.tracking.publisher import TrackingPublisher
 
 publisher = TrackingPublisher()
 
 AsyncFunc = Callable[..., Awaitable[Any]]
-MaybeDTO = Any  # Replace with your DTO base class if available
+SyncFunc = Callable[..., Any]
+MaybeDTO = Any 
 
 
-def publish_data_flow_from_arg(status: DataFlowStatus, source: Optional[str] = None):
-    """Publish a data flow event using the first argument (assumed DTO)."""
+def isValidDTO(obj: Any) -> bool:
+    return obj is not None and not isinstance(obj, DataFlowEventMsg)
 
+# 1. Async: DTO as first argument
+def publish_data_flow_from_arg_async(status: DataFlowStatus, source: Optional[str] = None):
     def decorator(func: AsyncFunc) -> AsyncFunc:
         @wraps(func)
         async def wrapper(self, *args, **kwargs) -> Any:
             result = await func(self, *args, **kwargs)
             event_source = source or self.__class__.__name__
             dto: MaybeDTO = args[0] if args else None
-            if dto is not None:
-                await publisher.publish_data_flow_event(dto, source=event_source, status=status)
+            if isValidDTO(dto):
+                publisher.publish_data_flow_event(dto, source=event_source, status=status)
             return result
         return wrapper
-
     return decorator
 
+# 2. Sync: DTO as first argument
+def publish_data_flow_from_arg_sync(status: DataFlowStatus, source: Optional[str] = None):
+    def decorator(func: SyncFunc) -> SyncFunc:
+        @wraps(func)
+        def wrapper(self, *args, **kwargs) -> Any:
+            result = func(self, *args, **kwargs)
+            event_source = source or self.__class__.__name__
+            dto: MaybeDTO = args[0] if args else None
+            if isValidDTO(dto):
+                # If publisher is async, schedule it
+                publisher.publish_data_flow_event(dto, source=event_source, status=status)
+            return result
+        return wrapper
+    return decorator
 
-def publish_data_flow_from_return(status: DataFlowStatus, source: Optional[str] = None):
-    """Publish a data flow event using the function's return value (event_type, dto)."""
-
+# 3. Async: DTO as return value (or first of tuple/list)
+def publish_data_flow_from_return_async(status: DataFlowStatus, source: Optional[str] = None):
     def decorator(func: AsyncFunc) -> AsyncFunc:
         @wraps(func)
         async def wrapper(self, *args, **kwargs) -> Any:
             result = await func(self, *args, **kwargs)
-            try:
-                event_type, dto = result
-            except Exception as e:
-                raise ValueError(
-                    f"Expected (event_type, dto) return from {func.__name__}, got {result!r}"
-                ) from e
+            if isinstance(result, (tuple, list)) and len(result) > 0:
+                dto = result[0]
+            else:
+                dto = result
             event_source = source or self.__class__.__name__
-            if dto is not None:
-                await publisher.publish_data_flow_event(dto, source=event_source, status=status)
+            if isValidDTO(dto):
+                publisher.publish_data_flow_event(dto, source=event_source, status=status)
             return result
         return wrapper
+    return decorator
 
+# 4. Sync: DTO as return value (or first of tuple/list)
+def publish_data_flow_from_return_sync(status: DataFlowStatus, source: Optional[str] = None):
+    def decorator(func: SyncFunc) -> SyncFunc:
+        @wraps(func)
+        def wrapper(self, *args, **kwargs) -> Any:
+            result = func(self, *args, **kwargs)
+            if isinstance(result, (tuple, list)) and len(result) > 0:
+                dto = result[0]
+            else:
+                dto = result
+            event_source = source or self.__class__.__name__
+            if isValidDTO(dto):
+                publisher.publish_data_flow_event(dto, source=event_source, status=status)
+            return result
+        return wrapper
     return decorator

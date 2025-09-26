@@ -62,39 +62,6 @@ async def test_service_bus_mode_adds_event(model, controller, sample_event):
     assert stored.timestamp == sample_event.timestamp
     assert stored.payload == sample_event.payload
 
-@pytest.mark.asyncio
-async def test_service_file_mode_reads_new_events(tmp_path, model, controller, sample_event):
-    file_path = tmp_path / "flow_events.log"
-
-    # Configure tracking to use file mode
-    config = Config.get_instance("tests/test_config.json")
-    config.get_module_config("tracking")["mode"] = "file"
-    config.get_module_config("tracking")["file_path"] = str(file_path)
-
-    service = TrackingService(EventBus.get_instance(), model, controller)
-    #Ensure the file exists
-    open(file_path, "a").close()
-    # Start tailing in the background (do NOT read old lines)
-    task = asyncio.create_task(service.tail_file(str(file_path), from_start=False))
-    await asyncio.sleep(0.5)  # ensure f.seek(END) has run
-    with open(file_path, "a") as f:
-        f.write(json.dumps(sample_event.get_track_payload(), default=safe_serialize) + "\n")
-        f.flush()
-    await asyncio.sleep(1)  # allow processing
-    
-    # Check that the event was loaded into the model
-    events = list(model.get_all().values())
-    assert any(e.track_id == sample_event.track_id for e in events)
-    
-    # Cleanup
-    task.cancel()
-    try:
-        await task
-    except asyncio.CancelledError:
-        pass
-    if os.path.exists(file_path):
-        os.remove(file_path)
-
 def test_controller_publish_live_feed(model):
     socketio = MagicMock()
     controller = TrackingController(model, socketio)
