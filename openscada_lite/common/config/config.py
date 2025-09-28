@@ -80,6 +80,32 @@ class Config:
                 datapoint_identifiers.append(f"{driver_name}@{datapoint_identifier['name']}")
         return datapoint_identifiers
 
+    def get_default_value(self, datapoint_identifier: str):
+        """
+        Returns the default value for a given datapoint_identifier, e.g. 'Server1@TANK'.
+        """
+        # Split into driver and datapoint name
+        if "@" not in datapoint_identifier:
+            return None
+        driver_name, dp_name = datapoint_identifier.split("@", 1)
+        # Find the driver
+        for driver in self._config.get("drivers", []):
+            if driver.get("name") == driver_name:
+                # Search in datapoints
+                for dp in driver.get("datapoints", []):
+                    if dp.get("name") == dp_name:
+                        dp_type = dp.get("type")
+                        # Get default from dp_types
+                        type_info = self._config.get("dp_types", {}).get(dp_type, {})
+                        return type_info.get("default")
+                # Search in command_datapoints if not found
+                for dp in driver.get("command_datapoints", []):
+                    if dp.get("name") == dp_name:
+                        dp_type = dp.get("type")
+                        type_info = self._config.get("dp_types", {}).get(dp_type, {})
+                        return type_info.get("default")
+        return None
+
     def validate_value(self, datapoint_identifier: str, value) -> bool:
         """
         Validate if the value is valid for the given datapoint_identifier.

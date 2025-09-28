@@ -42,6 +42,17 @@
                 document.getElementById(btn.dataset.tab).classList.add('active');
             });
         });
+
+        window.addEventListener('message', function(event) {
+            if (event.data === 'RaiseAlert:Alarms') {
+                document.querySelector('.tab-btn[data-tab="alarms"]').style.background = 'red';
+                document.querySelector('.tab-btn[data-tab="alarms"]').style.color = 'white';
+            }
+            if (event.data === 'LowerAlert:Alarms') {
+                document.querySelector('.tab-btn[data-tab="alarms"]').style.background = '';
+                document.querySelector('.tab-btn[data-tab="alarms"]').style.color = '';
+            }
+        });
     </script>
 </body>
 </html>

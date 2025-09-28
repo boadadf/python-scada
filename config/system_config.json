@@ -14,9 +14,10 @@
 ],
   "dp_types": {
     "LEVEL":      { "type": "float", "min": 0, "max": 100, "default": 0.0 },
-    "STATUS":     { "type": "enum", "values": ["OPENED", "CLOSED"], "default": "CLOSED" },
+    "OPENED_CLOSED":     { "type": "enum", "values": ["OPENED", "CLOSED"], "default": "CLOSED" },
+    "OPEN_CLOSE_CMD": { "type": "enum", "values": ["OPEN", "CLOSE", "TOGGLE"], "default": "CLOSE" },
     "START_STOP":      { "type": "enum", "values": ["STARTED", "STOPPED"], "default": "STOPPED" },
-    "START_STOP_CMD":      { "type": "enum", "values": ["START", "STOP"], "default": "STOP" },
+    "START_STOP_CMD":      { "type": "enum", "values": ["START", "STOP", "TOGGLE"], "default": "STOP" },
     "PRESSURE":   { "type": "float", "min": 0, "max": 200, "default": 50.0 },
     "TEMPERATURE":{ "type": "float", "min": 100, "max": 150, "default": 120.0 }
   },
@@ -27,13 +28,13 @@
       "connection_info": { "server_name": "Server1" },
       "datapoints": [
         { "name": "TANK", "type": "LEVEL" },
-        { "name": "PUMP", "type": "STATUS" },
-        { "name": "DOOR", "type": "STATUS" },
+        { "name": "PUMP", "type": "OPENED_CLOSED" },
+        { "name": "DOOR", "type": "OPENED_CLOSED" },
         { "name": "TEST", "type": "START_STOP" }
       ],
       "command_datapoints": [
-        { "name": "PUMP_CMD", "type": "STATUS" },
-        { "name": "DOOR_CMD", "type": "STATUS" },
+        { "name": "PUMP_CMD", "type": "OPEN_CLOSE_CMD" },
+        { "name": "DOOR_CMD", "type": "OPEN_CLOSE_CMD" },
         { "name": "TEST_CMD", "type": "START_STOP_CMD" }
       ]
     },
@@ -42,15 +43,15 @@
       "driver_class": "BoilerTestDriver",
       "connection_info": { "server_name": "Server2" },
       "datapoints": [
-        { "name": "VALVE", "type": "STATUS" },
+        { "name": "VALVE", "type": "OPENED_CLOSED" },
         { "name": "PRESSURE", "type": "PRESSURE" },
         { "name": "TEMPERATURE", "type": "TEMPERATURE" },
-        { "name": "HEATER", "type": "STATUS" },
+        { "name": "HEATER", "type": "OPENED_CLOSED" },
         { "name": "TEST", "type": "START_STOP" }
       ],
       "command_datapoints": [
-        { "name": "VALVE_CMD", "type": "STATUS" },
-        { "name": "HEATER_CMD", "type": "STATUS" },
+        { "name": "VALVE_CMD", "type": "OPENED_CLOSED_CMD" },
+        { "name": "HEATER_CMD", "type": "OPEN_CLOSE_CMD" },
         { "name": "TEST_CMD", "type": "START_STOP_CMD" }      
       ]
     }
@@ -72,7 +73,8 @@
       "rule_id": "pump_start_if_low_level",
       "on_condition": "float(Server1@TANK) < 10",
       "on_actions": [
-        "send_command('Server1@PUMP', 'OPENED')",
+        "send_command('Server1@PUMP_CMD', 'OPEN')",
+        "send_command('Server1@DOOR_CMD', 'CLOSE')",
         "raise_alarm()"
       ]
     },

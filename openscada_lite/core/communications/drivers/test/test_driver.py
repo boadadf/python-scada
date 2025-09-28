@@ -5,6 +5,7 @@ from abc import ABC, abstractmethod
 import threading
 from typing import Dict, List, Callable, Any
 
+from openscada_lite.common.config.config import Config
 from openscada_lite.common.tracking.decorators import publish_data_flow_from_arg_async
 from openscada_lite.common.tracking.tracking_types import DataFlowStatus
 from openscada_lite.common.models.dtos import DriverConnectStatus, RawTagUpdateMsg, CommandFeedbackMsg, SendCommandMsg
@@ -39,16 +40,24 @@ class TestDriver(DriverProtocol, ABC):
     # Connection lifecycle
     # -------------------------
     async def connect(self):
+        await self.initValues()
         self._connected = True
         if self._communication_status_callback:
             await self.publish_driver_state("online")
-        asyncio.create_task(self._publish_all())
-        
 
     async def disconnect(self):
         self._connected = False
+        self.stop_test()
         print(f"[DISCONNECT] Disconnecting driver {self._server_name}")        
         await self.publish_driver_state("offline")        
+
+    async def initValues(self):
+        now = datetime.datetime.now()
+        for tag in self._tags.values():            
+            tag.value = Config.get_instance().get_default_value(tag.datapoint_identifier)
+            tag.timestamp = now
+            tag.quality = "good"
+            await self._publish_value(tag)
 
     # -------------------------
     # Subscriptions and listeners
@@ -132,7 +141,6 @@ class TestDriver(DriverProtocol, ABC):
             await self._safe_invoke(self._command_feedback_callback, msg)            
 
     async def handle_special_command(self, datapoint_name: str, value: str ) -> str:
-        # Special handling for TEST@TEST_CMD to toggle TEST@TEST between STARTED and STOPPED
         if datapoint_name == "TEST_CMD":
             if value == "START":
                 await self.start_test()
@@ -140,6 +148,21 @@ class TestDriver(DriverProtocol, ABC):
             elif value == "STOP":
                 await self.stop_test()
                 return "STOPPED"
+            elif value == "TOGGLE":
+                if "TEST" in self._tags:
+                    current_value = self._tags["TEST"].value
+                    new_value = "STARTED" if current_value == "STOPPED" else "STOPPED"
+                    if new_value == "STARTED":
+                        await self.start_test()
+                    else:
+                        await self.stop_test()
+                    return new_value
+        elif datapoint_name in ["PUMP_CMD", "DOOR_CMD", "VALVE_CMD", "HEATER_CMD"] and value == "TOGGLE":
+            base_name = datapoint_name[:-4]  # Remove _CMD
+            if base_name in self._tags:
+                current_value = self._tags[base_name].value
+                new_value = "OPENED" if current_value == "CLOSED" else "CLOSED"
+                return new_value
 
     async def start_test(self):
         self._running = True

@@ -101,6 +101,7 @@ class ConnectorManager:
 
     @publish_data_flow_from_arg_async(status=DataFlowStatus.FORWARDED)
     async def send_command(self, data: SendCommandMsg):
+        print(f"[COMMAND] Sending command: {data.datapoint_identifier} = {data.value}")
         config = Config.get_instance()
         server_id, simple_datapoint_identifier = data.datapoint_identifier.split("@", 1)
 

@@ -33,10 +33,19 @@
 
         function updateAlarmRow(alarm) {
             const id = alarm.alarm_occurrence_id || (alarm.datapoint_identifier + '@' + alarm.activation_time);
-            let row = document.getElementById('alarm-' + id.replace(/[^a-zA-Z0-9]/g, '_'));
+            const rowId = 'alarm-' + id.replace(/[^a-zA-Z0-9]/g, '_');
+
+            // Finished: both deactivation_time and acknowledge_time are set
+            if (alarm.deactivation_time && alarm.acknowledge_time) {
+                removeAlarmRow(id);
+                delete alarms[id];
+                return;
+            }
+
+            let row = document.getElementById(rowId);
             if (!row) {
                 row = document.createElement('tr');
-                row.id = 'alarm-' + id.replace(/[^a-zA-Z0-9]/g, '_');
+                row.id = rowId;
                 row.innerHTML = `
                     <td>${alarm.datapoint_identifier}</td>
                     <td class="activation_time"></td>
@@ -46,7 +55,6 @@
                 `;
                 alarmTableBody.appendChild(row);
 
-                // Ack button → HTTP POST instead of socket.emit
                 row.querySelector('button').addEventListener('click', function() {
                     sendAck(id);
                 });
@@ -87,37 +95,43 @@
             }
         }
 
+        function checkAlarmsAckStatus() {
+            // If any alarm in alarms is NOT acknowledged, send RaiseAlert
+            const hasUnack = Object.values(alarms).some(alarm => !alarm.acknowledge_time);
+            if (hasUnack) {
+                window.parent.postMessage('RaiseAlert:Alarms', '*');
+            } else {
+                window.parent.postMessage('LowerAlert:Alarms', '*');
+            }
+        }
+
         socket.on('connect', () => {
             socket.emit('alarm_subscribe_live_feed');
         });
 
         socket.on('alarm_initial_state', function(alarmList) {
             alarmTableBody.innerHTML = '';
-            // ✅ Defensive: ensure it's always an array
             const list = Array.isArray(alarmList) ? alarmList : (alarmList ? [alarmList] : []);
             for (const alarm of list) {
                 const id = alarm.alarm_occurrence_id || (alarm.datapoint_identifier + '@' + alarm.activation_time);
                 alarms[id] = alarm;
                 updateAlarmRow(alarm);
             }
+            checkAlarmsAckStatus();
         });
 
         socket.on('alarm_alarmupdatemsg', function(alarmList) {
-            // ✅ Defensive: ensure it's always an array
             const list = Array.isArray(alarmList) ? alarmList : (alarmList ? [alarmList] : []);
-
-            // Remove all rows first
             for (const id in alarms) {
                 removeAlarmRow(id);
             }
-
-            // Clear and re-add only active alarms
             Object.keys(alarms).forEach(k => delete alarms[k]);
             for (const alarm of list) {
                 const id = alarm.alarm_occurrence_id || (alarm.datapoint_identifier + '@' + alarm.activation_time);
                 alarms[id] = alarm;
                 updateAlarmRow(alarm);
             }
+            checkAlarmsAckStatus();
         });
     </script>
 </body>

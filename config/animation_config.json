@@ -11,10 +11,24 @@
     "maxValue": 150,
     "duration": 0.5
   },
-  "toggle": {
+  "toggle_opened_closed": {
     "type": "fill_toggle",
-    "onColor": "green",
-    "offColor": "gray",
+    "map": {
+      "OPENED": "green",
+      "CLOSED": "gray"
+    },
     "duration": 0.3
+  },
+  "toggle_start_stop": {
+    "type": "fill_toggle",
+    "map": {
+      "STARTED": "green",
+      "STOPPED": "brown"
+    },
+    "duration": 0.3
+  },
+  "level_text": {
+    "type": "text",
+    "duration": 0.2
   }
 }

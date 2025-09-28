@@ -16,13 +16,17 @@ class AlarmService(BaseService[Union[RaiseAlarmMsg, LowerAlarmMsg], AckAlarmMsg,
         
     @override
     def should_accept_update(self, msg) -> bool:
-        if isinstance(msg, (LowerAlarmMsg)):
+        if isinstance(msg, LowerAlarmMsg):
             msg_lower: LowerAlarmMsg = msg
             alarm = Utils.get_latest_alarm(self.model, msg_lower.get_id())
-            if (alarm and alarm.deactivation_time is None):
+            if alarm and alarm.deactivation_time is None:
                 return True
-        elif isinstance(msg, (RaiseAlarmMsg)):
-            return True            
+        elif isinstance(msg, RaiseAlarmMsg):
+            msg_raise: RaiseAlarmMsg = msg
+            alarm = Utils.get_latest_alarm(self.model, msg_raise.get_id())
+            # Accept only if last alarm is deactivated (deactivation_time is not None)
+            if alarm is None or alarm.deactivation_time is not None:
+                return True
         # Other cases, the alarm cannot be accepted
         return False
 
@@ -53,6 +57,9 @@ class AlarmService(BaseService[Union[RaiseAlarmMsg, LowerAlarmMsg], AckAlarmMsg,
         alarm.acknowledge_time = data.timestamp
         self.model.update(alarm)
         await self.event_bus.publish(alarm.get_event_type(), alarm)
+        print(f"[AlarmService] Alarm {alarm.get_id()} acknowledged at {alarm.acknowledge_time}. Is finished: {alarm.isFinished()}")
+        if self.controller:
+            self.controller.publish(alarm)
 
     #Publish alarm updates to the bus in case another service wants to listen
     @override

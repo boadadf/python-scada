@@ -144,11 +144,20 @@ class RuleEngine:
                         await self.execute_action(action, tag_id, msg.track_id, active=False)
             else:
                 print(f"[RuleEngine] Rule {rule_id} has no off_condition.")
-                # No off_condition: always execute on_actions if on_condition is true (no latching)
-                if on_result:
-                    print(f"[RuleEngine] Rule {rule_id} on_condition is true; executing on_actions.")
+                # Only trigger on rising edge (transition from false to true)
+                prev_active = self.rule_states.get(rule_id, False)
+                if not prev_active and on_result:
+                    print(f"[RuleEngine] Rule {rule_id} on_condition transitioned to true; executing on_actions.")
+                    self.rule_states[rule_id] = True
                     for action in getattr(rule, "on_actions", []):
                         await self.execute_action(action, tag_id, msg.track_id, active=True)
+                elif prev_active and not on_result:
+                    # Reset state so next true will trigger again
+                    self.rule_states[rule_id] = False
+                    # If raise_alarm is in on_actions, trigger lower_alarm automatically
+                    if any("raise_alarm" in action for action in getattr(rule, "on_actions", [])):
+                        print(f"[RuleEngine] Rule {rule_id} on_condition transitioned to false; executing lower_alarm.")
+                        await self.execute_action("lower_alarm()", tag_id, msg.track_id, active=False)
 
     def parse_action(self, action_str):
         """

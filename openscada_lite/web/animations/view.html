@@ -5,6 +5,10 @@
 <title>SVG Animation</title>
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/TextPlugin.min.js"></script>
+<script>
+    gsap.registerPlugin(TextPlugin);
+</script>
 </head>
 <body>
 <h2>Animated SVGs</h2>
@@ -33,13 +37,22 @@ function loadSvg(name){
 
 socket.on('connect', ()=>socket.emit('animation_subscribe_live_feed'));
 
-socket.on('animation_animationupdatemsg', msg=>{
-  if(msg.svg_name!==svgSelector.value) return;
-  const elem=document.getElementById(msg.element_id);
-  if(!elem || !msg.config) return;
-  gsap.to(elem,{duration:msg.config.duration, attr:msg.config.attr});
-});
+socket.on('animation_animationupdatemsg', msg => {
+    console.log("Animation update:", msg);
+    if (msg.svg_name !== svgSelector.value) return;
+    const elem = document.getElementById(msg.element_id);
+    if (!elem || !msg.config) return;
 
+    const gsapConfig = { duration: msg.config.duration || 0.5 };
+
+    // Apply attribute changes
+    if (msg.config.attr) gsapConfig.attr = msg.config.attr;
+
+    // Apply text changes (for TextPlugin)
+    if (msg.config.text) gsapConfig.text = msg.config.text;
+
+    gsap.to(elem, gsapConfig);
+});
 svgContainer.addEventListener("click", function(e) {
   const target = e.target;
   if (target && target.hasAttribute("command-datapoint")) {

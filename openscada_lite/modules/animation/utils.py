@@ -22,7 +22,16 @@ class Utils:
             red = int((v - minV)/(maxV-minV)*255)
             return {"attr": {"fill": f"rgb({red},0,0)"}, "duration": duration}
         elif t == "fill_toggle":
-            color = cfg.get("onColor") if value else cfg.get("offColor")
+            value_map = cfg.get("map")
+            if value_map and isinstance(value_map, dict):
+                # If value matches an enum in the map
+                color = value_map.get(str(value), cfg.get("offColor", "gray"))
+            else:
+                # Fallback: handle as boolean
+                color = cfg.get("onColor") if bool(value) else cfg.get("offColor")
             return {"attr": {"fill": color}, "duration": duration}
+        elif t == "text":
+            # Use GSAP TextPlugin
+            return {"text": str(value), "duration": duration}
         else:
             return {"attr": {}, "duration": duration}
