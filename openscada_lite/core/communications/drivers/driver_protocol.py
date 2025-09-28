@@ -1,6 +1,7 @@
 from typing import Protocol, Callable, Any, List
 from typing import runtime_checkable
 
+from openscada_lite.common.models.dtos import SendCommandMsg
 from openscada_lite.common.models.entities import Datapoint
 
 @runtime_checkable
@@ -12,7 +13,7 @@ class DriverProtocol(Protocol):
     #Async because it publishes all the driver states (to know the available drivers)
     async def register_communication_status_listener(self, callback: Callable) -> None: ...
     def register_command_feedback(self, callback: Callable) -> None: ...
-    async def send_command(self, tag_id: str, command: Any, command_id: str) -> None: ...
+    async def send_command(self, data: SendCommandMsg) -> None: ...
 
     @property
     def server_name(self) -> str: ...

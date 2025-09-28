@@ -1,0 +1,33 @@
+<svg id="tank" xmlns="http://www.w3.org/2000/svg" width="400" height="400">
+  <!-- Tank outline -->
+  <rect x="100" y="50" width="200" height="340" stroke="black" fill="none" stroke-width="2"/>
+
+  <!-- Tank fill (animated by LEVEL) -->
+  <rect id="tank_fill"
+        x="100" y="390" width="200" height="0"
+        fill="blue"
+        data-datapoint="Server1@TANK"
+        data-animation="fill_level" />
+
+  <!-- Pump (toggle open/closed) -->
+  <circle id="pump"
+          cx="70" cy="200" r="20"
+          fill="gray" stroke="black"
+          data-datapoint="Server1@PUMP"
+          data-animation="toggle"
+          command-datapoint="Server1@PUMP_CMD"
+          command-value="toggle"/>
+
+  <text x="70" y="205" font-size="10" text-anchor="middle">Pump</text>
+
+  <!-- Door (toggle open/closed) -->
+  <rect id="door"
+        x="310" y="180" width="30" height="40"
+        fill="brown" stroke="black"
+        data-datapoint="Server1@DOOR"
+        data-animation="toggle"
+        command-datapoint="Server1@DOOR_CMD"
+        command-value="toggle"/>
+
+  <text x="325" y="240" font-size="10" text-anchor="middle">Door</text>
+</svg>

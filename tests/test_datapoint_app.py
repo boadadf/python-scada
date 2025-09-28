@@ -1,6 +1,5 @@
-
 import os
-os.environ["SCADA_CONFIG_FILE"] = "tests/test_config.json"
+os.environ["SCADA_CONFIG_PATH"] = "tests"
 
 
 import asyncio
@@ -10,6 +9,7 @@ import time
 import socketio
 from openscada_lite.app import app, socketio as flask_socketio
 from common.models.dtos import RawTagUpdateMsg
+import requests
 
 SERVER_URL = "http://localhost:5000"
 
@@ -70,8 +70,11 @@ async def test_live_feed_and_set_tag_real():
     # Set a value for one tag using HTTP POST (if you have a REST endpoint), or via WebSocket
     test_tag = expected_tags[0]
     test_value = 123.45
-    sio.emit('datapoint_send_rawtagupdatemsg', RawTagUpdateMsg(test_tag, test_value, "good", None).to_dict())
-    time.sleep(1)  # Wait for update
+    requests.post(
+        f"{SERVER_URL}/datapoint_send_rawtagupdatemsg",
+        json=RawTagUpdateMsg(test_tag, test_value, "good", None).to_dict()
+    )
+    await asyncio.sleep(1)  # Wait for update
 
     assert received_updates, "No datapoint_update received after set_tag"
     update = received_updates[-1]

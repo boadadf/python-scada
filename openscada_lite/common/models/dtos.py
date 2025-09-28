@@ -1,6 +1,6 @@
 from dataclasses import dataclass, asdict, field
 from enum import Enum
-from typing import Any, Tuple, Optional
+from typing import Any, Optional
 import datetime
 import uuid
 
@@ -320,7 +320,6 @@ class DataFlowEventMsg(DTO):
         return f'{self.track_id}@{self.source}@{self.event_type}'
 
     def get_track_payload(self):
-        print(f"DataFlowEventMsg payload: {self.to_dict()}")
         return {
             "track_id": str(self.track_id),
             "event_type": self.event_type,
@@ -329,3 +328,32 @@ class DataFlowEventMsg(DTO):
             "timestamp": self.timestamp.isoformat(),
             "payload": self.payload
         }
+
+@dataclass
+class AnimationUpdateMsg(DTO):
+    svg_name: str
+    element_id: str
+    animation_type: str
+    value: float
+    config: dict
+    timestamp: Optional[datetime.datetime] = None
+    
+    @classmethod
+    def get_event_type(cls) -> EventType:
+        return EventType.ANIMATION_EVENT
+
+    def to_dict(self):
+        return self._default_to_dict()
+    
+    def get_id(self) -> str:
+        return f"{self.svg_name}:{self.element_id}"
+
+    def get_track_payload(self):
+        return {
+            "element_id": self.element_id,
+            "animation": self.animation,
+            "value": self.value,
+            "svg_file": self.svg_file,
+            "timestamp": self.timestamp.isoformat() if self.timestamp else None
+        }
+                

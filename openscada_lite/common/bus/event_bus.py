@@ -46,6 +46,5 @@ class EventBus:
     async def publish(self, event_type: EventType, data: Any):
         to_publish = copy.copy(data)
         """Publish an event to all subscribers asynchronously."""
-        print(f"[EVENT BUS] Publishing event {event_type} to {len(self._subscribers[event_type])} subscribers")
         for callback in self._subscribers[event_type]:
             await callback(to_publish)

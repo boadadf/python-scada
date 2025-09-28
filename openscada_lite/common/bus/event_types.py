@@ -16,3 +16,4 @@ class EventType(Enum):
     DRIVER_CONNECT_COMMAND = "driver_connect"
     DRIVER_CONNECT_STATUS = "driver_connect_status"
     FLOW_EVENT = "flow_event"
+    ANIMATION_EVENT = "animation_event"

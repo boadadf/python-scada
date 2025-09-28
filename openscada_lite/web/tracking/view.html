@@ -4,11 +4,7 @@
     <meta charset="UTF-8">
     <title>Tracking Events</title>
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 1em; }
-        table { border-collapse: collapse; width: 100%; }
-        th, td { border: 1px solid #bbb; padding: 0.5em; text-align: left; }
-    </style>
+    <link rel="stylesheet" href="../css/styles.css">
 </head>
 <body>
     <h2>Data Flow Events</h2>
@@ -30,6 +26,7 @@
     <script>
         const socket = io();
         const trackingTableBody = document.querySelector('#tracking-table tbody');
+        const MAX_ROWS = 100;
 
         function addEventRow(event) {
             const row = document.createElement('tr');
@@ -42,6 +39,11 @@
                 <td><pre style="margin:0">${JSON.stringify(event.payload, null, 2)}</pre></td>
             `;
             trackingTableBody.appendChild(row);
+
+            // Limit the number of rows to MAX_ROWS
+            while (trackingTableBody.rows.length > MAX_ROWS) {
+                trackingTableBody.removeChild(trackingTableBody.firstChild);
+            }
         }
 
         function clearTable() {

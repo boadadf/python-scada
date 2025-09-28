@@ -31,9 +31,7 @@ async def test_connector_drivers_publish_to_datapoint_engine():
     dp_engine = DatapointService(bus, DatapointModel(), None)   
     connector_manager = ConnectorManager(bus)
     await connector_manager.init_drivers()
-    print("ConnectorManager initialized.")
     await connector_manager.start_all()
-    print("ConnectorManager and DatapointService started.")
     # Let TestDrivers publish some values
     await asyncio.sleep(2)
 

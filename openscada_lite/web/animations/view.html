@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>SVG Animation</title>
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+</head>
+<body>
+<h2>Animated SVGs</h2>
+<select id="svgSelector"></select>
+<div id="svgContainer"></div>
+
+<script>
+const socket = io();
+const svgSelector = document.getElementById("svgSelector");
+const svgContainer = document.getElementById("svgContainer");
+
+fetch('/animation_svgs').then(r=>r.json()).then(svgs=>{
+  svgs.forEach(name=>{
+    const opt = document.createElement("option");
+    opt.value = name; opt.textContent = name;
+    svgSelector.appendChild(opt);
+  });
+  if(svgs.length) loadSvg(svgs[0]);
+});
+
+svgSelector.addEventListener("change", ()=>loadSvg(svgSelector.value));
+
+function loadSvg(name){
+  fetch(`/svg/${name}`).then(r=>r.text()).then(svg=>svgContainer.innerHTML=svg);
+}
+
+socket.on('connect', ()=>socket.emit('animation_subscribe_live_feed'));
+
+socket.on('animation_animationupdatemsg', msg=>{
+  if(msg.svg_name!==svgSelector.value) return;
+  const elem=document.getElementById(msg.element_id);
+  if(!elem || !msg.config) return;
+  gsap.to(elem,{duration:msg.config.duration, attr:msg.config.attr});
+});
+
+svgContainer.addEventListener("click", function(e) {
+  const target = e.target;
+  if (target && target.hasAttribute("command-datapoint")) {
+    const command = target.getAttribute("command-datapoint");
+    const value = target.getAttribute("command-value") || "";
+    if (confirm(`Send command "${command}" with value "${value}"?`)) {
+      const payload = {
+        command_id: command,
+        datapoint_identifier: command,
+        value: value
+      };
+      fetch('/command_send_sendcommandmsg', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+      .then(resp => resp.json())
+      .then(data => alert(data.reason || 'Command sent!'))
+      .catch(err => alert('Error sending command'));
+    }
+  }
+});
+</script>
+</body>
+</html>

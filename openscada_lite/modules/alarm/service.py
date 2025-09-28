@@ -1,4 +1,6 @@
 from typing import Union, override
+from openscada_lite.common.tracking.tracking_types import DataFlowStatus
+from openscada_lite.common.tracking.decorators import publish_data_flow_from_return_sync
 from openscada_lite.modules.alarm.controller import AlarmController
 from openscada_lite.modules.alarm.model import AlarmModel
 from openscada_lite.modules.alarm.utils import Utils
@@ -24,6 +26,7 @@ class AlarmService(BaseService[Union[RaiseAlarmMsg, LowerAlarmMsg], AckAlarmMsg,
         # Other cases, the alarm cannot be accepted
         return False
 
+    @publish_data_flow_from_return_sync(status=DataFlowStatus.CREATED)
     @override
     def process_msg(self, msg) -> AlarmUpdateMsg:
         #Raise can one mean reset deactivation and acknowledge to None
@@ -46,11 +49,12 @@ class AlarmService(BaseService[Union[RaiseAlarmMsg, LowerAlarmMsg], AckAlarmMsg,
     
     @override
     async def handle_controller_message(self, data: AckAlarmMsg):
-        print("DatapointService.on_model_accepted_bus_update CALLED")
         alarm = self.model.get(data.alarm_occurrence_id)
         alarm.acknowledge_time = data.timestamp
         self.model.update(alarm)
         await self.event_bus.publish(alarm.get_event_type(), alarm)
-        
+
+    #Publish alarm updates to the bus in case another service wants to listen
+    @override
     async def on_model_accepted_bus_update(self, msg: AlarmUpdateMsg):
         await self.event_bus.publish(EventType.ALARM_UPDATE, msg)

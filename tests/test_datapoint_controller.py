@@ -56,16 +56,37 @@ def test_handle_subscribe_live_feed_emits_initial_state(controller):
                 found = True
         assert found, "No initial_state emit found"
         
-def test_set_tag_calls_service_and_emits_ack(controller):
+def test_set_tag_calls_service_and_emits_ack():
+    from openscada_lite.modules.datapoint.controller import DatapointController
+    from flask import Flask
+    import json
+    import datetime
+    from unittest.mock import AsyncMock, MagicMock
+    from openscada_lite.common.models.dtos import RawTagUpdateMsg, StatusDTO, TagUpdateMsg
+
+    app = Flask(__name__)
+    model = DatapointModel()
+    controller = DatapointController(model, MagicMock(), flask_app=app)
     controller.service = MagicMock()
     controller.service.handle_controller_message = AsyncMock(return_value=True)
 
-    def immediate_call(func, *args, **kwargs):
-        func(*args, **kwargs)
-    controller.socketio.start_background_task.side_effect = immediate_call
     now = datetime.datetime.now()
     test_data = RawTagUpdateMsg(track_id="1234", datapoint_identifier="Test@TAG", value=42, quality="good", timestamp=now)
-    controller.handle_request(test_data)
 
-    controller.service.handle_controller_message.assert_called_once_with(RawTagUpdateMsg(track_id="1234", datapoint_identifier="Test@TAG", value=42, quality="good", timestamp=now))
-    controller.socketio.emit.assert_any_call("datapoint_ack", StatusDTO(status="ok", reason="Request accepted.").to_dict())
+    with app.test_client() as client, app.app_context():
+        response = client.post(
+            "/datapoint_send_rawtagupdatemsg",
+            data=json.dumps(test_data.to_dict()),
+            content_type="application/json"
+        )
+        assert response.status_code == 200
+        assert response.get_json() == {"status": "ok", "reason": "Request accepted."}
+
+    expected_data = RawTagUpdateMsg(
+        track_id="1234",
+        datapoint_identifier="Test@TAG",
+        value=42,
+        quality="good",
+        timestamp=test_data.timestamp.isoformat()  # Expect string, not datetime
+    )
+    controller.service.handle_controller_message.assert_called_once_with(expected_data)

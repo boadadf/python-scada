@@ -4,19 +4,7 @@
     <meta charset="UTF-8">
     <title>Driver Communications</title>
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 2em; }
-        .driver-list { margin-top: 2em; }
-        .driver-row { display: flex; align-items: center; margin-bottom: 1em; }
-        .status-indicator {
-            width: 16px; height: 16px; border-radius: 50%; display: inline-block;
-            margin-right: 1em; border: 1px solid #888;
-        }
-        .status-online { background: #2ecc40; }
-        .status-offline { background: #ff4136; }
-        .driver-name { width: 120px; }
-        .driver-actions button { margin-left: 1em; }
-    </style>
+    <link rel="stylesheet" href="../css/styles.css">
 </head>
 <body>
     <h1>Driver Communications</h1>
@@ -74,8 +62,29 @@
             });
         }
 
-        function setDriverStatus(driver, status) {
-            socket.emit('communication_send_driverconnectcommand', { driver_name: driver, status: status });
+        async function setDriverStatus(driver, status) {
+            try {
+                const response = await fetch('/communication_send_driverconnectcommand', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-User': localStorage.getItem('username') || ''
+                    },
+                    body: JSON.stringify({
+                        driver_name: driver,
+                        status: status
+                    })
+                });
+
+                const result = await response.json();
+                if (response.ok) {
+                    console.log("Driver status update successful:", result);
+                } else {
+                    alert("Driver status update failed: " + result.reason);
+                }
+            } catch (err) {
+                console.error("Failed to send driver status update", err);
+            }
         }
 
         // Listen for all driver statuses (initial state)

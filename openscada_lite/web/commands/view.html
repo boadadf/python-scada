@@ -4,13 +4,7 @@
     <meta charset="UTF-8">
     <title>Command List</title>
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 1em; }
-        table { border-collapse: collapse; width: 100%; }
-        th, td { border: 1px solid #bbb; padding: 0.5em; text-align: left; }
-        input[type="text"] { width: 80px; }
-        button { padding: 0.2em 0.8em; }
-    </style>
+    <link rel="stylesheet" href="../css/styles.css">
 </head>
 <body>
     <h2>Command List</h2>
@@ -39,6 +33,7 @@
             let valueDisplay = (cmd.value === undefined || cmd.value === null || cmd.value === '') ? '' : cmd.value;
             let feedbackDisplay = (cmd.feedback === undefined || cmd.feedback === null) ? 'None' : cmd.feedback;
             let timestampDisplay = (cmd.timestamp === undefined || cmd.timestamp === null) ? 'None' : cmd.timestamp;
+
             if (!row) {
                 row = document.createElement('tr');
                 row.id = rowId;
@@ -63,20 +58,38 @@
                     sendCommand(cmd.datapoint_identifier, val);
                 });
             }
+
             // Always update the input value and other fields
             row.querySelector('input').value = valueDisplay;
             row.querySelector('.feedback').textContent = feedbackDisplay;
             row.querySelector('.timestamp').textContent = timestampDisplay;
         }
 
-        function sendCommand(datapoint_identifier, value) {
-            // Generate a random command_id for demo purposes
-            const command_id = 'cmd_' + Math.random().toString(36).substring(2, 10);
-            socket.emit('command_send_sendcommandmsg', {
-                command_id: command_id,
-                datapoint_identifier: datapoint_identifier,
-                value: value
-            });
+        // ✅ HTTP POST instead of socket.emit
+        async function sendCommand(datapoint_identifier, value) {
+            try {
+                const command_id = 'cmd_' + Math.random().toString(36).substring(2, 10);
+                const response = await fetch('/command_send_sendcommandmsg', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-User': localStorage.getItem('username') || ''
+                    },
+                    body: JSON.stringify({
+                        command_id: command_id,
+                        datapoint_identifier: datapoint_identifier,
+                        value: value
+                    })
+                });
+                const result = await response.json();
+                if (response.ok) {
+                    console.log("Command sent successfully:", result);
+                } else {
+                    alert("Command failed: " + result.reason);
+                }
+            } catch (err) {
+                console.error("Failed to send command", err);
+            }
         }
 
         socket.on('connect', () => {
@@ -85,7 +98,8 @@
 
         socket.on('command_initial_state', function(cmdList) {
             commandTableBody.innerHTML = '';
-            cmdList.forEach(cmd => {
+            const list = Array.isArray(cmdList) ? cmdList : (cmdList ? [cmdList] : []);
+            list.forEach(cmd => {
                 commands[cmd.datapoint_identifier] = cmd;
                 updateCommandRow(cmd);
             });

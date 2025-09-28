@@ -4,8 +4,8 @@
   { "name": "command" },
   { "name": "communication" },
   { "name": "datapoint" },
-  { 
-    "name": "tracking",
+  { "name": "animation" },
+  { "name": "tracking",
     "config": {
       "mode": "file",  
       "file_path": "flow_events.log"
@@ -15,6 +15,8 @@
   "dp_types": {
     "LEVEL":      { "type": "float", "min": 0, "max": 100, "default": 0.0 },
     "STATUS":     { "type": "enum", "values": ["OPENED", "CLOSED"], "default": "CLOSED" },
+    "START_STOP":      { "type": "enum", "values": ["STARTED", "STOPPED"], "default": "STOPPED" },
+    "START_STOP_CMD":      { "type": "enum", "values": ["START", "STOP"], "default": "STOP" },
     "PRESSURE":   { "type": "float", "min": 0, "max": 200, "default": 50.0 },
     "TEMPERATURE":{ "type": "float", "min": 100, "max": 150, "default": 120.0 }
   },
@@ -26,11 +28,13 @@
       "datapoints": [
         { "name": "TANK", "type": "LEVEL" },
         { "name": "PUMP", "type": "STATUS" },
-        { "name": "DOOR", "type": "STATUS" }
+        { "name": "DOOR", "type": "STATUS" },
+        { "name": "TEST", "type": "START_STOP" }
       ],
       "command_datapoints": [
         { "name": "PUMP_CMD", "type": "STATUS" },
-        { "name": "DOOR_CMD", "type": "STATUS" }
+        { "name": "DOOR_CMD", "type": "STATUS" },
+        { "name": "TEST_CMD", "type": "START_STOP_CMD" }
       ]
     },
     {
@@ -41,11 +45,13 @@
         { "name": "VALVE", "type": "STATUS" },
         { "name": "PRESSURE", "type": "PRESSURE" },
         { "name": "TEMPERATURE", "type": "TEMPERATURE" },
-        { "name": "HEATER", "type": "STATUS" }
+        { "name": "HEATER", "type": "STATUS" },
+        { "name": "TEST", "type": "START_STOP" }
       ],
       "command_datapoints": [
         { "name": "VALVE_CMD", "type": "STATUS" },
-        { "name": "HEATER_CMD", "type": "STATUS" }
+        { "name": "HEATER_CMD", "type": "STATUS" },
+        { "name": "TEST_CMD", "type": "START_STOP_CMD" }      
       ]
     }
   ],
@@ -54,7 +60,7 @@
       "rule_id": "close_valve_if_high",
       "on_condition": "Server2@PRESSURE > 100",
       "on_actions": [
-        "send_command('Server2@VALVE1_POS', 0)",
+        "send_command('Server2@VALVE', 0)",
         "raise_alarm()"
       ],
       "off_condition": "Server2@PRESSURE < 80",
@@ -63,16 +69,16 @@
       ]
     },
     {
-      "rule_id": "pump_shutdown_if_low_level",
-      "on_condition": "Server1@TANK1_LEVEL < 10",
+      "rule_id": "pump_start_if_low_level",
+      "on_condition": "float(Server1@TANK) < 10",
       "on_actions": [
-        "send_command('Server1@PUMP1_STATUS', 'OFF')",
+        "send_command('Server1@PUMP', 'OPENED')",
         "raise_alarm()"
       ]
     },
     {
       "rule_id": "door_open_alarm",
-      "on_condition": "Server1@DOOR1_OPEN == True",
+      "on_condition": "Server1@DOOR == OPENED",
       "on_actions": [
         "raise_alarm()"
       ]

@@ -4,12 +4,7 @@
     <meta charset="UTF-8">
     <title>Active Alarms</title>
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 1em; }
-        table { border-collapse: collapse; width: 100%; }
-        th, td { border: 1px solid #bbb; padding: 0.5em; text-align: left; }
-        button { padding: 0.2em 0.8em; }
-    </style>
+    <link rel="stylesheet" href="../css/styles.css">
 </head>
 <body>
     <h2>Active Alarms</h2>
@@ -51,7 +46,7 @@
                 `;
                 alarmTableBody.appendChild(row);
 
-                // Ack button
+                // Ack button → HTTP POST instead of socket.emit
                 row.querySelector('button').addEventListener('click', function() {
                     sendAck(id);
                 });
@@ -67,10 +62,29 @@
             if (row) row.remove();
         }
 
-        function sendAck(alarm_occurrence_id) {
-            socket.emit('alarm_send_ackalarmmsg', {
-                alarm_occurrence_id: alarm_occurrence_id
-            });
+        // ✅ Replaced socket.emit with fetch POST
+        async function sendAck(alarm_occurrence_id) {
+            try {
+                const response = await fetch('/alarm_send_ackalarmmsg', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-User': localStorage.getItem('username') || ''
+                    },
+                    body: JSON.stringify({
+                        alarm_occurrence_id: alarm_occurrence_id
+                    })
+                });
+
+                const result = await response.json();
+                if (response.ok) {
+                    console.log("Ack sent successfully:", result);
+                } else {
+                    alert("Ack failed: " + result.reason);
+                }
+            } catch (err) {
+                console.error("Failed to send ack", err);
+            }
         }
 
         socket.on('connect', () => {
@@ -79,7 +93,9 @@
 
         socket.on('alarm_initial_state', function(alarmList) {
             alarmTableBody.innerHTML = '';
-            for (const alarm of alarmList) {
+            // ✅ Defensive: ensure it's always an array
+            const list = Array.isArray(alarmList) ? alarmList : (alarmList ? [alarmList] : []);
+            for (const alarm of list) {
                 const id = alarm.alarm_occurrence_id || (alarm.datapoint_identifier + '@' + alarm.activation_time);
                 alarms[id] = alarm;
                 updateAlarmRow(alarm);
@@ -87,13 +103,17 @@
         });
 
         socket.on('alarm_alarmupdatemsg', function(alarmList) {
+            // ✅ Defensive: ensure it's always an array
+            const list = Array.isArray(alarmList) ? alarmList : (alarmList ? [alarmList] : []);
+
             // Remove all rows first
             for (const id in alarms) {
                 removeAlarmRow(id);
             }
+
             // Clear and re-add only active alarms
             Object.keys(alarms).forEach(k => delete alarms[k]);
-            for (const alarm of alarmList) {
+            for (const alarm of list) {
                 const id = alarm.alarm_occurrence_id || (alarm.datapoint_identifier + '@' + alarm.activation_time);
                 alarms[id] = alarm;
                 updateAlarmRow(alarm);

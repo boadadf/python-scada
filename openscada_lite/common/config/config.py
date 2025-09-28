@@ -1,5 +1,6 @@
 import os
 import json
+import xml.etree.ElementTree as ET
 from openscada_lite.common.models.entities import Rule
 
 class Config:
@@ -10,17 +11,29 @@ class Config:
             raise RuntimeError("Use Config.get_instance() instead of direct instantiation.")
         return super().__new__(cls)
 
-    def __init__(self, config_file: str):
+    def __init__(self, config_path: str):
+        # config_path is the directory containing system_config.json
+        if os.path.isdir(config_path):
+            config_file = os.path.join(config_path, "system_config.json")
+        else:
+            # If a file is given, use it directly
+            config_file = config_path
+        print(f"[CONFIG] Loading config from: {config_file}")
         with open(config_file) as f:
             self._config = json.load(f)
+        self._config_path = config_path  # Save the config directory path for later use
 
     @classmethod
-    def get_instance(cls, config_file=None):
+    def get_instance(cls, config_path=None):
         if cls._instance is None:
-            if config_file is None:
-                config_file = os.environ.get("SCADA_CONFIG_FILE", "config/system_config.json")
-            cls._instance = cls(config_file)
+            if config_path is None:
+                config_path = os.environ.get("SCADA_CONFIG_PATH", "config")
+            cls._instance = cls(config_path)
         return cls._instance
+
+    def load_system_config(self):
+        """Return the loaded system config dict."""
+        return self._config
 
     @classmethod
     def reset_instance(cls):
@@ -110,3 +123,57 @@ class Config:
             if isinstance(module, dict) and module.get("name") == module_name:
                 return module.get("config", {})
         return {}
+
+    def get_animation_config(self) -> dict:
+        """
+        Loads and returns the animation_config.json from the config folder.
+        """
+        config_dir = os.path.dirname(self._config_path) if hasattr(self, "_config_path") else os.getcwd()
+        anim_path = os.path.join(config_dir, "animation_config.json")
+        if os.path.exists(anim_path):
+            with open(anim_path) as f:
+                return json.load(f)
+        return {}
+
+    def _get_svg_folder(self) -> str:
+        """
+        Internal: Returns the SVG folder path from config or defaults to './svg'.
+        """
+        config_dir = os.path.dirname(self._config_path) if hasattr(self, "_config_path") else os.getcwd()
+        svg_folder = self._config.get("svg_folder", None)
+        if svg_folder:
+            return os.path.join(config_dir, svg_folder)
+        return os.path.join(config_dir, "svg")
+
+    def get_svg_files(self) -> list:
+        """
+        Returns SVG file names from config or scans the svg folder.
+        """
+        svg_files = self._config.get("svg_files", [])
+        if svg_files:
+            return svg_files
+        svg_folder = self._get_svg_folder()
+        return [f for f in os.listdir(svg_folder) if f.endswith(".svg")]
+
+    def get_datapoint_map(self) -> dict:
+        """
+        Parses all SVG files and returns a map:
+        {datapoint_identifier: [(svg_name, element_id, animation_type), ...]}
+        """
+        svg_folder = self._get_svg_folder()
+        svg_files = self.get_svg_files()
+        datapoint_map = {}
+        for fname in svg_files:
+            svg_path = os.path.join(svg_folder, fname)
+            if not os.path.exists(svg_path):
+                continue
+            tree = ET.parse(svg_path)
+            root = tree.getroot()
+            for elem in root.iter():
+                dp = elem.attrib.get("data-datapoint")
+                anim = elem.attrib.get("data-animation")
+                if dp and anim:
+                    datapoint_map.setdefault(dp, []).append(
+                        (fname, elem.attrib.get("id"), anim)
+                    )
+        return datapoint_map

@@ -103,6 +103,7 @@ class RuleEngine:
         Args:
             data (dict): The tag update event data, must include 'tag_id' and 'value'.
         """
+        print(f"[RuleEngine] Received tag update: {msg.datapoint_identifier} = {msg.value}")
         tag_id = msg.datapoint_identifier
         value = msg.value
         self.datapoint_state[tag_id] = value
@@ -112,10 +113,16 @@ class RuleEngine:
 
         impacted_rules = self.tag_to_rules.get(tag_id, [])
         for rule in impacted_rules:
+            print(f"[RuleEngine] Evaluating rule: {rule.rule_id}")
             rule_id = rule.rule_id
             on_active = self.rule_states.get(rule_id, False)
             try:
+                print("Evaluating:", rule.on_condition.replace("@", "__"))
+                print("Symtable value:", self.asteval.symtable.get(safe_key))
                 on_result = self.asteval(rule.on_condition.replace("@", "__"))
+                if self.asteval.error:
+                    print("asteval errors:", self.asteval.error)
+                print("Result:", on_result)
                 has_off = getattr(rule, "off_condition", None) is not None
                 off_result = False
                 if has_off:
@@ -136,8 +143,10 @@ class RuleEngine:
                     for action in getattr(rule, "off_actions", []):
                         await self.execute_action(action, tag_id, msg.track_id, active=False)
             else:
+                print(f"[RuleEngine] Rule {rule_id} has no off_condition.")
                 # No off_condition: always execute on_actions if on_condition is true (no latching)
                 if on_result:
+                    print(f"[RuleEngine] Rule {rule_id} on_condition is true; executing on_actions.")
                     for action in getattr(rule, "on_actions", []):
                         await self.execute_action(action, tag_id, msg.track_id, active=True)
 
@@ -159,6 +168,7 @@ class RuleEngine:
         return action_name, params
 
     async def execute_action(self, action_str, identifier, track_id, active=True):
+        print(f"[RuleEngine] Executing action: {action_str} for {identifier} (active={active})")
         """
         Execute an action by looking up its handler and calling it.
 

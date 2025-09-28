@@ -22,12 +22,9 @@ class TankTestDriver(TestDriver):
         try:
             level = float(level_tag.value) if level_tag.value not in (None, "") else 0.0
         except Exception as e:
-            print(f"[SIM] Error parsing level value: {level_tag.value} ({e})")
             level = 0.0
         pump = pump_tag.value if pump_tag.value else "CLOSED"
         door = door_tag.value if door_tag.value else "CLOSED"
-
-        print(f"[SIM] Before: level={level}, pump={pump}, door={door}")
 
         # --- compute next level ---
         if pump == "OPENED":
@@ -37,7 +34,6 @@ class TankTestDriver(TestDriver):
 
         # clamp between 0 and 100
         level = max(0.0, min(100.0, level))
-        print(f"[SIM] After: level={level}")
 
         level_tag.value = level
         level_tag.timestamp = now

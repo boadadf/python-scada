@@ -47,7 +47,6 @@ class ConnectorManager:
 
     @publish_data_flow_from_arg_async(status=DataFlowStatus.RECEIVED)
     async def handle_driver_connect(self, data: DriverConnectCommand):
-        print(f"[CONNECT MANAGER] Handling driver connect command: {data}")
         driver_name = data.driver_name
         status = data.status
         driver = self.driver_instances.get(driver_name)
@@ -119,7 +118,7 @@ class ConnectorManager:
         driver = self.driver_instances.get(server_id)
         if driver:
             if driver.is_connected:
-                await driver.send_command(simple_datapoint_identifier, data.value, data.command_id)
+                await driver.send_command(data)
             else:
                 print(f"Driver '{server_id}' is not connected. Cannot send command.")
                 feedback = CommandFeedbackMsg(

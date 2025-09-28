@@ -4,8 +4,8 @@ from openscada_lite.modules.base.base_controller import BaseController
 from openscada_lite.common.models.dtos import AckAlarmMsg, AlarmUpdateMsg, StatusDTO
 
 class AlarmController(BaseController[AlarmUpdateMsg, AckAlarmMsg]):
-    def __init__(self, model: AlarmModel, socketio, base_event: str):
-        super().__init__(model, socketio, AlarmUpdateMsg, AckAlarmMsg, base_event=base_event)
+    def __init__(self, model: AlarmModel, socketio, base_event: str, flask_app=None):
+        super().__init__(model, socketio, AlarmUpdateMsg, AckAlarmMsg, base_event=base_event, flask_app=flask_app)
         self.model: AlarmModel = model
 
     @override
@@ -14,4 +14,4 @@ class AlarmController(BaseController[AlarmUpdateMsg, AckAlarmMsg]):
         alarm = self.model.get(data.alarm_occurrence_id)
         if not alarm or alarm.isFinished() or alarm.acknowledge_time is not None:
             return StatusDTO("error", "Invalid alarm state")
-        return alarm
+        return data

@@ -5,7 +5,9 @@ from abc import ABC, abstractmethod
 import threading
 from typing import Dict, List, Callable, Any
 
-from openscada_lite.common.models.dtos import DriverConnectStatus, RawTagUpdateMsg, TagUpdateMsg, CommandFeedbackMsg
+from openscada_lite.common.tracking.decorators import publish_data_flow_from_arg_async
+from openscada_lite.common.tracking.tracking_types import DataFlowStatus
+from openscada_lite.common.models.dtos import DriverConnectStatus, RawTagUpdateMsg, CommandFeedbackMsg, SendCommandMsg
 from openscada_lite.core.communications.drivers.driver_protocol import DriverProtocol
 from openscada_lite.common.models.entities import Datapoint
 
@@ -14,11 +16,12 @@ class TestDriver(DriverProtocol, ABC):
     def __init__(self, server_name: str):
         print(f"[INIT] Creating TestDriver {server_name}")
         self._server_name = server_name
-        self._tags: Dict[str, TagUpdateMsg] = {}
-        self._value_callback: Callable[[TagUpdateMsg], Any] | None = None
+        self._tags: Dict[str, RawTagUpdateMsg] = {}
+        self._value_callback: Callable[[RawTagUpdateMsg], Any] | None = None
         self._communication_status_callback: Callable[[DriverConnectStatus], Any] | None = None
         self._command_feedback_callback: Callable[[CommandFeedbackMsg], Any] | None = None
         self._running = False
+        self._connected = False
         self._task: asyncio.Task | None = None
 
     # -------------------------
@@ -26,7 +29,7 @@ class TestDriver(DriverProtocol, ABC):
     # -------------------------
     @property
     def is_connected(self) -> bool:
-        return self._running
+        return self._connected
 
     @property
     def server_name(self) -> str:
@@ -36,25 +39,16 @@ class TestDriver(DriverProtocol, ABC):
     # Connection lifecycle
     # -------------------------
     async def connect(self):
-        self._running = True
-        def runner():
-            asyncio.run(self._publish_loop())  # runs its own loop
-        thread = threading.Thread(target=runner, daemon=True)
-        thread.start()
+        self._connected = True
         if self._communication_status_callback:
             await self.publish_driver_state("online")
+        asyncio.create_task(self._publish_all())
         
 
     async def disconnect(self):
-        print(f"[DISCONNECT] Disconnecting driver {self._server_name}")
-        self._running = False
-        await self.publish_driver_state("offline")
-        if self._task:
-            self._task.cancel()
-            try:
-                await self._task
-            except asyncio.CancelledError:
-                print(f"[DISCONNECT] Publish loop cancelled cleanly")
+        self._connected = False
+        print(f"[DISCONNECT] Disconnecting driver {self._server_name}")        
+        await self.publish_driver_state("offline")        
 
     # -------------------------
     # Subscriptions and listeners
@@ -63,13 +57,13 @@ class TestDriver(DriverProtocol, ABC):
         now = datetime.datetime.now()
         for datapoint in datapoints:
             tag_id = f"{self._server_name}@{datapoint.name}"
-            self._tags[datapoint.name] = TagUpdateMsg(
+            self._tags[datapoint.name] = RawTagUpdateMsg(
                 datapoint_identifier=tag_id,
                 value=datapoint.type["default"],
                 timestamp=now,
             )
 
-    def register_value_listener(self, callback: Callable[[TagUpdateMsg], Any]):
+    def register_value_listener(self, callback: Callable[[RawTagUpdateMsg], Any]):
         self._value_callback = callback
 
     async def register_communication_status_listener(
@@ -89,13 +83,14 @@ class TestDriver(DriverProtocol, ABC):
         msg = DriverConnectStatus(driver_name=self._server_name, status=state)
         await self._safe_invoke(self._communication_status_callback, msg)
 
-    async def send_command(self, datapoint_identifier: str, value: str, command_id: str):
+    @publish_data_flow_from_arg_async(status=DataFlowStatus.RECEIVED)
+    async def send_command(self, data: SendCommandMsg):
         if self._command_feedback_callback:
             # Remove server_name prefix if present
-            if "@" in datapoint_identifier:
-                _, dp_name = datapoint_identifier.split("@", 1)
+            if "@" in data.datapoint_identifier:
+                _, dp_name = data.datapoint_identifier.split("@", 1)
             else:
-                dp_name = datapoint_identifier
+                dp_name = data.datapoint_identifier
 
             # Check for _CMD suffix and remove it
             if dp_name.endswith("_CMD"):
@@ -104,12 +99,17 @@ class TestDriver(DriverProtocol, ABC):
                 dp_name_base = dp_name
 
             exists = dp_name_base in self._tags
-            print(f"[COMMAND] Received command for {datapoint_identifier} (exists: {exists} / tags: {list(self._tags.keys())})")
             full_tag_id = f"{self._server_name}@{dp_name_base}"
+            value = data.value
+            command_id = data.command_id
+            # Start / Stop the simulation
+            result = await self.handle_special_command(dp_name, value)
+            if result:
+                value = result
+
             # If the datapoint exists, publish a RawTagUpdateMsg
             if exists and self._value_callback:
                 if dp_name_base in self._tags:
-                    print(f"[COMMAND] Setting {dp_name_base} to {value}")
                     self._tags[dp_name_base].value = value
                     self._tags[dp_name_base].timestamp = datetime.datetime.now()
 
@@ -124,12 +124,38 @@ class TestDriver(DriverProtocol, ABC):
             feedback = "OK" if exists else "NOK"
             msg = CommandFeedbackMsg(
                 command_id=command_id,
-                datapoint_identifier=f"{self._server_name}@{datapoint_identifier}",
+                datapoint_identifier=data.datapoint_identifier,
                 feedback=feedback,
                 value=value,
                 timestamp=datetime.datetime.now()
             )
             await self._safe_invoke(self._command_feedback_callback, msg)            
+
+    async def handle_special_command(self, datapoint_name: str, value: str ) -> str:
+        # Special handling for TEST@TEST_CMD to toggle TEST@TEST between STARTED and STOPPED
+        if datapoint_name == "TEST_CMD":
+            if value == "START":
+                await self.start_test()
+                return "STARTED"
+            elif value == "STOP":
+                await self.stop_test()
+                return "STOPPED"
+
+    async def start_test(self):
+        self._running = True
+        def runner():
+            asyncio.run(self._publish_loop())  # runs its own loop
+        thread = threading.Thread(target=runner, daemon=True)
+        thread.start()
+
+    async def stop_test(self):
+        self._running = False
+        if self._task:
+            self._task.cancel()
+            try:
+                await self._task
+            except asyncio.CancelledError:
+                print(f"[DISCONNECT] Publish loop cancelled cleanly")
 
     # For testing: simulate a value change
     async def simulate_value(self, tag_id: str, value: Any, track_id: str):
@@ -139,6 +165,14 @@ class TestDriver(DriverProtocol, ABC):
             )
             await self._safe_invoke(self._value_callback, msg)
 
+    @publish_data_flow_from_arg_async(status=DataFlowStatus.CREATED)
+    async def _publish_value(self, tag: RawTagUpdateMsg):
+        await self._safe_invoke(self._value_callback, tag)
+
+    async def _publish_all(self):   
+        for tag in self._tags.values():
+            await self._publish_value(tag)
+
     # -------------------------
     # Background publishing loop
     # -------------------------
@@ -147,7 +181,8 @@ class TestDriver(DriverProtocol, ABC):
             while self._running:
                 await self._simulate_values()
                 for tag in self._tags.values():
-                    await self._safe_invoke(self._value_callback, tag)
+                    if tag.value != "OPENED" and tag.value != "CLOSED":
+                        await self._publish_value(tag)
                 await asyncio.sleep(5)
         except asyncio.CancelledError:
             print(f"[PUBLISH LOOP] Cancelled for {self._server_name}")

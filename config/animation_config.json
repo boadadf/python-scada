@@ -1,0 +1,20 @@
+{
+  "fill_level": {
+    "type": "height_y",
+    "maxHeight": 340,
+    "baseY": 390,
+    "duration": 0.5
+  },
+  "color": {
+    "type": "fill_color",
+    "minValue": 100,
+    "maxValue": 150,
+    "duration": 0.5
+  },
+  "toggle": {
+    "type": "fill_toggle",
+    "onColor": "green",
+    "offColor": "gray",
+    "duration": 0.3
+  }
+}

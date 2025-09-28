@@ -1,11 +1,12 @@
 import os
-os.environ["SCADA_CONFIG_FILE"] = "tests/test_config.json"
+os.environ["SCADA_CONFIG_PATH"] = "tests"
 
 import asyncio
 import pytest
 import threading
 import time
 import socketio
+import requests
 
 from openscada_lite.common.bus.event_bus import EventBus
 from openscada_lite.modules.command.service import CommandService
@@ -67,14 +68,17 @@ async def test_command_live_feed_and_feedback():
     # Optionally check initial state
     assert received_initial is not None
 
-    # Send a command (adjust fields as needed)
+    # Send a command
     test_command = SendCommandMsg(
         command_id="testcmd1",
         datapoint_identifier="Server1@TANK",
         value=42,
     )
-    sio.emit("command_send_sendcommandmsg", test_command.to_dict())
-    await asyncio.sleep(1)  # Wait for initial state
+    response = requests.post(
+        f"{SERVER_URL}/command_send_sendcommandmsg",
+        json=test_command.to_dict()
+    )
+    assert response.status_code == 200
 
     assert received_feedback, "No command feedback received after sending command"
     feedback = received_feedback[-1]

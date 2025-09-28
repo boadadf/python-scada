@@ -1,7 +1,9 @@
+from flask import Flask
+import json
 import asyncio
 from typing import Any
 import pytest
-from unittest.mock import ANY, MagicMock, patch
+from unittest.mock import ANY, AsyncMock, MagicMock, patch
 from openscada_lite.common.models.dtos import DriverConnectCommand, DriverConnectStatus, RawTagUpdateMsg, StatusDTO
 from openscada_lite.modules.communication.controller import CommunicationController
 from openscada_lite.modules.communication.service import CommunicationService
@@ -44,49 +46,54 @@ def service():
     svc = CommunicationService(event_bus, model, controller)
     return svc, event_bus, model
 
-def test_handle_connect_driver_valid_status(controller):
-    from unittest.mock import AsyncMock
-    controller.service.handle_controller_message = AsyncMock()
-    controller.socketio.emit = MagicMock()
+def test_handle_connect_driver_valid_status():
+    from openscada_lite.modules.communication.controller import CommunicationController
+    from flask import Flask
+    import json
+
+    app = Flask(__name__)
+    controller = CommunicationController(MagicMock(), MagicMock(), flask_app=app)
+    # Set service to a MagicMock so you can assert calls
+    controller.service = MagicMock()
+    controller.service.handle_controller_message = AsyncMock(return_value=True)
     data = DriverConnectCommand(driver_name="Server1", status="connect")
 
-    handlers = {}
-    def fake_on(event):
-        def decorator(fn):
-            handlers[event] = fn
-            return fn
-        return decorator
-    controller.socketio.on = fake_on
-    controller.register_socketio()
-    controller.socketio.start_background_task = lambda fn, *args, **kwargs: asyncio.run(fn(*args, **kwargs))
-    handlers["communication_send_driverconnectcommand"](data)
-    controller.service.handle_controller_message.assert_called_once_with(data)
-    controller.socketio.emit.assert_any_call("communication_ack", StatusDTO(status="ok", reason="Request accepted.").to_dict())
+    with app.test_client() as client, app.app_context():
+        response = client.post(
+            "/communication_send_driverconnectcommand",
+            data=json.dumps(data.to_dict()),
+            content_type="application/json"
+        )
+        assert response.status_code == 200
+        assert response.get_json() == {"status": "ok", "reason": "Request accepted."}
 
-def test_handle_connect_driver_invalid_status(controller):
-    controller.service.handle_controller_message = MagicMock()
-    controller.socketio.emit = MagicMock()
+    # Check service and emit calls
+    controller.service.handle_controller_message.assert_called_once_with(data)
+
+def test_handle_connect_driver_invalid_status():
+    from openscada_lite.modules.communication.controller import CommunicationController
+    from flask import Flask
+    import json
+
+    app = Flask(__name__)
+    controller = CommunicationController(MagicMock(), MagicMock(), flask_app=app)
+    controller.service = MagicMock()
+    controller.service.handle_controller_message = AsyncMock(return_value=True)
     data = DriverConnectCommand(driver_name="Server1", status="bad_status")
 
-    handlers = {}
-    def fake_on(event):
-        def decorator(fn):
-            handlers[event] = fn
-            return fn
-        return decorator
-    controller.socketio.on = fake_on
-    controller.register_socketio()
-    handlers["communication_send_driverconnectcommand"](data)
+    with app.test_client() as client, app.app_context():
+        response = client.post(
+            "/communication_send_driverconnectcommand",
+            data=json.dumps(data.to_dict()),
+            content_type="application/json"
+        )
+        assert response.status_code == 400
+        assert response.get_json() == {
+            "status": "error",
+            "reason": "Invalid status. Must be 'connect' or 'disconnect'."
+        }
 
     controller.service.handle_controller_message.assert_not_called()
-    controller.socketio.emit.assert_any_call(
-        "communication_ack",
-        StatusDTO(
-            status="error",
-            reason="Invalid status. Must be 'connect' or 'disconnect'."
-        )
-    )
-
 @pytest.mark.asyncio
 async def test_handle_subscribe_driver_status(controller):
     controller.socketio.emit = MagicMock()
@@ -198,11 +205,9 @@ async def test_driver_publishes_disconnected_status_on_start():
     await connector_manager.stop_all()
 
 def test_emit_communication_status_sets_unknown(monkeypatch):
-    # Mock config to return known datapoints and types for the driver
     class DummyConfig:
         def get_datapoint_types_for_driver(self, driver_name, types):
             if driver_name == "TestDriver":
-                # Simulate two datapoints with default values
                 return {
                     "TANK": {"default": 0.0},
                     "PUMP": {"default": "CLOSED"}
@@ -213,23 +218,23 @@ def test_emit_communication_status_sets_unknown(monkeypatch):
 
     monkeypatch.setattr("openscada_lite.common.config.config.Config.get_instance", lambda: DummyConfig())
 
-    bus = DummyEventBus.get_instance()
+    # Set the EventBus singleton to DummyEventBus
+    from openscada_lite.common.bus.event_bus import EventBus
+    EventBus._instance = DummyEventBus()
+
+    bus = EventBus.get_instance()
     manager = ConnectorManager(bus)
-    #Force online
     manager.driver_status["TestDriver"] = "online"
-    # Simulate driver disconnect
     status = DriverConnectStatus(driver_name="TestDriver", status="offline")
     import asyncio
     asyncio.run(manager.emit_communication_status(status))
 
-    # Check that RawTagUpdateMsg was published for each datapoint with quality unknown and default value
     raw_updates = [d for e, d in bus.published if e == EventType.RAW_TAG_UPDATE]
     assert len(raw_updates) == 2
     for msg in raw_updates:
         assert isinstance(msg, RawTagUpdateMsg)
         assert msg.quality == "unknown"
         assert msg.datapoint_identifier in ["TestDriver@TANK", "TestDriver@PUMP"]
-        # Check default values
         if msg.datapoint_identifier.endswith("TANK"):
             assert msg.value == 0.0
         elif msg.datapoint_identifier.endswith("PUMP"):
