@@ -5,6 +5,8 @@ import asyncio
 from flask import Flask, send_from_directory
 from flask_socketio import SocketIO
 
+
+
 # Set SCADA_CONFIG_PATH from command-line argument or default
 if "SCADA_CONFIG_PATH" not in os.environ:
     if len(sys.argv) > 1:
@@ -16,6 +18,9 @@ if "SCADA_CONFIG_PATH" not in os.environ:
         )
 print(f"[APP] Using SCADA_CONFIG_PATH: {os.environ['SCADA_CONFIG_PATH']}")
 
+from openscada_lite.modules.security.controller import SecurityController
+from openscada_lite.modules.security.model import SecurityModel
+from openscada_lite.modules.security.service import SecurityService
 from openscada_lite.common.config.config import Config
 from openscada_lite.core.rule.rule_manager import RuleEngine
 from openscada_lite.common.bus.event_bus import EventBus
@@ -97,6 +102,14 @@ RuleEngine.get_instance(event_bus)
 connector_manager = ConnectorManager(event_bus)
 # Run async initialization safely at startup
 asyncio.run(connector_manager.init_drivers())
+
+
+#Security modules are not part of the dynamic modules
+print(f"[APP] Initializing Security Module {(app)}")
+security_model = SecurityModel(app)
+security_service = SecurityService(event_bus, security_model)
+security_controller = SecurityController(security_model, security_service)
+security_controller.register_routes(app)
 
 
 # ---------------------------------------------------------------------

@@ -3,7 +3,6 @@
 <head>
   <meta charset="utf-8"/>
   <title>Login</title>
-  <script src="/socket.io/socket.io.js"></script>
 </head>
 <body>
 <h2>Login</h2>
@@ -17,24 +16,32 @@
 <div id="status"></div>
 
 <script>
-const socket = io();
-
-document.getElementById("loginForm").onsubmit = (e) => {
+document.getElementById("loginForm").onsubmit = async (e) => {
   e.preventDefault();
   const username = document.getElementById("username").value;
   const password = document.getElementById("password").value;
 
-  socket.emit("security_login", { username, password });
-};
+  try {
+    const resp = await fetch("/security/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password })
+    });
 
-socket.on("security_login_response", (resp) => {
-  const statusDiv = document.getElementById("status");
-  if (resp.status === "ok") {
-    statusDiv.textContent = `Logged in as ${resp.username}`;
-  } else {
-    statusDiv.textContent = `Login failed: ${resp.reason}`;
+    const data = await resp.json();
+    const statusDiv = document.getElementById("status");
+
+    if (resp.ok && data.status === "ok") {
+      // Store username so other pages can include it in headers (X-User)
+      localStorage.setItem("username", data.username);
+      statusDiv.textContent = `Logged in as ${data.username}`;
+    } else {
+      statusDiv.textContent = `Login failed: ${data.reason || "Unknown error"}`;
+    }
+  } catch (err) {
+    document.getElementById("status").textContent = "Request failed: " + err;
   }
-});
+};
 </script>
 </body>
 </html>

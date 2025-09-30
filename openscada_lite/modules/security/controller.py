@@ -1,75 +1,141 @@
 # openscada_lite/modules/security/controller.py
-from flask import request
-from flask_socketio import emit
-from openscada_lite.modules.base.base_controller import BaseController
+import typing as t
+from flask import request, jsonify
 from openscada_lite.common.models.dtos import StatusDTO
 from openscada_lite.modules.security.service import SecurityService
+from openscada_lite.modules.security.model import SecurityModel
 
+class SecurityController:
+    """
+    REST-style controller for the security module.
+    Use register_routes(flask_app) after initialization to expose endpoints.
+    """
 
-class SecurityController(BaseController):
-    def validate_request_data(self, data):
-        return data
+    def __init__(self, model: SecurityModel, service: SecurityService):
+        self.model = model
+        self.service = service
 
-    def register_socketio(self):
-        super().register_socketio()
+    def register_routes(self, flask_app):
+        """
+        Register HTTP endpoints on the provided Flask app.
+        We use add_url_rule with explicit endpoint names to avoid collisions.
+        """
 
-        @self.socketio.on("security_get_users")
+        # ---------------- Users ----------------
         def _get_users():
             users = self.model.get_all_users_list()
-            self.socketio.emit("security_users", users)
+            return jsonify(users)
+        flask_app.add_url_rule(
+            "/security/users", endpoint="security_get_users", view_func=_get_users, methods=["GET"]
+        )
 
-        @self.socketio.on("security_create_user")
-        def _create_user(data):
-            self.service.create_user(data["username"], data["password"], data.get("groups", []))
-            self.socketio.emit("security_users", self.model.get_all_users_list())
-
-        @self.socketio.on("security_update_user")
-        def _update_user(data):
-            try:
-                self.model.update_user_groups(data["username"], data.get("groups", []))
-                self.socketio.emit("security_users", self.model.get_all_users_list())
-            except KeyError as e:
-                self.socketio.emit("security_ack", StatusDTO(status="error", reason=str(e)).to_dict())
-
-        @self.socketio.on("security_get_groups")
-        def _get_groups():
-            groups = self.model.get_all_groups_list()
-            self.socketio.emit("security_groups", groups)
-
-        @self.socketio.on("security_create_group")
-        def _create_group(data):
-            self.service.create_group(data["name"], data.get("permissions", []))
-            self.socketio.emit("security_groups", self.model.get_all_groups_list())
-
-        @self.socketio.on("security_update_group")
-        def _update_group(data):
-            try:
-                self.model.update_group_permissions(data["name"], data.get("permissions", []))
-                self.socketio.emit("security_groups", self.model.get_all_groups_list())
-            except KeyError as e:
-                self.socketio.emit("security_ack", StatusDTO(status="error", reason=str(e)).to_dict())
-
-        @self.socketio.on("security_get_endpoints")
-        def _get_endpoints():
-            svc = SecurityService.get_instance_or_none()
-            endpoints = svc.get_available_endpoints() if svc else []
-            self.socketio.emit("security_endpoints", endpoints)
-
-        @self.socketio.on("security_login")
-        def _login(data):
+        def _create_user():
+            data = request.get_json() or {}
             username = data.get("username")
             password = data.get("password")
-            svc = self.service
-            if not svc:
-                emit("security_login_response", {"status": "error", "reason": "Security not enabled"})
-                return
+            groups = data.get("groups", [])
+            if not username or not password:
+                return jsonify(StatusDTO(status="error", reason="username & password required").to_dict()), 400
+            if self.service:
+                user = self.service.create_user(username, password, groups)
+            else:
+                # If no service, write directly via model (store password hash)
+                from hashlib import sha256
+                password_hash = sha256(password.encode()).hexdigest()
+                self.model.add_user({"username": username, "password_hash": password_hash, "groups": groups})
+                user = self.model.get_all_users_list()[-1] if self.model.get_all_users_list() else {}
+            return jsonify({"status": "ok", "username": username})
+        flask_app.add_url_rule(
+            "/security/users", endpoint="security_create_user", view_func=_create_user, methods=["POST"]
+        )
 
-            user = svc.model.get_user(username)
-            if not user or svc.hash_password(password) != user["password_hash"]:
-                emit("security_login_response", {"status": "error", "reason": "Invalid username or password"})
-                return
+        def _update_user_groups(username):
+            data = request.get_json() or {}
+            groups = data.get("groups", [])
+            try:
+                self.model.update_user_groups(username, groups)
+                return jsonify({"status": "ok", "username": username, "groups": groups})
+            except KeyError as e:
+                return jsonify(StatusDTO(status="error", reason=str(e)).to_dict()), 404
+        flask_app.add_url_rule(
+            "/security/users/<username>/groups",
+            endpoint="security_update_user_groups",
+            view_func=_update_user_groups,
+            methods=["PUT"]
+        )
 
-            # associate sid → username
-            sid = request.sid
-            self._sid_to_user[sid] = username
-            emit("security_login_response", {"status": "ok", "username": username})
+        # ---------------- Groups ----------------
+        def _get_groups():
+            groups = self.model.get_all_groups_list()
+            return jsonify(groups)
+        flask_app.add_url_rule(
+            "/security/groups", endpoint="security_get_groups", view_func=_get_groups, methods=["GET"]
+        )
+
+        def _create_group():
+            data = request.get_json() or {}
+            name = data.get("name")
+            permissions = data.get("permissions", [])
+            if not name:
+                return jsonify(StatusDTO(status="error", reason="name required").to_dict()), 400
+            if self.service:
+                self.service.create_group(name, permissions)
+            else:
+                self.model.add_group({"name": name, "permissions": permissions})
+            return jsonify({"status": "ok", "name": name})
+        flask_app.add_url_rule(
+            "/security/groups", endpoint="security_create_group", view_func=_create_group, methods=["POST"]
+        )
+
+        def _update_group_permissions(group_name):
+            data = request.get_json() or {}
+            permissions = data.get("permissions", [])
+            try:
+                self.model.update_group_permissions(group_name, permissions)
+                return jsonify({"status": "ok", "name": group_name, "permissions": permissions})
+            except KeyError as e:
+                return jsonify(StatusDTO(status="error", reason=str(e)).to_dict()), 404
+        flask_app.add_url_rule(
+            "/security/groups/<group_name>/permissions",
+            endpoint="security_update_group_permissions",
+            view_func=_update_group_permissions,
+            methods=["PUT"]
+        )
+
+        # ---------------- Endpoints (available send_* endpoints) ----------------
+        def _get_endpoints():            
+            endpoints = self.model.get_end_points()
+            return jsonify(endpoints)
+        flask_app.add_url_rule(
+            "/security/endpoints", endpoint="security_get_endpoints", view_func=_get_endpoints, methods=["GET"]
+        )
+
+        # ---------------- Login ----------------
+        def _login():
+            data = request.get_json() or {}
+            username = data.get("username")
+            password = data.get("password")
+            if not username or not password:
+                return jsonify(StatusDTO(status="error", reason="username & password required").to_dict()), 400
+
+            svc = self.service or SecurityService.get_instance_or_none()
+            # If a service exists, use it (so hashing is consistent). Otherwise use model data & sha256.
+            if svc:
+                user = next((u for u in svc.model.get_all_users_list() if u["username"] == username), None)
+                if not user:
+                    return jsonify(StatusDTO(status="error", reason="unknown user").to_dict()), 404
+                # compare hashes
+                if svc.hash_password(password) != user.get("password_hash"):
+                    return jsonify(StatusDTO(status="error", reason="invalid credentials").to_dict()), 401
+            else:
+                # fallback read from model directly
+                user = next((u for u in self.model.get_all_users_list() if u["username"] == username), None)
+                if not user:
+                    return jsonify(StatusDTO(status="error", reason="unknown user").to_dict()), 404
+                import hashlib
+                if hashlib.sha256(password.encode()).hexdigest() != user.get("password_hash"):
+                    return jsonify(StatusDTO(status="error", reason="invalid credentials").to_dict()), 401
+
+            # success: frontend is expected to store username locally and send X-User later
+            return jsonify({"status": "ok", "username": username})
+        flask_app.add_url_rule("/security/login", endpoint="security_login", view_func=_login, methods=["POST"])

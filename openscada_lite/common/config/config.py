@@ -203,3 +203,10 @@ class Config:
                         (fname, elem.attrib.get("id"), anim)
                     )
         return datapoint_map
+    
+    def get_security_config_path(self) -> str:
+        """
+        Returns the absolute path to security_config.json in the config folder.
+        """
+        config_dir = os.path.dirname(self._config_path) if hasattr(self, "_config_path") else os.getcwd()
+        return os.path.join(config_dir, "security_config.json")

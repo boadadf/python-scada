@@ -1,28 +1,32 @@
+<!-- security/groups.html -->
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="utf-8"/>
+  <meta charset="utf-8">
   <title>Groups</title>
-  <script src="/socket.io/socket.io.js"></script>
 </head>
 <body>
-<h2>Groups</h2>
+  <h2>Groups</h2>
 
-<form id="createGroupForm">
-  <input id="groupName" placeholder="Group name" required />
-  <button type="submit">Create Group</button>
-</form>
+  <form id="createGroupForm">
+    <input id="groupName" placeholder="Group name" required />
+    <button type="submit">Create Group</button>
+  </form>
 
-<h3>Existing Groups</h3>
-<ul id="groupList"></ul>
+  <h3>Existing Groups</h3>
+  <ul id="groupList"></ul>
 
 <script>
-const socket = io();
+async function fetchGroups() {
+  const r = await fetch('/security/groups');
+  return r.ok ? await r.json() : [];
+}
+async function fetchEndpoints() {
+  const r = await fetch('/security/endpoints');
+  return r.ok ? await r.json() : [];
+}
 
-function fetchGroups() { socket.emit("security_get_groups"); }
-function fetchEndpoints() { socket.emit("security_get_endpoints"); }
-
-socket.on("security_groups", (groups) => {
+function renderGroups(groups) {
   const list = document.getElementById("groupList");
   list.innerHTML = "";
   groups.forEach(g => {
@@ -34,31 +38,51 @@ socket.on("security_groups", (groups) => {
     li.appendChild(editBtn);
     list.appendChild(li);
   });
-});
+}
 
-socket.on("security_endpoints", (endpoints) => {
-  window._security_endpoints = endpoints;
-});
+async function init() {
+  const g = await fetchGroups();
+  renderGroups(g);
+  window._endpoints = await fetchEndpoints();
+}
 
-function showEditPermissions(groupName, currentPermissions) {
-  fetchEndpoints();
-  const available = window._security_endpoints || [];
+document.getElementById("createGroupForm").onsubmit = async (e) => {
+  e.preventDefault();
+  const name = document.getElementById("groupName").value;
+  const resp = await fetch('/security/groups', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, permissions: [] })
+  });
+  if (resp.ok) {
+    document.getElementById("groupName").value = "";
+    const groups = await fetchGroups();
+    renderGroups(groups);
+  } else {
+    alert('Create group failed: ' + (await resp.text()));
+  }
+};
+
+async function showEditPermissions(groupName, currentPermissions) {
+  window._endpoints = await fetchEndpoints();
+  const available = window._endpoints || [];
   const newPerms = prompt("Permissions (comma separated). Available: " + available.join(", "), currentPermissions.join(", "));
-  if (newPerms !== null) {
-    const perms = newPerms.split(",").map(s => s.trim()).filter(Boolean);
-    socket.emit("security_update_group", { name: groupName, permissions: perms });
+  if (newPerms === null) return;
+  const perms = newPerms.split(",").map(s => s.trim()).filter(Boolean);
+  const resp = await fetch(`/security/groups/${encodeURIComponent(groupName)}/permissions`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ permissions: perms })
+  });
+  if (resp.ok) {
+    const groups = await fetchGroups();
+    renderGroups(groups);
+  } else {
+    alert('Update failed: ' + (await resp.text()));
   }
 }
 
-document.getElementById("createGroupForm").onsubmit = (e) => {
-  e.preventDefault();
-  const name = document.getElementById("groupName").value;
-  socket.emit("security_create_group", { name, permissions: [] });
-  document.getElementById("groupName").value = "";
-};
-
-fetchEndpoints();
-fetchGroups();
+init();
 </script>
 </body>
 </html>

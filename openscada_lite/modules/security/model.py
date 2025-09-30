@@ -5,39 +5,48 @@ import threading
 import copy
 from typing import List
 
+from flask import Flask, app
+
+from openscada_lite.common.config.config import Config
+
 class SecurityModel:
     """
-    Stores users and groups in a JSON file and keeps an in-memory copy.
+    Stores users and groups from a config dict and keeps an in-memory copy.
     """
 
-    def __init__(self, file_path: str = "security.json"):
-        self.file_path = file_path
+    def __init__(self, flask_app: Flask = None):
         self._lock = threading.RLock()
-        self._data = {"users": [], "groups": []}
+        self.file_path = Config.get_instance().get_security_config_path()
         self._load()
+        self.endpoints = set()  # registered endpoint names
+        self.app = flask_app
+        if self.app:
+            self._load_endpoints()
 
-    # ---------------- Persistence ----------------
-    def _load(self) -> None:
+    def _load_endpoints(self):
+        """Scan Flask app for all registered POST endpoint names."""
+        print("[SecurityModel] Scanning Flask app for POST endpoints...")
         with self._lock:
-            if not os.path.exists(self.file_path):
-                self._save()
-                return
-            try:
-                with open(self.file_path, "r", encoding="utf-8") as f:
-                    self._data = json.load(f)
-                self._data.setdefault("users", [])
-                self._data.setdefault("groups", [])
-            except Exception:
-                self._data = {"users": [], "groups": []}
+            self.endpoints = set(
+                rule.endpoint
+                for rule in self.app.url_map.iter_rules()
+                if "POST" in rule.methods
+            )
+            for rule in self.app.url_map.iter_rules():
+                if "POST" in rule.methods:
+                    print(f"Rule: {rule} endpoint: {rule.endpoint} methods: {rule.methods}")
 
-    def _save(self) -> None:
-        with self._lock:
-            tmp_path = f"{self.file_path}.tmp"
-            with open(tmp_path, "w", encoding="utf-8") as f:
-                json.dump(self._data, f, indent=2)
-                f.flush()
-                os.fsync(f.fileno())
-            os.replace(tmp_path, self.file_path)
+    def _load(self):
+        if os.path.exists(self.file_path):
+            with open(self.file_path) as f:
+                self._data = json.load(f)
+        else:
+            self._data = {"users": [], "groups": []}
+            self._save()
+
+    def _save(self):
+        with open(self.file_path, "w") as f:
+            json.dump(self._data, f, indent=2)
 
     # ---------------- Users API ----------------
     def get_all_users_list(self) -> List[dict]:
@@ -90,3 +99,9 @@ class SecurityModel:
                     self._save()
                     return
             raise KeyError(f"Unknown group: {name}")
+
+    def get_end_points(self) -> List[str]:
+        """
+        Returns a list of all unique endpoint names from all groups.
+        """
+        return sorted(list(self.endpoints))

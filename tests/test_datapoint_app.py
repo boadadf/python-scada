@@ -13,6 +13,12 @@ import requests
 
 SERVER_URL = "http://localhost:5000"
 
+@pytest.fixture(autouse=True)
+def ensure_svg_folder_exists():
+    svg_dir = os.path.abspath("config/svg")
+    if not os.path.exists(svg_dir):
+        os.makedirs(svg_dir)
+
 @pytest.fixture(scope="module", autouse=True)
 def run_server():
     # Start the Flask app in a background thread

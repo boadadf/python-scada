@@ -122,7 +122,6 @@ class RuleEngine:
                 on_result = self.asteval(rule.on_condition.replace("@", "__"))
                 if self.asteval.error:
                     print("asteval errors:", self.asteval.error)
-                print("Result:", on_result)
                 has_off = getattr(rule, "off_condition", None) is not None
                 off_result = False
                 if has_off:
@@ -136,12 +135,12 @@ class RuleEngine:
                 if not on_active and on_result:
                     self.rule_states[rule_id] = True
                     for action in getattr(rule, "on_actions", []):
-                        await self.execute_action(action, tag_id, msg.track_id, active=True)
+                        await self.execute_action(action, tag_id, msg.track_id, active=True, rule_id=rule_id)
                 # OFF transition: only if currently active
                 elif on_active and off_result:
                     self.rule_states[rule_id] = False
                     for action in getattr(rule, "off_actions", []):
-                        await self.execute_action(action, tag_id, msg.track_id, active=False)
+                        await self.execute_action(action, tag_id, msg.track_id, active=False, rule_id=rule_id)
             else:
                 print(f"[RuleEngine] Rule {rule_id} has no off_condition.")
                 # Only trigger on rising edge (transition from false to true)
@@ -150,14 +149,14 @@ class RuleEngine:
                     print(f"[RuleEngine] Rule {rule_id} on_condition transitioned to true; executing on_actions.")
                     self.rule_states[rule_id] = True
                     for action in getattr(rule, "on_actions", []):
-                        await self.execute_action(action, tag_id, msg.track_id, active=True)
+                        await self.execute_action(action, tag_id, msg.track_id, active=True, rule_id=rule_id)
                 elif prev_active and not on_result:
                     # Reset state so next true will trigger again
                     self.rule_states[rule_id] = False
                     # If raise_alarm is in on_actions, trigger lower_alarm automatically
                     if any("raise_alarm" in action for action in getattr(rule, "on_actions", [])):
                         print(f"[RuleEngine] Rule {rule_id} on_condition transitioned to false; executing lower_alarm.")
-                        await self.execute_action("lower_alarm()", tag_id, msg.track_id, active=False)
+                        await self.execute_action("lower_alarm()", tag_id, msg.track_id, active=False, rule_id=rule_id)
 
     def parse_action(self, action_str):
         """
@@ -176,14 +175,14 @@ class RuleEngine:
         params = eval(f"({params_str},)") if params_str else ()
         return action_name, params
 
-    async def execute_action(self, action_str, identifier, track_id, active=True):
+    async def execute_action(self, action_str, identifier, track_id, active=True, rule_id=None):
         print(f"[RuleEngine] Executing action: {action_str} for {identifier} (active={active})")
         """
         Execute an action by looking up its handler and calling it.
 
         Args:
             action_str (str): The action string to execute.
-            tag_id (str): The tag that triggered the rule.
+            identifier (str): The tag that triggered the rule.
             active (bool): Whether this is an 'on' or 'off' action.
             track_id (str): The track ID associated with the action.
         """
@@ -191,6 +190,6 @@ class RuleEngine:
         handler: Action = ACTION_MAP.get(action_name)
         if handler:
             # Pass self (engine), identifier, params tuple
-            await handler(identifier, params, track_id=track_id)
+            await handler(identifier, params, track_id=track_id, rule_id=rule_id)
         else:
             raise ValueError(f"Unknown action: {action_name}")

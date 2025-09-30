@@ -1,15 +1,14 @@
 # openscada_lite/modules/security/security_service.py
 import hashlib
 from typing import Optional, List
-from openscada_lite.modules.base.base_service import BaseService
-from .model import SecurityModel
+from openscada_lite.modules.security.model import SecurityModel
 
-class SecurityService(BaseService):
+class SecurityService:
     _instance: Optional["SecurityService"] = None
 
-    def __init__(self, event_bus, model: SecurityModel, controller):
-        super().__init__(event_bus, model, controller, dict, dict, dict)
+    def __init__(self, event_bus, model: SecurityModel):
         SecurityService._instance = self
+        self.model = model
         self._endpoints = set()  # registered endpoint names
 
     @classmethod
@@ -48,11 +47,3 @@ class SecurityService(BaseService):
             if group and endpoint_name in group.get("permissions", []):
                 return True
         return False
-
-    # ---------------- Endpoints ----------------
-    def register_endpoint(self, endpoint_name: str) -> None:
-        """Controllers call this to register their send_* endpoint names."""
-        self._endpoints.add(endpoint_name)
-
-    def get_available_endpoints(self) -> list:
-        return sorted(list(self._endpoints))

@@ -1,0 +1,37 @@
+{
+  "users": [
+    {
+      "username": "alice",
+      "password_hash": "2bb80d537b1da3e38bd30361aa855686bde0eacd7162fef6a25fe97bf527a25b",
+      "groups": [
+        "admin"
+      ]
+    },
+    {
+      "username": "bob",
+      "password_hash": "30c952fab122c3f9759f02a6d95c3758b246b4fee239957b2d4fee46e26170c4",
+      "groups": [
+        "admin"
+      ]
+    },
+    {
+      "username": "carol",
+      "password_hash": "30c952fab122c3f9759f02a6d95c3758b246b4fee239957b2d4fee46e26170c4",
+      "groups": []
+    }
+  ],
+  "groups": [
+    {
+      "name": "admin",
+      "permissions": [
+        "security_get_users"
+      ]
+    },
+    {
+      "name": "operator",
+      "permissions": [
+        "security_create_user"
+      ]
+    }
+  ]
+}

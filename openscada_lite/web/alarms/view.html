@@ -11,6 +11,7 @@
     <table id="alarm-table">
         <thead>
             <tr>
+                <th>Rule ID</th>
                 <th>Datapoint</th>
                 <th>Activation Time</th>
                 <th>Deactivation Time</th>
@@ -47,6 +48,7 @@
                 row = document.createElement('tr');
                 row.id = rowId;
                 row.innerHTML = `
+                    <td>${alarm.rule_id || 'N/A'}</td>
                     <td>${alarm.datapoint_identifier}</td>
                     <td class="activation_time"></td>
                     <td class="deactivation_time"></td>

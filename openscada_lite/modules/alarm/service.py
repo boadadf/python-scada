@@ -41,6 +41,7 @@ class AlarmService(BaseService[Union[RaiseAlarmMsg, LowerAlarmMsg], AckAlarmMsg,
                 activation_time=msg_raise.timestamp,
                 deactivation_time=None,
                 acknowledge_time=None,
+                rule_id=msg_raise.rule_id
             )
         #Lower can only set deactivation time
         elif isinstance(msg, LowerAlarmMsg):

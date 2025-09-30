@@ -70,6 +70,7 @@ def test_handle_connect_driver_valid_status():
     # Check service and emit calls
     controller.service.handle_controller_message.assert_called_once_with(data)
 
+
 def test_handle_connect_driver_invalid_status():
     from openscada_lite.modules.communication.controller import CommunicationController
     from flask import Flask
@@ -205,6 +206,7 @@ async def test_driver_publishes_disconnected_status_on_start():
     await connector_manager.stop_all()
 
 def test_emit_communication_status_sets_unknown(monkeypatch):
+    # Patch Config.get_instance as before
     class DummyConfig:
         def get_datapoint_types_for_driver(self, driver_name, types):
             if driver_name == "TestDriver":
@@ -218,18 +220,21 @@ def test_emit_communication_status_sets_unknown(monkeypatch):
 
     monkeypatch.setattr("openscada_lite.common.config.config.Config.get_instance", lambda: DummyConfig())
 
-    # Set the EventBus singleton to DummyEventBus
-    from openscada_lite.common.bus.event_bus import EventBus
-    EventBus._instance = DummyEventBus()
-
     bus = EventBus.get_instance()
+    published = []
+
+    async def fake_publish(self, event_type, data):
+        published.append((event_type, data))
+
+    monkeypatch.setattr(EventBus, "publish", fake_publish)
+
     manager = ConnectorManager(bus)
     manager.driver_status["TestDriver"] = "online"
     status = DriverConnectStatus(driver_name="TestDriver", status="offline")
     import asyncio
     asyncio.run(manager.emit_communication_status(status))
 
-    raw_updates = [d for e, d in bus.published if e == EventType.RAW_TAG_UPDATE]
+    raw_updates = [d for e, d in published if e == EventType.RAW_TAG_UPDATE]
     assert len(raw_updates) == 2
     for msg in raw_updates:
         assert isinstance(msg, RawTagUpdateMsg)
@@ -239,3 +244,12 @@ def test_emit_communication_status_sets_unknown(monkeypatch):
             assert msg.value == 0.0
         elif msg.datapoint_identifier.endswith("PUMP"):
             assert msg.value == "CLOSED"
+
+@pytest.fixture
+def dummy_event_bus():
+    class DummyEventBus:
+        async def publish(self, event_type, data):
+            pass
+        def subscribe(self, event_type, handler):
+            pass
+    return DummyEventBus()

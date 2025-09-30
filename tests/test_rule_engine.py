@@ -123,7 +123,7 @@ async def test_multiple_actions():
     assert alarms[0].datapoint_identifier == "Server1@pressure"
 
 @pytest.mark.asyncio
-async def test_on_action_triggers_every_time_without_off():
+async def test_on_action_triggers_twice_only_onc_alarm():
     test_bus = EventBus.get_instance()
     engine = RuleEngine.get_instance()
     engine.rules = [
@@ -150,6 +150,5 @@ async def test_on_action_triggers_every_time_without_off():
     await test_bus.publish(EventType.TAG_UPDATE, TagUpdateMsg(datapoint_identifier="Server1@level", value=20))
     await asyncio.sleep(0.01)
 
-    assert len(alarms) == 2
+    assert len(alarms) == 1
     assert alarms[0].datapoint_identifier == "Server1@level"
-    assert alarms[1].datapoint_identifier == "Server1@level"

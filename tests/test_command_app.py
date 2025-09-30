@@ -1,4 +1,6 @@
 import os
+
+os.makedirs("svg", exist_ok=True)
 os.environ["SCADA_CONFIG_PATH"] = "tests"
 
 import asyncio
@@ -21,7 +23,7 @@ SERVER_URL = "http://localhost:5000"
 def reset_event_bus(monkeypatch):
     # Reset the singleton before each test
     monkeypatch.setattr(EventBus, "_instance", None)
-    
+
 @pytest.fixture(scope="module", autouse=True)
 def run_server():
     # Start the Flask app in a background thread

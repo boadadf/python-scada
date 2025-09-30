@@ -152,6 +152,7 @@ class CommandFeedbackMsg(DTO):
 class RaiseAlarmMsg(DTO):
     datapoint_identifier: str
     timestamp: datetime.datetime = field(default_factory=datetime.datetime.now)
+    rule_id: Optional[str] = None
 
     @classmethod
     def get_event_type(cls) -> EventType:
@@ -173,6 +174,7 @@ class RaiseAlarmMsg(DTO):
 class LowerAlarmMsg(DTO):
     datapoint_identifier: str
     timestamp: datetime.datetime = field(default_factory=datetime.datetime.now)
+    rule_id: Optional[str] = None
 
     @classmethod
     def get_event_type(cls) -> EventType:
@@ -217,6 +219,7 @@ class AlarmUpdateMsg(DTO):
     activation_time: datetime.datetime
     deactivation_time: Optional[datetime.datetime] = None
     acknowledge_time: Optional[datetime.datetime] = None
+    rule_id: Optional[str] = None
 
     @property
     def alarm_occurrence_id(self) -> str:

@@ -1,0 +1,34 @@
+{
+  "fill_level": {
+    "type": "height_y",
+    "maxHeight": 340,
+    "baseY": 390,
+    "duration": 0.5
+  },
+  "color": {
+    "type": "fill_color",
+    "minValue": 100,
+    "maxValue": 150,
+    "duration": 0.5
+  },
+  "toggle_opened_closed": {
+    "type": "fill_toggle",
+    "map": {
+      "OPENED": "green",
+      "CLOSED": "gray"
+    },
+    "duration": 0.3
+  },
+  "toggle_start_stop": {
+    "type": "fill_toggle",
+    "map": {
+      "STARTED": "green",
+      "STOPPED": "brown"
+    },
+    "duration": 0.3
+  },
+  "level_text": {
+    "type": "text",
+    "duration": 0.2
+  }
+}

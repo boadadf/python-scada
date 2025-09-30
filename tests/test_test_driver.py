@@ -18,9 +18,10 @@ async def test_test_driver_value_callback():
         event.set()  # signal that we got something
     
     driver.register_value_listener(cb)
+    driver.subscribe([Datapoint(name="TANK", type={"default": 0}),Datapoint(name="PUMP", type={"default": "CLOSED"}),Datapoint(name="DOOR", type={"default": "CLOSED"})])
 
     await driver.connect()
-    driver.subscribe([Datapoint(name="TANK", type={"default": 0}),Datapoint(name="PUMP", type={"default": "CLOSED"}),Datapoint(name="DOOR", type={"default": "CLOSED"})])
+    
     
     # Wait until callback fires (instead of blind sleep)
     await asyncio.sleep(2)

@@ -31,7 +31,7 @@ class Utils:
                 color = cfg.get("onColor") if bool(value) else cfg.get("offColor")
             return {"attr": {"fill": color}, "duration": duration}
         elif t == "text":
-            # Use GSAP TextPlugin
+
             return {"text": str(value), "duration": duration}
         else:
             return {"attr": {}, "duration": duration}
