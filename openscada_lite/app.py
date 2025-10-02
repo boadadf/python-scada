@@ -25,7 +25,8 @@ from openscada_lite.common.config.config import Config
 from openscada_lite.core.rule.rule_manager import RuleEngine
 from openscada_lite.common.bus.event_bus import EventBus
 from openscada_lite.core.communications.connector_manager import ConnectorManager
-
+from openscada_lite.web.config_editor.routes import config_bp
+from openscada_lite.web.security_editor import security_bp
 
 # ---------------------------------------------------------------------
 # Flask & SocketIO setup
@@ -35,6 +36,13 @@ app = Flask(
     static_folder="web",
     static_url_path="/static"
 )
+
+
+# Register config editor blueprint
+app.register_blueprint(config_bp)
+
+# Register security editor blueprint
+app.register_blueprint(security_bp)
 
 @app.route('/svg/<path:filename>')
 def serve_svg(filename):
