@@ -1,7 +1,7 @@
 # openscada_lite/modules/security/security_service.py
-import hashlib
 from typing import Optional, List
 from openscada_lite.modules.security.model import SecurityModel
+from openscada_lite.modules.security import utils
 
 class SecurityService:
     _instance: Optional["SecurityService"] = None
@@ -16,26 +16,15 @@ class SecurityService:
         return cls._instance
 
     def hash_password(self, password: str) -> str:
-        return hashlib.sha256(password.encode()).hexdigest()
+        return utils.hash_password(password)
 
-    # ---------------- Users ----------------
-    def create_user(self, username: str, password: str, groups: Optional[List[str]] = None):
-        user = {
-            "username": username,
-            "password_hash": self.hash_password(password),
-            "groups": groups or []
-        }
-        self.model.add_user(user)
-        return user
-
-    # ---------------- Groups ----------------
-    def create_group(self, name: str, permissions: Optional[List[str]] = None):
-        group = {
-            "name": name,
-            "permissions": permissions or []
-        }
-        self.model.add_group(group)
-        return group
+    def authenticate_user(self, username: str, password: str) -> Optional[str]:
+        user = next((u for u in self.model.get_all_users_list() if u["username"] == username), None)
+        if not user:
+            return None
+        if user["password_hash"] != utils.hash_password(password):
+            return None
+        return utils.create_jwt(username)
 
     def is_allowed(self, username: str, endpoint_name: str) -> bool:
         """Check if the given username has permission for the endpoint."""

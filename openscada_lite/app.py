@@ -26,7 +26,8 @@ from openscada_lite.core.rule.rule_manager import RuleEngine
 from openscada_lite.common.bus.event_bus import EventBus
 from openscada_lite.core.communications.connector_manager import ConnectorManager
 from openscada_lite.web.config_editor.routes import config_bp
-from openscada_lite.web.security_editor import security_bp
+from openscada_lite.web.security_editor.routes import security_bp
+from openscada_lite.web.scada.routes import scada_bp
 
 # ---------------------------------------------------------------------
 # Flask & SocketIO setup
@@ -37,6 +38,8 @@ app = Flask(
     static_url_path="/static"
 )
 
+# Register security blueprint
+app.register_blueprint(scada_bp)
 
 # Register config editor blueprint
 app.register_blueprint(config_bp)
