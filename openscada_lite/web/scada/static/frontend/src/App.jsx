@@ -58,13 +58,14 @@ function PrivateApp() {
         ))}
       </div>
       <Suspense fallback={<div style={{padding: 40, textAlign: "center"}}>Loading...</div>}>
-        {TABS.map(tab =>
-          activeTab === tab.key ? (
-            <div key={tab.key} className="tab-content active">
-              <tab.Component />
-            </div>
-          ) : null
-        )}
+        {TABS.map(tab => (
+          <div
+            key={tab.key}
+            className={activeTab === tab.key ? "tab-content active" : "tab-content"}
+          >
+            <tab.Component />
+          </div>
+        ))}
       </Suspense>
     </div>
   );
@@ -81,7 +82,6 @@ function RequireAuth({ children }) {
 
 export default function App() {
   const [route, setRoute] = useState(window.location.pathname);
-  console.log(route);
   if (route === "/scada/login") {
     return (
       <AuthProvider>

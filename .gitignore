@@ -11,5 +11,9 @@ node_modules/
 npm-debug.log
 package-lock.json
 
-# React build
-static/frontend/dist/
+web/*/static/frontend/dist/
+web/*/static/frontend/node_modules/
+web/*/static/frontend/package-lock.json
+
+# If you want to ignore all dist folders everywhere (recursive)
+**/dist/

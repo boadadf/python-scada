@@ -2,6 +2,12 @@ import React, { useState, useEffect } from "react";
 import Table from "./Table";
 import { sha256 } from "js-sha256";
 
+const ALL_APPS = [
+  { value: "scada", label: "SCADA" },
+  { value: "security_editor", label: "Security Editor" },
+  { value: "config_editor", label: "System Config Editor" }
+];
+
 export default function UsersTab({ config, setConfig }) {
   const [selected, setSelected] = useState(null);
   const [passwordInput, setPasswordInput] = useState(""); // local state for password
@@ -20,7 +26,7 @@ export default function UsersTab({ config, setConfig }) {
     if (!password) return;
     const password_hash = sha256(password);
     const copy = JSON.parse(JSON.stringify(config));
-    copy.users.push({ username, password_hash, groups: [] });
+    copy.users.push({ username, password_hash, groups: [], allowed_apps: [] });
     setConfig(copy);
     setSelected(copy.users.length - 1);
   }
@@ -40,9 +46,20 @@ export default function UsersTab({ config, setConfig }) {
     setConfig(copy);
   }
 
-  function updateGroups(groupsArr) {
+  function toggleAllowedApp(appValue) {
     const copy = JSON.parse(JSON.stringify(config));
-    copy.users[selected].groups = groupsArr;
+    const allowed = copy.users[selected].allowed_apps || [];
+    if (allowed.includes(appValue)) {
+      copy.users[selected].allowed_apps = allowed.filter(a => a !== appValue);
+    } else {
+      copy.users[selected].allowed_apps = [...allowed, appValue];
+    }
+    setConfig(copy);
+  }
+
+  function setSingleGroup(groupName) {
+    const copy = JSON.parse(JSON.stringify(config));
+    copy.users[selected].groups = [groupName];
     setConfig(copy);
   }
 
@@ -82,13 +99,41 @@ export default function UsersTab({ config, setConfig }) {
               />
               <button type="button" onClick={setPassword}>Set</button>
             </div>
-            <label>Groups:</label>
-            <select multiple value={users[selected].groups || []} onChange={e => {
-              const opts = Array.from(e.target.selectedOptions).map(o => o.value);
-              updateGroups(opts);
-            }}>
-              {groups.map(g => <option key={g.name} value={g.name}>{g.name}</option>)}
-            </select>
+            <label>Group:</label>
+            <table style={{ width: "100%", background: "#fafaff", borderCollapse: "collapse" }}>
+              <tbody>
+                {groups.map(g => (
+                  <tr key={g.name}>
+                    <td>
+                      <input
+                        type="radio"
+                        name="user-group"
+                        checked={users[selected].groups && users[selected].groups[0] === g.name}
+                        onChange={() => setSingleGroup(g.name)}
+                      />
+                    </td>
+                    <td>{g.name}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <label>Allowed Apps:</label>
+            <table style={{ width: "100%", background: "#fafaff", borderCollapse: "collapse" }}>
+              <tbody>
+                {ALL_APPS.map(app => (
+                  <tr key={app.value}>
+                    <td>
+                      <input
+                        type="checkbox"
+                        checked={users[selected].allowed_apps && users[selected].allowed_apps.includes(app.value)}
+                        onChange={() => toggleAllowedApp(app.value)}
+                      />
+                    </td>
+                    <td>{app.label}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       )}

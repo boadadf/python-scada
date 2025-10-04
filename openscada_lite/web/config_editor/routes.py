@@ -1,5 +1,7 @@
 import os
 import json
+import sys
+import threading
 from flask import jsonify, request, render_template
 from . import config_bp
 
@@ -19,13 +21,17 @@ def save_config():
         json.dump(config, f, indent=2)
     return jsonify({"status": "ok"})
 
-@config_bp.route("/api/reload", methods=["POST"])
-def reload_modules():
-    try:
-        # reload_all_modules()
-        return jsonify({"status": "ok", "message": "Modules reloaded!"})
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+@config_bp.route("/api/restart", methods=["POST"])
+def restart_app():
+    def do_restart():
+        print("[RESTART] Restarting OpenSCADA-Lite process as 'python -m openscada_lite.app' ...")
+        project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../.."))
+        os.chdir(project_root)
+        python = sys.executable
+        # Use '-m openscada_lite.app' instead of the script path
+        os.execl(python, python, "-m", "openscada_lite.app", *sys.argv[1:])
+    threading.Thread(target=do_restart).start()
+    return jsonify({"message": "Restarting OpenSCADA-Lite..."}), 200
 
 @config_bp.route("/")
 def editor():

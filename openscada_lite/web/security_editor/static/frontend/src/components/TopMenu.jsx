@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useAuth } from "login";
 
-export default function TopMenu({ onLoad, onSave }) {
+export default function TopMenu({ onLoad, onSave, dirty = false }) {
   const [open, setOpen] = useState(false);
   const menuRef = useRef();
   const { logout } = useAuth();
@@ -16,6 +16,12 @@ export default function TopMenu({ onLoad, onSave }) {
   }, [open]);
 
   function handleLogout() {
+    if (dirty) {
+      if (!window.confirm("You have unsaved changes. Are you sure you want to logout?")) {
+        setOpen(false);
+        return;
+      }
+    }
     logout();
     window.location.reload();
   }
@@ -41,7 +47,8 @@ export default function TopMenu({ onLoad, onSave }) {
             fontWeight: 'bold',
             fontSize: 16,
             cursor: 'pointer',
-            padding: '4px 12px'
+            padding: '4px 12px',
+            color: '#222' // Dark color for visibility
           }}
           onClick={() => setOpen(v => !v)}
         >

@@ -43,15 +43,15 @@ class SecurityController:
             data = request.json or {}
             username = data.get("username")
             password = data.get("password")
-            if not username or not password:
-                return jsonify(StatusDTO(status="error", reason="username & password required").to_dict()), 400
+            app_name = data.get("app") or request.args.get("app")
+            if not username or not password or not app_name:
+                return jsonify(StatusDTO(status="error", reason="username & password & app required").to_dict()), 400
 
             # Verify credentials
-            answer = self.service.authenticate_user(username, password)
-            if not answer:
-                return jsonify(StatusDTO(status="error", reason="Invalid credentials").to_dict()), 401
-            else:
-                return jsonify({"status": "ok", "username": username, "token": answer})
+            token = self.service.authenticate_user(username, password, app_name)
+            if not token:
+                return jsonify({"error": "Unauthorized"}), 401
+            return jsonify({"token": token, "user": username})
 
         @flask_app.route("/security-editor/api/config", methods=["GET"])
         def get_security_config():

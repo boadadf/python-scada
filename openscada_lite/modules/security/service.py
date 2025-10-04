@@ -18,13 +18,25 @@ class SecurityService:
     def hash_password(self, password: str) -> str:
         return utils.hash_password(password)
 
-    def authenticate_user(self, username: str, password: str) -> Optional[str]:
+    def authenticate_user(self, username: str, password: str, app_name: Optional[str] = None) -> Optional[str]:
         user = next((u for u in self.model.get_all_users_list() if u["username"] == username), None)
         if not user:
             return None
         if user["password_hash"] != utils.hash_password(password):
             return None
+        if app_name and not self.can_login_to(username, app_name):
+            return None
         return utils.create_jwt(username)
+    
+    def can_login_to(self, username: str, app_name: str) -> bool:
+        user = next((u for u in self.model.get_all_users_list() if u["username"] == username), None)
+        if not user:
+            return False
+        allowed = user.get("allowed_apps")
+        if allowed is None:
+            # If not set, allow all apps (or deny, as you prefer)
+            return True
+        return app_name in allowed    
 
     def is_allowed(self, username: str, endpoint_name: str) -> bool:
         """Check if the given username has permission for the endpoint."""

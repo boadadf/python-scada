@@ -1,17 +1,37 @@
 {
-  "users": [
-    {
-      "username": "test",
-      "password_hash": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
-      "groups": []
-    }
-  ],
   "groups": [
     {
-      "name": "test_group",
+      "name": "all_group",
       "permissions": [
-        "alarm_send_ackalarmmsg"
+        "alarm_send_ackalarmmsg",
+        "command_send_sendcommandmsg",
+        "communication_send_driverconnectcommand",
+        "config_bp.reload_modules",
+        "config_bp.save_config",
+        "datapoint_send_rawtagupdatemsg",
+        "security_bp.reload_security",
+        "security_bp.save_config"
       ]
+    }
+  ],
+  "users": [
+    {
+      "groups": [
+        "test_group"
+      ],
+      "password_hash": "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918",
+      "username": "admin"
+    },
+    {
+      "allowed_apps": [
+        "security_editor",
+        "config_editor"
+      ],
+      "groups": [
+        "test_group"
+      ],
+      "password_hash": "bbdda550319287f2dfa031ab9c67a181b6886cad91b645c04c29c773a537c3c2",
+      "username": "dani"
     }
   ]
 }

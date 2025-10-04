@@ -1,96 +1,211 @@
 {
- "modules": [
-  { "name": "alarm" },
-  { "name": "command" },
-  { "name": "communication" },
-  { "name": "datapoint" },
-  { "name": "animation" },
-  { "name": "tracking",
-    "config": {
-      "mode": "file",  
-      "file_path": "flow_events.log"
-    }
-  }
-],
   "dp_types": {
-    "LEVEL":      { "type": "float", "min": 0, "max": 100, "default": 0.0 },
-    "OPENED_CLOSED":     { "type": "enum", "values": ["OPENED", "CLOSED"], "default": "CLOSED" },
-    "OPEN_CLOSE_CMD": { "type": "enum", "values": ["OPEN", "CLOSE", "TOGGLE"], "default": "CLOSE" },
-    "START_STOP":      { "type": "enum", "values": ["STARTED", "STOPPED"], "default": "STOPPED" },
-    "START_STOP_CMD":      { "type": "enum", "values": ["START", "STOP", "TOGGLE"], "default": "STOP" },
-    "PRESSURE":   { "type": "float", "min": 0, "max": 200, "default": 50.0 },
-    "TEMPERATURE":{ "type": "float", "min": 100, "max": 150, "default": 120.0 }
+    "LEVEL": {
+      "default": 0,
+      "max": 100,
+      "min": 0,
+      "type": "float"
+    },
+    "OPENED_CLOSED": {
+      "default": "CLOSED",
+      "type": "enum",
+      "values": [
+        "OPENED",
+        "CLOSED"
+      ]
+    },
+    "OPEN_CLOSE_CMD": {
+      "default": "CLOSE",
+      "type": "enum",
+      "values": [
+        "OPEN",
+        "CLOSE",
+        "TOGGLE"
+      ]
+    },
+    "PRESSURE": {
+      "default": 50,
+      "max": 200,
+      "min": 0,
+      "type": "float"
+    },
+    "START_STOP": {
+      "default": "STOPPED",
+      "type": "enum",
+      "values": [
+        "STARTED",
+        "STOPPED"
+      ]
+    },
+    "START_STOP_CMD": {
+      "default": "STOP",
+      "type": "enum",
+      "values": [
+        "START",
+        "STOP",
+        "TOGGLE"
+      ]
+    },
+    "TEMPERATURE": {
+      "default": 120,
+      "max": 150,
+      "min": 100,
+      "type": "enum"
+    },
+    "TRAIN_SWITCH": {
+      "default": "STRAIGHT",
+      "max": 100,
+      "min": 0,
+      "type": "enum",
+      "values": [
+        "STRAIGHT",
+        "TURN"
+      ]
+    }
   },
   "drivers": [
     {
-      "name": "Server1",
-      "driver_class": "TankTestDriver",
-      "connection_info": { "server_name": "Server1" },
-      "datapoints": [
-        { "name": "TANK", "type": "LEVEL" },
-        { "name": "PUMP", "type": "OPENED_CLOSED" },
-        { "name": "DOOR", "type": "OPENED_CLOSED" },
-        { "name": "TEST", "type": "START_STOP" }
-      ],
       "command_datapoints": [
-        { "name": "PUMP_CMD", "type": "OPEN_CLOSE_CMD" },
-        { "name": "DOOR_CMD", "type": "OPEN_CLOSE_CMD" },
-        { "name": "TEST_CMD", "type": "START_STOP_CMD" }
-      ]
+        {
+          "name": "PUMP_CMD",
+          "type": "OPEN_CLOSE_CMD"
+        },
+        {
+          "name": "DOOR_CMD",
+          "type": "OPEN_CLOSE_CMD"
+        },
+        {
+          "name": "TEST_CMD",
+          "type": "START_STOP_CMD"
+        }
+      ],
+      "connection_info": {
+        "server_name": "Server1"
+      },
+      "datapoints": [
+        {
+          "name": "TANK",
+          "type": "LEVEL"
+        },
+        {
+          "name": "PUMP",
+          "type": "OPENED_CLOSED"
+        },
+        {
+          "name": "DOOR",
+          "type": "OPENED_CLOSED"
+        },
+        {
+          "name": "TEST",
+          "type": "START_STOP"
+        }
+      ],
+      "driver_class": "TankTestDriver",
+      "name": "Server1"
     },
     {
-      "name": "Server2",
-      "driver_class": "BoilerTestDriver",
-      "connection_info": { "server_name": "Server2" },
-      "datapoints": [
-        { "name": "VALVE", "type": "OPENED_CLOSED" },
-        { "name": "PRESSURE", "type": "PRESSURE" },
-        { "name": "TEMPERATURE", "type": "TEMPERATURE" },
-        { "name": "HEATER", "type": "OPENED_CLOSED" },
-        { "name": "TEST", "type": "START_STOP" }
-      ],
       "command_datapoints": [
-        { "name": "VALVE_CMD", "type": "OPENED_CLOSED_CMD" },
-        { "name": "HEATER_CMD", "type": "OPEN_CLOSE_CMD" },
-        { "name": "TEST_CMD", "type": "START_STOP_CMD" }      
-      ]
+        {
+          "name": "VALVE_CMD",
+          "type": "OPENED_CLOSED_CMD"
+        },
+        {
+          "name": "HEATER_CMD",
+          "type": "OPEN_CLOSE_CMD"
+        },
+        {
+          "name": "TEST_CMD",
+          "type": "START_STOP_CMD"
+        }
+      ],
+      "connection_info": {
+        "server_name": "Server2"
+      },
+      "datapoints": [
+        {
+          "name": "VALVE",
+          "type": "OPENED_CLOSED"
+        },
+        {
+          "name": "PRESSURE",
+          "type": "PRESSURE"
+        },
+        {
+          "name": "TEMPERATURE",
+          "type": "TEMPERATURE"
+        },
+        {
+          "name": "HEATER",
+          "type": "OPENED_CLOSED"
+        },
+        {
+          "name": "TEST",
+          "type": "START_STOP"
+        }
+      ],
+      "driver_class": "BoilerTestDriver",
+      "name": "Server2"
+    }
+  ],
+  "modules": [
+    {
+      "name": "alarm"
+    },
+    {
+      "name": "command"
+    },
+    {
+      "name": "communication"
+    },
+    {
+      "name": "datapoint"
+    },
+    {
+      "name": "animation"
+    },
+    {
+      "config": {
+        "p1": "file",
+        "p2": "flow_events.log"
+      },
+      "name": "tracking"
     }
   ],
   "rules": [
     {
-      "rule_id": "close_valve_if_high",
-      "on_condition": "Server2@PRESSURE > 100",
+      "off_actions": [
+        "lower_alarm()"
+      ],
+      "off_condition": "Server2@PRESSURE < 80",
       "on_actions": [
         "send_command('Server2@VALVE', 0)",
         "raise_alarm()"
       ],
-      "off_condition": "Server2@PRESSURE < 80",
-      "off_actions": [
-        "lower_alarm()"
-      ]
+      "on_condition": "Server2@PRESSURE > 100",
+      "rule_id": "close_valve_if_high"
     },
     {
-      "rule_id": "pump_start_if_low_level",
-      "on_condition": "float(Server1@TANK) < 10",
       "on_actions": [
         "send_command('Server1@PUMP_CMD', 'OPEN')",
         "send_command('Server1@DOOR_CMD', 'CLOSE')",
         "raise_alarm()"
-      ]
+      ],
+      "on_condition": "float(Server1@TANK) < 10",
+      "rule_id": "pump_start_if_low_level"
     },
     {
-      "rule_id": "door_open_alarm",
+      "on_actions": [
+        "raise_alarm()"
+      ],
       "on_condition": "Server1@DOOR == OPENED",
-      "on_actions": [
-        "raise_alarm()"
-      ]
+      "rule_id": "door_open_alarm"
     },
     {
-      "rule_id": "temperature_high_warning",
-      "on_condition": "Server2@TEMPERATURE > 80",
       "on_actions": [
         "raise_alarm()"
-      ]
+      ],
+      "on_condition": "Server2@TEMPERATURE > 80",
+      "rule_id": "temperature_high_warning"
     }
   ]
 }

@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect } from "react";
 import { useAuth } from "login";
 
-export default function TopMenu({ onNew, onLoad, onSave, onUpload }) {
+export default function TopMenu({ onLoad, onSave, dirty }) {
   const [open, setOpen] = useState(false);
   const menuRef = useRef();
   const { logout } = useAuth();
@@ -15,6 +15,12 @@ export default function TopMenu({ onNew, onLoad, onSave, onUpload }) {
   }, [open]);
 
   function handleLogout() {
+    if (dirty) {
+      if (!window.confirm("You have unsaved changes. Are you sure you want to logout?")) {
+        setOpen(false);
+        return;
+      }
+    }
     logout();
     window.location.reload();
   }
@@ -40,7 +46,8 @@ export default function TopMenu({ onNew, onLoad, onSave, onUpload }) {
             fontWeight: 'bold',
             fontSize: 16,
             cursor: 'pointer',
-            padding: '4px 12px'
+            padding: '4px 12px',
+            color: '#222'
           }}
           onClick={() => setOpen(v => !v)}
         >
@@ -60,20 +67,12 @@ export default function TopMenu({ onNew, onLoad, onSave, onUpload }) {
           }}>
             <div
               style={{ padding: '8px 16px', cursor: 'pointer' }}
-              onClick={() => { setOpen(false); onNew(); }}
-            >New</div>
-            <div
-              style={{ padding: '8px 16px', cursor: 'pointer' }}
               onClick={() => { setOpen(false); onLoad(); }}
             >Load</div>
             <div
               style={{ padding: '8px 16px', cursor: 'pointer' }}
               onClick={() => { setOpen(false); onSave(); }}
             >Save</div>
-            <div
-              style={{ padding: '8px 16px', cursor: 'pointer' }}
-              onClick={() => { setOpen(false); onUpload(); }}
-            >Upload</div>
             <div
               style={{ padding: '8px 16px', cursor: 'pointer', color: '#e53935', borderTop: '1px solid #eee' }}
               onClick={() => { setOpen(false); handleLogout(); }}

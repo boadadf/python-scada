@@ -32,6 +32,7 @@
  */
 
 import React, { useEffect, useState } from "react";
+import "./App.css";
 import TopMenu from "./components/TopMenu";
 import Tabs from "./components/Tabs";
 import UsersTab from "./components/UsersTab";
@@ -40,26 +41,35 @@ import GroupsTab from "./components/GroupsTab";
 // Import from your shared login package
 import { AuthProvider, useAuth, Login } from "login";
 
-const DEFAULT_CONFIG = { users: [], groups: [] };
+const DEFAULT_CONFIG = { users: [], groups: [],  };
 
 function SecureApp() {
   const [config, setConfig] = useState(DEFAULT_CONFIG);
   const [activeTab, setActiveTab] = useState('Users');
   const [dirty, setDirty] = useState(false);
 
-  useEffect(() => { loadConfig(); }, []);
-
-  async function loadConfig() {
+  async function loadConfig(signal) {
     try {
-      const res = await fetch('/security-editor/api/config');
+      const res = await fetch('/security-editor/api/config', { signal });
       if (!res.ok) throw new Error(await res.text());
       const data = await res.json();
       setConfig(data);
       setDirty(false);
     } catch (err) {
+      // Ignore expected aborts
+      if (err.name === "AbortError" || err.name === "TypeError") {
+        return; // silently ignore
+      }
+      alert('Failed to load config: ' + err.name);
       alert('Failed to load config: ' + err.message);
     }
   }
+
+  useEffect(() => {
+    const controller = new AbortController();
+    loadConfig(controller.signal);
+    return () => controller.abort();
+  }, []);
 
   async function saveConfig() {
     try {
@@ -81,12 +91,17 @@ function SecureApp() {
       <TopMenu
         onLoad={loadConfig}
         onSave={saveConfig}
+        dirty={dirty}
       />
       <div style={{ padding: 8 }}>
         <Tabs tabs={['Users', 'Groups']} active={activeTab} onChange={setActiveTab} />
         <div style={{ border: '1px solid #ddd', padding: 8, background: '#fff', flex: 1, overflow: 'auto' }}>
-          {activeTab === 'Users' && <UsersTab config={config} setConfig={c => { setConfig(c); setDirty(true); }} />}
-          {activeTab === 'Groups' && <GroupsTab config={config} setConfig={c => { setConfig(c); setDirty(true); }} />}
+          <div className={activeTab === 'Users' ? 'tab-content active' : 'tab-content'}>
+            <UsersTab config={config} setConfig={c => { setConfig(c); setDirty(true); }} />
+          </div>
+          <div className={activeTab === 'Groups' ? 'tab-content active' : 'tab-content'}>
+            <GroupsTab config={config} setConfig={c => { setConfig(c); setDirty(true); }} />
+          </div>
         </div>
       </div>
       <div style={{ padding: 8, borderTop: '1px solid #ddd', background: '#fafafa' }}>
