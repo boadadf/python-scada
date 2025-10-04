@@ -1,12 +1,11 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { useAuth } from "login";
 
-export default function TopMenu({ onLoad, onSave }) {
+export default function TopMenu({ onNew, onLoad, onSave, onUpload }) {
   const [open, setOpen] = useState(false);
   const menuRef = useRef();
   const { logout } = useAuth();
 
-  // Close menu when clicking outside
   useEffect(() => {
     function handleClick(e) {
       if (menuRef.current && !menuRef.current.contains(e.target)) setOpen(false);
@@ -31,7 +30,7 @@ export default function TopMenu({ onLoad, onSave }) {
       position: 'relative'
     }}>
       <div style={{ fontWeight: 'bold', fontSize: 18, letterSpacing: 1 }}>
-        Security Config Editor
+        SCADA Config Editor
       </div>
       <div ref={menuRef} style={{ position: 'relative' }}>
         <button
@@ -61,12 +60,20 @@ export default function TopMenu({ onLoad, onSave }) {
           }}>
             <div
               style={{ padding: '8px 16px', cursor: 'pointer' }}
+              onClick={() => { setOpen(false); onNew(); }}
+            >New</div>
+            <div
+              style={{ padding: '8px 16px', cursor: 'pointer' }}
               onClick={() => { setOpen(false); onLoad(); }}
             >Load</div>
             <div
               style={{ padding: '8px 16px', cursor: 'pointer' }}
               onClick={() => { setOpen(false); onSave(); }}
             >Save</div>
+            <div
+              style={{ padding: '8px 16px', cursor: 'pointer' }}
+              onClick={() => { setOpen(false); onUpload(); }}
+            >Upload</div>
             <div
               style={{ padding: '8px 16px', cursor: 'pointer', color: '#e53935', borderTop: '1px solid #eee' }}
               onClick={() => { setOpen(false); handleLogout(); }}

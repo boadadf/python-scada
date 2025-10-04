@@ -37,9 +37,12 @@ import Tabs from "./components/Tabs";
 import UsersTab from "./components/UsersTab";
 import GroupsTab from "./components/GroupsTab";
 
+// Import from your shared login package
+import { AuthProvider, useAuth, Login } from "login";
+
 const DEFAULT_CONFIG = { users: [], groups: [] };
 
-export default function App() {
+function SecureApp() {
   const [config, setConfig] = useState(DEFAULT_CONFIG);
   const [activeTab, setActiveTab] = useState('Users');
   const [dirty, setDirty] = useState(false);
@@ -91,4 +94,23 @@ export default function App() {
       </div>
     </div>
   );
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <RequireAuth>
+        <SecureApp />
+      </RequireAuth>
+    </AuthProvider>
+  );
+}
+
+// RequireAuth component
+function RequireAuth({ children }) {
+  const { isAuthenticated } = useAuth();
+  if (!isAuthenticated) {
+    return <Login redirectPath="/security-editor" />;
+  }
+  return children;
 }

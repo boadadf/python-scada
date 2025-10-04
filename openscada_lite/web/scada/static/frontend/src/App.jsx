@@ -1,7 +1,7 @@
 import React, { Suspense, useState, useEffect, useRef } from "react";
-import { AuthProvider, useAuth } from "./context/AuthContext";
 import "./App.css";
-import Login from "./components/Login";
+import TopMenu from "./components/TopMenu";
+import { useAuth, AuthProvider, Login } from "login";
 
 // Lazy load your views for code splitting
 const ImageView = React.lazy(() => import("./components/ImageView"));
@@ -38,6 +38,7 @@ function PrivateApp() {
 
   return (
     <div>
+      <TopMenu />
       <div className="tabs">
         {TABS.map(tab => (
           <button
@@ -80,11 +81,11 @@ function RequireAuth({ children }) {
 
 export default function App() {
   const [route, setRoute] = useState(window.location.pathname);
-
+  console.log(route);
   if (route === "/scada/login") {
     return (
       <AuthProvider>
-        <Login />
+        <Login redirectPath="/scada"/>
       </AuthProvider>
     );
   }

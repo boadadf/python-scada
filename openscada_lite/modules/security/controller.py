@@ -33,8 +33,7 @@ class SecurityController:
 
         # ---------------- Endpoints ----------------
         @flask_app.route("/security/endpoints", methods=["GET"])
-        @self.require_jwt
-        def _get_endpoints(username):
+        def _get_endpoints():
             endpoints = self.model.get_end_points()
             return jsonify(endpoints)
 

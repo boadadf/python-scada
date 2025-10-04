@@ -3,7 +3,7 @@ import React, { createContext, useContext, useState } from "react";
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
-  const [token, setToken] = useState(localStorage.getItem("jwt_token"));
+  const [token, setToken] = useState(() => localStorage.getItem("jwt_token"));
   const [user, setUser] = useState(null);
 
   function login(token, user) {

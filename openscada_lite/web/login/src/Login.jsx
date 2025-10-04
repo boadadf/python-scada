@@ -1,7 +1,8 @@
 import React, { useState } from "react";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "./AuthContext";
+import "./login.css";
 
-export default function Login() {
+export default function Login({ onLoginSuccess, loginEndpoint = "/security/login", redirectPath = "/" }) {
   const { login } = useAuth();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -13,7 +14,7 @@ export default function Login() {
     setError("");
     setLoading(true);
     try {
-      const res = await fetch("/security/login", {
+      const res = await fetch(loginEndpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password })
@@ -21,7 +22,9 @@ export default function Login() {
       if (!res.ok) throw new Error("Login failed");
       const data = await res.json();
       login(data.token, data.user);
-      window.location.href = "/scada/";
+      setLoading(false);
+      if (onLoginSuccess) onLoginSuccess();
+      else window.location.href = redirectPath;
     } catch (err) {
       setError("Invalid credentials");
       setLoading(false);

@@ -10,13 +10,30 @@ module.exports = {
     rules: [
       {
         test: /\.jsx?$/,
-        exclude: /node_modules/,
-        use: 'babel-loader'
+        exclude: (modulePath) => {
+          // Exclude node_modules except for the linked login package
+          return /node_modules/.test(modulePath) && !/node_modules[\\/](login)/.test(modulePath);
+        },
+        use: {
+          loader: 'babel-loader',
+          options: {
+            presets: ['@babel/preset-env', '@babel/preset-react']
+          }
+        }
+      },
+      {
+        test: /\.css$/i,
+        use: ['style-loader', 'css-loader']
       }
     ]
   },
   resolve: {
     extensions: ['.js', '.jsx'],
+    symlinks: true,
+    alias: {
+      react: path.resolve(__dirname, 'node_modules/react'),
+      'react-dom': path.resolve(__dirname, 'node_modules/react-dom')
+    }
   },
   devServer: {
     static: path.join(__dirname, 'dist'),

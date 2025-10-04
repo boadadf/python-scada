@@ -3,11 +3,32 @@ import Table from "./Table";
 
 export default function GroupsTab({ config, setConfig }) {
   const [selected, setSelected] = useState(null);
+  const [endpoints, setEndpoints] = useState([]);
   const groups = config.groups || [];
 
   useEffect(() => {
     if (selected != null && selected >= groups.length) setSelected(null);
   }, [groups.length]);
+
+  // Fetch endpoints on mount
+  useEffect(() => {
+    async function fetchEndpoints() {
+      try {
+        // If your endpoints require JWT, add the Authorization header here
+        const token = localStorage.getItem("jwt_token");
+        const res = await fetch("/security/endpoints", {
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setEndpoints(Array.isArray(data) ? data : []);
+        }
+      } catch (err) {
+        setEndpoints([]);
+      }
+    }
+    fetchEndpoints();
+  }, []);
 
   function add() {
     const name = prompt('Group name:');
@@ -19,7 +40,8 @@ export default function GroupsTab({ config, setConfig }) {
   }
 
   function remove() {
-    if (selected == null) return; if (!window.confirm('Delete selected group?')) return;
+    if (selected == null) return;
+    if (!window.confirm('Delete selected group?')) return;
     const copy = JSON.parse(JSON.stringify(config));
     copy.groups.splice(selected, 1);
     setConfig(copy);
@@ -32,9 +54,15 @@ export default function GroupsTab({ config, setConfig }) {
     setConfig(copy);
   }
 
-  function updatePermissions(permsArr) {
+  function togglePermission(endpoint) {
     const copy = JSON.parse(JSON.stringify(config));
-    copy.groups[selected].permissions = permsArr;
+    const group = copy.groups[selected];
+    if (!group.permissions) group.permissions = [];
+    if (group.permissions.includes(endpoint)) {
+      group.permissions = group.permissions.filter(e => e !== endpoint);
+    } else {
+      group.permissions.push(endpoint);
+    }
     setConfig(copy);
   }
 
@@ -52,12 +80,33 @@ export default function GroupsTab({ config, setConfig }) {
       {selected != null && groups[selected] && (
         <div style={{ marginTop: 12 }}>
           <h3>Edit Group</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: 8 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: 8, marginBottom: 16 }}>
             <label>Name:</label>
             <input value={groups[selected].name} onChange={e => updateField('name', e.target.value)} />
-            <label>Permissions (comma separated):</label>
-            <input value={(groups[selected].permissions || []).join(', ')} onChange={e => updatePermissions(e.target.value.split(',').map(s => s.trim()).filter(Boolean))} />
           </div>
+          <h4>Allowed Endpoints</h4>
+          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <thead>
+              <tr>
+                <th style={{ textAlign: "left", borderBottom: "1px solid #ccc" }}>Endpoint</th>
+                <th style={{ textAlign: "center", borderBottom: "1px solid #ccc" }}>Allowed</th>
+              </tr>
+            </thead>
+            <tbody>
+              {endpoints.map(endpoint => (
+                <tr key={endpoint}>
+                  <td style={{ padding: "4px 8px" }}>{endpoint}</td>
+                  <td style={{ textAlign: "center" }}>
+                    <input
+                      type="checkbox"
+                      checked={groups[selected].permissions?.includes(endpoint)}
+                      onChange={() => togglePermission(endpoint)}
+                    />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
     </div>
