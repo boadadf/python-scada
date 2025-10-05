@@ -1,14 +1,10 @@
-add log service that
 
-animations (SVG? Canvas?)
-Add feedback resson to command
-add trackingID to all data.
-
-add configurator
-add user
+Understand how the animations work.
+Create the animation configuration.
+Animate with quality 'unknown'
 
 
-DriverConnectStatus make status an enum
-raw to non raw conversion
-Release to Railway v1.0
-Anounce linkedin
+Message service
+Add new rule actions, send_message, set_value, send_confirm_message
+
+-----

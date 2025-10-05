@@ -359,4 +359,26 @@ class AnimationUpdateMsg(DTO):
             "svg_file": self.svg_file,
             "timestamp": self.timestamp.isoformat() if self.timestamp else None
         }
-                
+
+@dataclass
+class AnimationUpdateRequestMsg(DTO):
+    datapoint_identifier: str
+    quality: str
+    value: float
+    
+    @classmethod
+    def get_event_type(cls) -> EventType:
+        return EventType.ANIMATION_REQUEST
+
+    def to_dict(self):
+        return self._default_to_dict()
+    
+    def get_id(self) -> str:
+        return f"{self.datapoint_identifier}:{self.quality}:{self.value}"
+
+    def get_track_payload(self):
+        return {
+            "datapoint_identifier": self.datapoint_identifier,
+            "quality": self.quality,
+            "value": self.value
+        }                

@@ -92,5 +92,46 @@
         "raise_alarm()"
       ]
     }
-  ]
+  ],
+  "animations": {
+    "fill_level": [
+      {
+        "attribute": "y",
+        "quality": { "unknown": 390 },
+        "expression": "390 - ((value/100) * 340)"
+      },
+      {
+        "attribute": "height",
+        "quality": { "unknown": 0 },
+        "expression": "(value/100) * 340"
+      }
+    ],
+    "toggle_opened_closed": [
+      {
+        "attribute": "fill",
+        "quality": { "unknown": "gray" },
+        "expression": {
+          "OPENED": "green",
+          "CLOSED": "red"
+        }
+      }
+    ],
+    "toggle_start_stop": [
+      {
+        "attribute": "fill",
+        "quality": { "unknown": "gray" },
+        "expression": {
+          "STARTED": "green",
+          "STOPPED": "brown"
+        }
+      }
+    ],
+    "level_text": [
+      {
+        "attribute": "text",
+        "quality": { "unknown": "0.0" },
+        "expression": "str(round(value,1))"
+      }
+    ]
+  }
 }

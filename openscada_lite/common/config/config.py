@@ -151,15 +151,8 @@ class Config:
         return {}
 
     def get_animation_config(self) -> dict:
-        """
-        Loads and returns the animation_config.json from the config folder.
-        """
-        config_dir = os.path.dirname(self._config_path) if hasattr(self, "_config_path") else os.getcwd()
-        anim_path = os.path.join(config_dir, "animation_config.json")
-        if os.path.exists(anim_path):
-            with open(anim_path) as f:
-                return json.load(f)
-        return {}
+        animations = self._config.get("animations", [])
+        return animations
 
     def _get_svg_folder(self) -> str:
         """

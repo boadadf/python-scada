@@ -1,4 +1,55 @@
 {
+  "animations": {
+    "fill_level": [
+      {
+        "attribute": "y",
+        "expression": "390 - ((value/100) * 340)",
+        "quality": {
+          "unknown": 390
+        }
+      },
+      {
+        "attribute": "height",
+        "expression": "(value/100) * 340",
+        "quality": {
+          "unknown": 0
+        }
+      }
+    ],
+    "level_text": [
+      {
+        "attribute": "text",
+        "expression": "str(value)",
+        "quality": {
+          "unknown": "0.0"
+        }
+      }
+    ],
+    "toggle_opened_closed": [
+      {
+        "attribute": "fill",
+        "expression": {
+          "CLOSED": "red",
+          "OPENED": "green"
+        },
+        "quality": {
+          "unknown": "gray"
+        }
+      }
+    ],
+    "toggle_start_stop": [
+      {
+        "attribute": "fill",
+        "expression": {
+          "STARTED": "green",
+          "STOPPED": "brown"
+        },
+        "quality": {
+          "unknown": "gray"
+        }
+      }
+    ]
+  },
   "dp_types": {
     "LEVEL": {
       "default": 0,

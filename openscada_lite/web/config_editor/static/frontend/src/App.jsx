@@ -26,6 +26,7 @@ import ModulesTab from "./components/ModulesTab";
 import DatapointTypesTab from "./components/DatapointTypesTab";
 import DriversTab from "./components/DriversTab";
 import RulesTab from "./components/RulesTab";
+import AnimationsTab from "./components/AnimationsTab";
 
 const DEFAULT_CONFIG = {
   modules: [],
@@ -102,7 +103,7 @@ export default function App() {
           />
           <div style={{ padding: 8 }}>
             <Tabs
-              tabs={['Modules', 'Datapoint Types', 'Drivers', 'Rules']}
+              tabs={['Modules', 'Datapoint Types', 'Drivers', 'Rules', 'Animations']}
               active={activeTab}
               onChange={setActiveTab}
             />
@@ -118,6 +119,9 @@ export default function App() {
               </div>
               <div className={activeTab === 'Rules' ? 'tab-content active' : 'tab-content'}>
                 <RulesTab config={config} setConfig={c => { setConfig(c); setDirty(true); }} />
+              </div>
+              <div className={activeTab === 'Animations' ? 'tab-content active' : 'tab-content'}>
+                <AnimationsTab config={config} setConfig={c => { setConfig(c); setDirty(true); }} />
               </div>
             </div>
           </div>
