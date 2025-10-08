@@ -1,15 +1,13 @@
-import React, { Suspense, useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import "./App.css";
 import TopMenu from "./components/TopMenu";
 import { useAuth, AuthProvider, Login } from "login";
-
-// Lazy load your views for code splitting
-const ImageView = React.lazy(() => import("./components/ImageView"));
-const DatapointsView = React.lazy(() => import("./components/DatapointsView"));
-const CommunicationsView = React.lazy(() => import("./components/CommunicationsView"));
-const AlarmsView = React.lazy(() => import("./components/AlarmsView"));
-const CommandsView = React.lazy(() => import("./components/CommandsView"));
-const TrackingView = React.lazy(() => import("./components/TrackingView"));
+import ImageView from "./components/ImageView";
+import DatapointsView from "./components/DatapointsView";
+import CommunicationsView from "./components/CommunicationsView";
+import AlarmsView from "./components/AlarmsView";
+import CommandsView from "./components/CommandsView";
+import TrackingView from "./components/TrackingView";
 
 // Tab definitions
 const TABS = [
@@ -26,7 +24,6 @@ function PrivateApp() {
   const [alarmActive, setAlarmActive] = useState(false);
   const alarmBtnRef = useRef();
 
-  // Listen for messages from iframes (RaiseAlert/LowerAlert)
   useEffect(() => {
     function handleMessage(event) {
       if (event.data === "RaiseAlert:Alarms") setAlarmActive(true);
@@ -57,16 +54,16 @@ function PrivateApp() {
           </button>
         ))}
       </div>
-      <Suspense fallback={<div style={{padding: 40, textAlign: "center"}}>Loading...</div>}>
-        {TABS.map(tab => (
-          <div
-            key={tab.key}
-            className={activeTab === tab.key ? "tab-content active" : "tab-content"}
-          >
-            <tab.Component />
-          </div>
-        ))}
-      </Suspense>
+      {/* Render all tabs, only show the active one */}
+      {TABS.map(tab => (
+        <div
+          key={tab.key}
+          className={activeTab === tab.key ? "tab-content active" : "tab-content"}
+          style={{ display: activeTab === tab.key ? "block" : "none" }}
+        >
+          <tab.Component />
+        </div>
+      ))}
     </div>
   );
 }
