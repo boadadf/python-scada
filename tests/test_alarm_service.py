@@ -27,7 +27,7 @@ async def test_alarm_active_creation():
 
     await bus.publish(
         EventType.RAISE_ALARM,
-        RaiseAlarmMsg(datapoint_identifier="tag1", timestamp=datetime.now())
+        RaiseAlarmMsg(datapoint_identifier="tag1", timestamp=datetime.now(), rule_id="rule1")
     )
     await asyncio.sleep(0.01)
 
@@ -50,10 +50,10 @@ async def test_alarm_inactive_transition():
 
     await bus.publish(
         EventType.RAISE_ALARM,
-        RaiseAlarmMsg(datapoint_identifier="tag1", timestamp=datetime.now())
+        RaiseAlarmMsg(datapoint_identifier="tag1", timestamp=datetime.now(), rule_id="rule1")
     )
     await asyncio.sleep(0.01)
-    await bus.publish(EventType.LOWER_ALARM, LowerAlarmMsg(datapoint_identifier="tag1"))
+    await bus.publish(EventType.LOWER_ALARM, LowerAlarmMsg(datapoint_identifier="tag1", rule_id="rule1"))
     await asyncio.sleep(0.01)
 
 
@@ -75,7 +75,7 @@ async def test_alarm_acknowledge_active():
         updates.append(data)
     bus.subscribe(EventType.ALARM_UPDATE, capture)
 
-    test_alarm = RaiseAlarmMsg(datapoint_identifier="tag1", timestamp=datetime.now())
+    test_alarm = RaiseAlarmMsg(datapoint_identifier="tag1", timestamp=datetime.now(), rule_id="rule1")
     await bus.publish(
         EventType.RAISE_ALARM,
         test_alarm
@@ -103,13 +103,13 @@ async def test_alarm_acknowledge_inactive_finishes():
         updates.append(data)
     bus.subscribe(EventType.ALARM_UPDATE, capture)
 
-    test_alarm = RaiseAlarmMsg(datapoint_identifier="tag1", timestamp=datetime.now())
+    test_alarm = RaiseAlarmMsg(datapoint_identifier="tag1", timestamp=datetime.now(), rule_id="rule1")
     await bus.publish(
         EventType.RAISE_ALARM,
         test_alarm
     )
     await asyncio.sleep(0.01)
-    await bus.publish(EventType.LOWER_ALARM, LowerAlarmMsg(datapoint_identifier="tag1"))
+    await bus.publish(EventType.LOWER_ALARM, LowerAlarmMsg(datapoint_identifier="tag1", rule_id="rule1"))
     await asyncio.sleep(0.01)
     await service.handle_controller_message(AckAlarmMsg(alarm_occurrence_id=f'tag1@{test_alarm.timestamp.isoformat()}' ))
     await asyncio.sleep(0.01)
@@ -133,11 +133,11 @@ async def test_recursive_alarms_full_updates():
         updates.append(data)
     bus.subscribe(EventType.ALARM_UPDATE, capture)
 
-    await bus.publish(EventType.RAISE_ALARM, RaiseAlarmMsg(datapoint_identifier="door"))
+    await bus.publish(EventType.RAISE_ALARM, RaiseAlarmMsg(datapoint_identifier="door", rule_id="rule1"))
     await asyncio.sleep(0.01)
-    await bus.publish(EventType.LOWER_ALARM, LowerAlarmMsg(datapoint_identifier="door"))
+    await bus.publish(EventType.LOWER_ALARM, LowerAlarmMsg(datapoint_identifier="door", rule_id="rule1"))
     await asyncio.sleep(0.01)
-    await bus.publish(EventType.RAISE_ALARM, RaiseAlarmMsg(datapoint_identifier="door"))
+    await bus.publish(EventType.RAISE_ALARM, RaiseAlarmMsg(datapoint_identifier="door", rule_id="rule1"))
     await asyncio.sleep(0.01)
 
     assert len(updates) == 3
@@ -171,14 +171,14 @@ async def test_alarm_active_inactive_ack():
         updates.append(data)
     bus.subscribe(EventType.ALARM_UPDATE, capture)
 
-    test_alarm = RaiseAlarmMsg(datapoint_identifier="rule1", timestamp=datetime.now())
+    test_alarm = RaiseAlarmMsg(datapoint_identifier="rule1", timestamp=datetime.now(), rule_id="rule1")
     await bus.publish(
         EventType.RAISE_ALARM,
         test_alarm
     )
     await asyncio.sleep(0.01)
 
-    await bus.publish(EventType.LOWER_ALARM, LowerAlarmMsg(datapoint_identifier="rule1"))
+    await bus.publish(EventType.LOWER_ALARM, LowerAlarmMsg(datapoint_identifier="rule1", rule_id="rule1"))
     await asyncio.sleep(0.01)
 
     await service.handle_controller_message(AckAlarmMsg(alarm_occurrence_id=f'rule1@{test_alarm.timestamp.isoformat()}' ))

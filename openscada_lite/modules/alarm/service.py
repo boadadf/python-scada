@@ -1,3 +1,4 @@
+import copy
 from typing import Union, override
 from openscada_lite.common.tracking.tracking_types import DataFlowStatus
 from openscada_lite.common.tracking.decorators import publish_data_flow_from_return_sync
@@ -65,4 +66,5 @@ class AlarmService(BaseService[Union[RaiseAlarmMsg, LowerAlarmMsg], AckAlarmMsg,
     #Publish alarm updates to the bus in case another service wants to listen
     @override
     async def on_model_accepted_bus_update(self, msg: AlarmUpdateMsg):
-        await self.event_bus.publish(EventType.ALARM_UPDATE, msg)
+        updated = copy.deepcopy(msg)
+        await self.event_bus.publish(EventType.ALARM_UPDATE, updated)

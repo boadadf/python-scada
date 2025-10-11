@@ -51,26 +51,41 @@ export default function ImageView() {
         if (socketRef.current) socketRef.current.disconnect();
       };
     }
-
     function setupSocket() {
       socket = window.io();
       socketRef.current = socket;
+
+      function applyAnimation(msg) {
+        if (!msg || msg.svg_name !== selectedSvg) return;
+        const svgElem = svgContainerRef.current;
+        if (!svgElem) return;
+
+        const elem = svgElem.querySelector(`#${msg.element_id}`);
+        if (!elem || !msg.config) return;
+
+        const gsapConfig = { duration: msg.config.duration || 0.5 };
+        if (msg.config.attr) gsapConfig.attr = msg.config.attr;
+        if (msg.config.text) gsapConfig.text = msg.config.text;
+
+        gsap.to(elem, gsapConfig);
+      }
+
       socket.on("connect", () => {
         socket.emit("animation_subscribe_live_feed");
       });
-      socket.on("animation_animationupdatemsg", msg => {
-        if (msg.svg_name !== selectedSvg) return;
-        // Wait for SVG to be rendered
+
+      // --- Handle initial state (when page reloads / reconnects)
+      socket.on("animation_initial_state", msgs => {
+        // Replay all animations after a short delay to ensure SVG is rendered
         setTimeout(() => {
-          const svgElem = svgContainerRef.current;
-          if (!svgElem) return;
-          const elem = svgElem.querySelector(`#${msg.element_id}`);
-          if (!elem || !msg.config) return;
-          const gsapConfig = { duration: msg.config.duration || 0.5 };
-          if (msg.config.attr) gsapConfig.attr = msg.config.attr;
-          if (msg.config.text) gsapConfig.text = msg.config.text;
-          gsap.to(elem, gsapConfig);
-        }, 0);
+          if (!Array.isArray(msgs)) return;
+          msgs.forEach(applyAnimation);
+        }, 100);
+      });
+
+      // --- Handle live animation updates
+      socket.on("animation_animationupdatemsg", msg => {
+        applyAnimation(msg);
       });
     }
   }, [selectedSvg]);

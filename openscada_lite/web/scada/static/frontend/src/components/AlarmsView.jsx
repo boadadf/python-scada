@@ -102,6 +102,18 @@ export default function AlarmsView() {
     };
   }, []);
 
+  useEffect(() => {
+    setAlarms(prev => {
+      const copy = { ...prev };
+      Object.entries(copy).forEach(([id, alarm]) => {
+        if (alarm.deactivation_time && alarm.acknowledge_time) {
+          delete copy[id];
+        }
+      });
+      return copy;
+    });
+  }, [alarms]);
+
   return (
     <div>
       <h2>Active Alarms</h2>

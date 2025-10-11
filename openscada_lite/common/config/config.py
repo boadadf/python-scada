@@ -1,7 +1,7 @@
 import os
 import json
 import xml.etree.ElementTree as ET
-from openscada_lite.common.models.entities import Rule
+from openscada_lite.common.models.entities import Animation, AnimationEntry, Rule
 
 class Config:
     _instance = None
@@ -111,10 +111,11 @@ class Config:
         Validate if the value is valid for the given datapoint_identifier.
         Supports enum and float types as defined in dp_types.
         """
-        # Find the driver and datapoint type
+        # Find the driver and datapoint type        
         for driver in self.get_drivers():
             driver_name = driver["name"]
             for dp in driver.get("datapoints", []) + driver.get("command_datapoints", []):
+                print(f"[VALIDATE] Checking {driver_name}@{dp['name']} against {datapoint_identifier} with value {value}")
                 if f"{driver_name}@{dp['name']}" == datapoint_identifier:
                     dp_type_name = dp.get("type")
                     dp_types = self.get_types()
@@ -150,9 +151,15 @@ class Config:
                 return module.get("config", {})
         return {}
 
-    def get_animation_config(self) -> dict:
-        animations = self._config.get("animations", [])
-        return animations
+    def get_animations(self):
+        animations_dict = self._config.get("animations", {})
+        return {
+            name: Animation(
+                name=name,
+                entries=[AnimationEntry(**entry) for entry in entries]
+            )
+            for name, entries in animations_dict.items()
+        } 
 
     def _get_svg_folder(self) -> str:
         """
@@ -174,7 +181,7 @@ class Config:
         svg_folder = self._get_svg_folder()
         return [f for f in os.listdir(svg_folder) if f.endswith(".svg")]
 
-    def get_datapoint_map(self) -> dict:
+    def get_animation_datapoint_map(self) -> dict:
         """
         Parses all SVG files and returns a map:
         {datapoint_identifier: [(svg_name, element_id, animation_type), ...]}
@@ -192,6 +199,7 @@ class Config:
                 dp = elem.attrib.get("data-datapoint")
                 anim = elem.attrib.get("data-animation")
                 if dp and anim:
+                    print(f"*********************Found animation mapping in {fname}: {dp} -> {anim} (element id: {elem.attrib.get('id')})")
                     datapoint_map.setdefault(dp, []).append(
                         (fname, elem.attrib.get("id"), anim)
                     )

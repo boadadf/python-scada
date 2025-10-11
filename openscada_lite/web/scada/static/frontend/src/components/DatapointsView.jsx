@@ -26,6 +26,7 @@ export default function DatapointsView() {
 
     // Receive updates for individual datapoints
     socket.on("datapoint_tagupdatemsg", tag => {
+      console.log("Received tag update:", tag);
       setDatapoints(prev => ({
         ...prev,
         [tag.datapoint_identifier]: {

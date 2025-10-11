@@ -72,19 +72,24 @@ class RuleEngine:
 
     def build_tag_to_rules_index(self):
         """
-        Build a mapping from tag_id to the list of rules that reference it in their conditions.
+        Build mapping from tags (like Train@var) to rules that depend on them.
+        This ensures both on/off conditions are considered.
         """
-        self.tag_to_rules = {}
-        tag_pattern = re.compile(r'([A-Za-z0-9]+@[A-Za-z0-9_]+)')
+        self.tag_to_rules.clear()
+        tag_pattern = re.compile(r"[A-Za-z0-9_]+@[A-Za-z0-9_]+")
+
         for rule in self.rules:
-            # Collect tags from on_condition and off_condition
             conditions = [rule.on_condition]
             if getattr(rule, "off_condition", None):
                 conditions.append(rule.off_condition)
+
             for condition in conditions:
-                tags = tag_pattern.findall(condition)
-                for tag in tags:
+                for tag in tag_pattern.findall(condition or ""):
                     self.tag_to_rules.setdefault(tag, []).append(rule)
+
+        print(f"[RuleEngine] Tag-to-rule index built:")
+        for tag, rules in self.tag_to_rules.items():
+            print(f"  {tag} → {[r.rule_id for r in rules]}")
 
     def subscribe_to_eventbus(self):
         """
@@ -118,19 +123,21 @@ class RuleEngine:
             on_active = self.rule_states.get(rule_id, False)
             try:
                 print("Evaluating:", rule.on_condition.replace("@", "__"))
-                print("Symtable value:", self.asteval.symtable.get(safe_key))
+                print("Symtable value for {}: {}", safe_key , self.asteval.symtable.get(safe_key))
                 on_result = self.asteval(rule.on_condition.replace("@", "__"))
                 if self.asteval.error:
                     print("asteval errors:", self.asteval.error)
-                has_off = getattr(rule, "off_condition", None) is not None
+                off_cond = getattr(rule, "off_condition", None)
+                has_off = bool(off_cond and off_cond.strip())
                 off_result = False
                 if has_off:
                     off_result = self.asteval(rule.off_condition.replace("@", "__"))
             except Exception as e:
                 print(f"[RuleEngine] Error evaluating rule {rule_id}: {e}")
                 continue
-
+            print(f"[RuleEngine] Rule {rule_id} evaluation results: on_condition={on_result}, off_condition={off_result if has_off else 'N/A'}, on_active={on_active}")
             if has_off:
+                print(f"[RuleEngine] Rule {rule_id} has off_condition.")
                 # ON transition: only if not already active
                 if not on_active and on_result:
                     self.rule_states[rule_id] = True
@@ -154,6 +161,7 @@ class RuleEngine:
                     # Reset state so next true will trigger again
                     self.rule_states[rule_id] = False
                     # If raise_alarm is in on_actions, trigger lower_alarm automatically
+                    print(f"[RuleEngine] ======== Rule {rule_id} on_condition transitioned to false. {getattr(rule, "on_actions", [])}")
                     if any("raise_alarm" in action for action in getattr(rule, "on_actions", [])):
                         print(f"[RuleEngine] Rule {rule_id} on_condition transitioned to false; executing lower_alarm.")
                         await self.execute_action("lower_alarm()", tag_id, msg.track_id, active=False, rule_id=rule_id)

@@ -1,327 +1,389 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <svg
-   viewBox="0 0 800 600"
-   width="800"
-   height="600"
+   viewBox="0 0 617.32391 264.86923"
+   width="617.32391"
+   height="264.86923"
    version="1.1"
    id="svg25"
    sodipodi:docname="train.svg"
    inkscape:version="1.3.2 (091e20e, 2023-11-25, custom)"
+   xml:space="preserve"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns="http://www.w3.org/2000/svg"
-   xmlns:svg="http://www.w3.org/2000/svg"> 
-  <rect
-     width="86.900368%"
-     height="57.318573%"
-     fill="#f8f8f8"
-     id="rect1"
-     x="50.184505"
-     y="59.778599"
-     style="stroke-width:0.705762" />
-  <defs
-     id="defs13">
-    <!-- Straight Track -->
-    <g
-       id="straightTrack">
-      <rect
+   xmlns:svg="http://www.w3.org/2000/svg"><sodipodi:namedview
+     id="namedview25"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     showgrid="false"
+     inkscape:zoom="5.4200001"
+     inkscape:cx="386.62361"
+     inkscape:cy="154.33579"
+     inkscape:window-width="1920"
+     inkscape:window-height="1009"
+     inkscape:window-x="1912"
+     inkscape:window-y="-6"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg25" /><defs
+     id="defs13"><g
+       id="alert"><path
+         class="cls-1"
+         d="m 193.85457,335.90408 10.48387,-17.26894 0.0415,-0.0628 v 0 a 5.5959507,5.3321323 0 0 1 1.70906,-1.682 4.1505742,3.9548974 0 0 1 2.22666,-0.62813 4.0968609,3.9037164 0 0 1 2.22422,0.6258 5.564211,5.301889 0 0 1 1.70906,1.68898 c 0.0317,0.0489 0.061,0.0977 0.0879,0.14889 l 10.31295,17.06189 0.0562,0.10236 v 0 a 5.4250447,5.1692836 0 0 1 0.57864,2.37062 4.2946236,4.0921556 0 0 1 -0.52737,1.94255 3.9064228,3.7222564 0 0 1 -1.69441,1.53776 l -0.14161,0.0605 a 5.2101914,4.9645595 0 0 1 -2.22422,0.4048 v 0 h -21.11421 c -0.0562,0 -0.10743,0 -0.16114,0 a 4.4118163,4.2038233 0 0 1 -1.51374,-0.26754 4.0187325,3.8292713 0 0 1 -1.89462,-1.42144 4.2946236,4.0921556 0 0 1 -0.73245,-2.2287 5.6154828,5.3507436 0 0 1 0.38331,-2.03328 2.0118078,1.9169621 0 0 1 0.188,-0.35129 z"
+         id="path1"
+         style="fill:#b71616;stroke-width:0.238327" /><path
+         class="cls-2"
+         d="m 195.47818,336.91142 10.53513,-17.35502 c 1.27692,-1.91929 3.30337,-1.96815 4.60714,0 l 10.36179,17.14564 c 0.82523,1.58429 0.41506,3.72226 -2.28038,3.66875 h -21.11909 c -1.77499,0.0419 -2.92982,-1.44005 -2.10947,-3.45937 z"
+         id="path2"
+         style="fill:#e21b1b;fill-rule:evenodd;stroke-width:0.238327" /><path
+         class="cls-3"
+         d="m 207.33661,335.50161 a 1.3452744,1.2818521 0 0 1 0.84965,-0.36757 1.4038707,1.3376859 0 0 1 0.58597,0.0814 1.4209613,1.3539708 0 0 1 0.4883,0.30476 1.3501574,1.2865049 0 0 1 0.39552,0.82588 1.4771161,1.4074782 0 0 1 -0.0195,0.3257 1.3525989,1.2888313 0 0 1 -1.37701,1.07015 1.3843386,1.3190746 0 0 1 -0.55423,-0.12098 1.3574819,1.2934841 0 0 1 -0.6885,-0.68396 1.3794556,1.3144218 0 0 1 -0.0855,-0.29546 1.4234028,1.3562972 0 0 1 -0.0147,-0.30476 v 0 a 1.5112973,1.440048 0 0 1 0.13917,-0.46528 1.115772,1.0631695 0 0 1 0.27589,-0.36292 z m 1.99228,-2.38224 c -0.0488,1.11435 -2.0289,1.11668 -2.07529,0 -0.2002,-1.90998 -0.71292,-6.83732 -0.69583,-8.63098 0.0171,-0.55369 0.4883,-0.88171 1.11333,-1.00734 a 3.1324628,2.9847844 0 0 1 1.22076,0 c 0.63723,0.13028 1.1353,0.46528 1.1353,1.03293 v 0.0558 z"
+         id="path3"
+         style="fill:#ffffff;stroke-width:0.238327" /></g><g
+       id="clear"><rect
+         height="330"
+         ry="100"
+         width="200"
+         id="rect1-0"
+         x="0"
+         y="0" /><circle
+         cx="100"
+         cy="100"
+         fill="#00a650"
+         r="50"
+         id="circle1-0" /><circle
+         cx="100"
+         cy="230"
+         fill="#4d4d4d"
+         r="50"
+         id="circle2-3" /></g><g
+       id="stop"><rect
+         height="330"
+         ry="100"
+         width="200"
+         id="rect1-9"
+         x="0"
+         y="0" /><circle
+         cx="100"
+         cy="100"
+         fill="#4d4d4d"
+         r="50"
+         id="circle1" /><circle
+         cx="100"
+         cy="230"
+         fill="#df1a21"
+         r="50"
+         id="circle2" /></g><!-- Straight Track --><g
+       id="straightTrack"><rect
          x="0"
          y="-10"
          width="100"
          height="20"
          fill="#aaaaaa"
-         id="rect2" />
-      <!-- Sleepers -->
-      <g
-         id="g9">
-        <rect
+         id="rect2" /><!-- Sleepers --><g
+         id="g9"><rect
            x="3"
            y="-8"
            width="4"
            height="16"
            fill="#6b4f3a"
-           id="rect3" />
-        <rect
+           id="rect3" /><rect
            x="18"
            y="-8"
            width="4"
            height="16"
            fill="#6b4f3a"
-           id="rect4" />
-        <rect
+           id="rect4" /><rect
            x="33"
            y="-8"
            width="4"
            height="16"
            fill="#6b4f3a"
-           id="rect5" />
-        <rect
+           id="rect5" /><rect
            x="48"
            y="-8"
            width="4"
            height="16"
            fill="#6b4f3a"
-           id="rect6" />
-        <rect
+           id="rect6" /><rect
            x="65"
            y="-8"
            width="4"
            height="16"
            fill="#6b4f3a"
-           id="rect7" />
-        <rect
+           id="rect7" /><rect
            x="78"
            y="-8"
            width="4"
            height="16"
            fill="#6b4f3a"
-           id="rect8" />
-        <rect
+           id="rect8" /><rect
            x="93"
            y="-8"
            width="4"
            height="16"
            fill="#6b4f3a"
-           id="rect9" />
-      </g>
-    </g>
-    <!-- Curved Track (quarter circle, radius 80) -->
-    <g
-       id="curveTrack">
-      <path
-         d="M0,0 A80,80 0 0 1 80,80"
+           id="rect9" /></g></g><!-- Curved Track (quarter circle, radius 80) --><g
+       id="curveTrack"><path
+         d="M 0,0 A 80,80 0 0 1 80,80"
          fill="none"
          stroke="#aaaaaa"
          stroke-width="20"
-         id="path9" />
-      <!-- Sleepers along curve (approximate) -->
-      <g
-         id="g13">
-        <rect
+         id="path9" /><!-- Sleepers along curve (approximate) --><g
+         id="g13"><rect
            x="78"
            y="-38"
            width="4"
            height="16"
            fill="#6b4f3a"
-           transform="rotate(60 12 0)"
-           id="rect10" />
-        <rect
+           transform="rotate(60,12,0)"
+           id="rect10" /><rect
            x="4"
            y="-7"
            width="4"
            height="16"
            fill="#6b4f3a"
-           transform="rotate(10 12 0)"
-           id="rect29" />
-        <rect
+           transform="rotate(10,12,0)"
+           id="rect29" /><rect
            x="30"
            y="-2"
            width="4"
            height="16"
            fill="#6b4f3a"
-           transform="rotate(25 32 0)"
-           id="rect11" />
-        <rect
+           transform="rotate(25,32,0)"
+           id="rect11" /><rect
            x="66"
            y="7"
            width="4"
            height="16"
            fill="#6b4f3a"
-           transform="rotate(40 52 0)"
-           id="rect12" />
-        <rect
+           transform="rotate(40,52,0)"
+           id="rect12" /><rect
            x="130"
            y="-2"
            width="4"
            height="16"
            fill="#6b4f3a"
-           transform="rotate(83 68 10)"
-           id="rect13" />
-      </g>
-    </g>
-    <g
-       id="detour">
-      <rect
+           transform="rotate(83,68,10)"
+           id="rect13" /></g></g><g
+       id="detour"><rect
          x="0"
          y="0"
          width="40"
          height="6"
-         id="rect30" />
-    </g>
-    <g
-       id="switch">
-      <rect
+         id="rect30" /></g><g
+       id="switch"><rect
          id="test-status"
          x="100"
          y="100"
          width="44.845749"
          height="22.373423"
-         fill="#a52a2a"
          stroke="#000000"
          style="stroke-width:0.9144"
          data-datapoint="Server1@TEST"
          data-animation="toggle_start_stop"
          command-datapoint="Server1@TEST_CMD"
-         command-value="TOGGLE" />
-    </g>
-  </defs>
-  <!-- Build Oval Circuit using straight and curve tracks -->
-  <!-- Top straight -->
-  <use
+         command-value="TOGGLE" /></g></defs><!-- Build Oval Circuit using straight and curve tracks --><!-- Top straight --><use
      href="#straightTrack"
      x="200"
      y="140"
      id="use13"
-     style="fill:none;fill-opacity:1" />
-  <use
+     style="fill:none;fill-opacity:1"
+     transform="translate(-99.958504,-130)" /><use
      href="#straightTrack"
      x="300"
      y="140"
-     id="use14" />
-  <use
+     id="use14"
+     transform="translate(-99.958504,-130)" /><use
      href="#straightTrack"
      x="400"
      y="140"
-     id="use15" />
-  <use
+     id="use15"
+     transform="translate(-99.958504,-130)" /><use
      href="#straightTrack"
      x="500"
      y="140"
-     id="use16" />
-  <!-- Right curve -->
-  <use
+     id="use16"
+     transform="translate(-99.958504,-130)" /><!-- Right curve --><use
      href="#curveTrack"
      x="600"
      y="140"
-     id="use18" />
-  <use
+     id="use18"
+     transform="translate(-99.958504,-130)" /><use
      href="#curveTrack"
      x="600"
      y="220"
-     transform="rotate(90,640.2214,260.2214)"
-     id="use19" />
-  <!-- Bottom straight -->
-  <use
+     transform="rotate(90,655.24215,145.24215)"
+     id="use19" /><!-- Bottom straight --><use
      href="#straightTrack"
      x="500"
      y="460"
-     transform="rotate(180,550.1845,380.2952)"
-     id="use20" />
-  <use
+     transform="rotate(180,500.20525,315.2952)"
+     id="use20" /><use
      href="#straightTrack"
      x="400"
      y="460"
-     transform="rotate(180,450.1845,380.2952)"
-     id="use21" />
-  <use
+     transform="rotate(180,400.20525,315.2952)"
+     id="use21" /><use
      href="#straightTrack"
      x="300"
      y="460"
-     transform="rotate(180,350.1845,380.2952)"
-     id="use22" />
-  <use
+     transform="rotate(180,300.20525,315.2952)"
+     id="use22" /><use
      href="#straightTrack"
      x="200"
      y="460"
-     transform="rotate(180,250.1845,380.2952)"
-     id="use23" />
-  <use
+     transform="rotate(180,200.20525,315.2952)"
+     id="use23" /><use
      href="#straightTrack"
      x="200"
      y="460"
-     transform="rotate(180,297.82656,404.32841)"
-     id="use23-2" />
-  <use
+     transform="rotate(180,247.84731,339.32841)"
+     id="use23-2" /><use
      href="#straightTrack"
      x="200"
      y="460"
-     transform="rotate(-150.87517,236.32919,391.50536)"
+     transform="rotate(-150.87517,169.46423,339.48898)"
      id="use23-2-4"
      inkscape:transform-center-x="-104.80907"
-     inkscape:transform-center-y="49.947218" />
-  <use
+     inkscape:transform-center-y="49.947218" /><use
      href="#straightTrack"
      x="200"
      y="460"
-     transform="rotate(180,347.30259,404.35424)"
-     id="use23-5" />
-  <use
+     transform="rotate(180,297.32334,339.35424)"
+     id="use23-5" /><use
      href="#straightTrack"
      x="200"
      y="460"
-     transform="rotate(148.47004,409.12942,431.58017)"
-     id="use23-5-8" />
-  <!-- Left curve -->
-  <use
+     transform="rotate(148.47004,377.50041,352.47046)"
+     id="use23-5-8" /><!-- Left curve --><use
      href="#curveTrack"
      x="200"
      y="460"
-     transform="rotate(180,200,380.29521)"
-     id="use24" />
-  <use
+     transform="rotate(180,150.02075,315.29521)"
+     id="use24" /><use
      href="#curveTrack"
      x="200"
      y="380"
-     transform="rotate(-90,80.425568,340.16483)"
-     id="use25" />
-  <use
+     transform="rotate(-90,-34.553684,325.14408)"
+     id="use25" /><use
      href="#detour"
      x="530"
      y="307"
-     id="right_straight_detour"
-     fill="#c21e56" />
-  <use
+     id="right_switch_straight"
+     fill="#c21e56"
+     transform="translate(-99.958504,-130)"
+     data-datapoint="TrainTestDriver@RIGHT_SWITCH_CONTROL"
+     data-animation="RIGHT_SWITCH_STRAIGHT" /><use
      href="#detour"
      x="212"
      y="307"
-     id="left_straight_detour"
-     fill="#c21e56" />
-  <use
+     id="left_switch_straight"
+     fill="#c21e56"
+     transform="translate(-99.958504,-130)"
+     data-datapoint="TrainTestDriver@LEFT_SWITCH_CONTROL"
+     data-animation="LEFT_SWITCH_STRAIGHT" /><use
      href="#detour"
      x="205"
      y="295"
-     id="left_switch_detour"
+     id="left_switch_turn"
      fill="#008000"
-     transform="rotate(29.268338,224.42804,319.95806)" />
-  <use
+     transform="rotate(29.268338,423.37895,63.552779)"
+     data-datapoint="TrainTestDriver@LEFT_SWITCH_CONTROL"
+     data-animation="LEFT_SWITCH_TURN" /><use
      href="#detour"
      x="205"
      y="295"
-     id="right_switch_detour"
+     id="right_switch_turn"
      fill="#008000"
-     transform="rotate(-27.121689,394.59633,-377.76471)" />
-  <use
+     transform="rotate(-27.121689,75.133622,-235.55576)"
+     data-datapoint="TrainTestDriver@RIGHT_SWITCH_CONTROL"
+     data-animation="RIGHT_SWITCH_TURN" /><use
      href="#switch"
      x="205"
      y="295"
-     id="switch-right"
+     id="right-switch-control"
      fill="#008000"
-     transform="translate(227.00476,-138.29025)" />
-  <use
+     transform="translate(264.29281,-152.9614)"
+     data-datapoint="TrainTestDriver@RIGHT_SWITCH_CONTROL"
+     data-animation="SWITCH_CONTROL"
+     command-datapoint="TrainTestDriver@RIGHT_SWITCH_CONTROL_CMD"
+     command-value="TOGGLE" /><use
      href="#switch"
      x="205"
      y="295"
-     id="switch-left"
+     id="left-switch-control"
      fill="#008000"
-     transform="translate(-100.11036,-140.68355)" />
-  <text
+     transform="translate(-301.82961,-154.83285)"
+     data-datapoint="TrainTestDriver@LEFT_SWITCH_CONTROL"
+     data-animation="SWITCH_CONTROL"
+     command-datapoint="TrainTestDriver@LEFT_SWITCH_CONTROL_CMD"
+     command-value="TOGGLE" /><use
+     href="#stop"
+     x="205"
+     y="295"
+     id="signal-turn"
+     transform="matrix(0.03858596,0.02516038,-0.050301,0.02947201,469.50324,177.09089)"
+     data-datapoint="TrainTestDriver@RIGHT_SWITCH_CONTROL"
+     data-animation="SIGNAL_TURN" /><use
+     href="#stop"
+     x="205"
+     y="295"
+     id="signal-straight"
+     transform="matrix(6.3129227e-4,0.04966097,-0.06060401,5.1730224e-4,417.00565,172.33414)"
+     data-datapoint="TrainTestDriver@RIGHT_SWITCH_CONTROL"
+     data-animation="SIGNAL_STRAIGHT" /><use
+     href="#alert"
+     x="205"
+     y="295"
+     id="alert-switch-right"
+     transform="translate(-98.482489,-488.67158)"
+     data-datapoint="TrainTestDriver@RIGHT_SWITCH_CONTROL"
+     data-animation="ALARM_SWITCHES" /><use
+     href="#alert"
+     x="105"
+     y="295"
+     id="alert-switch-left"
+     transform="translate(-98.482489,-488.67158)"
+     data-datapoint="TrainTestDriver@LEFT_SWITCH_CONTROL"
+     data-animation="ALARM_SWITCHES" /><text
      xml:space="preserve"
      style="fill:#f8f8f8;fill-opacity:1;stroke:#000000;stroke-opacity:1"
-     x="207.6963"
-     y="247.35692"
+     x="-0.28515625"
+     y="234.77316"
      id="text30"><tspan
        sodipodi:role="line"
        id="tspan30"
-       x="207.6963"
-       y="247.35692">Switch</tspan></text>
-  <text
+       x="-0.28515625"
+       y="234.77316">Switch A</tspan></text><text
      xml:space="preserve"
      style="fill:#f8f8f8;fill-opacity:1;stroke:#000000;stroke-opacity:1"
-     x="534.57574"
-     y="247.18019"
+     x="565.07977"
+     y="237.20569"
      id="text30-7"><tspan
        sodipodi:role="line"
        id="tspan30-6"
-       x="534.57574"
-       y="247.18019">Switch</tspan></text>
-</svg>
+       x="565.07977"
+       y="237.20569">Switch B</tspan></text><text
+     xml:space="preserve"
+     style="fill:#ffffff;stroke:#000000"
+     x="129.02599"
+     y="154.71428"
+     id="text1"><tspan
+       sodipodi:role="line"
+       id="tspan1"
+       x="129.02599"
+       y="154.71428">A</tspan></text><text
+     xml:space="preserve"
+     style="fill:#ffffff;stroke:#000000"
+     x="447.73645"
+     y="150.49585"
+     id="text2"><tspan
+       sodipodi:role="line"
+       id="tspan2"
+       x="447.73645"
+       y="150.49585">B</tspan></text></svg>

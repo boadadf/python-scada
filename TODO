@@ -1,10 +1,21 @@
+Internal datapoints x communication status
+Unit testing web
 
-Understand how the animations work.
-Create the animation configuration.
-Animate with quality 'unknown'
-
-
-Message service
+ClientAlert service (show alert, show accept to send command)
+Driver for GPIO, opc ua client
+Allow server drivers to expose datapoints from another drivers
+Drvier for Opc ua server
 Add new rule actions, send_message, set_value, send_confirm_message
+Add headers to all files
+Better SVGs
+Documentation (README.md)
+Pipeline to compile/deploy into railway
+
 
 -----
+Rules by datapoint type
+animations by datapoint type
+SVG editor
+Add dynamically a module
+AI that predicts when alarms will happen
+

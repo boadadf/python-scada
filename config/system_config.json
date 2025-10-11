@@ -1,5 +1,106 @@
 {
   "animations": {
+    "ALARM_SWITCHES": [
+      {
+        "alarmEvent": "",
+        "attribute": "href",
+        "default": "#",
+        "expression": {
+          "ACTIVE": "#alert",
+          "FINISHED": "#",
+          "INACTIVE": "#"
+        },
+        "quality": {
+          "unknown": "#alert"
+        },
+        "revertAfter": 0,
+        "triggerType": "alarm"
+      }
+    ],
+    "LEFT_SWITCH_STRAIGHT": [
+      {
+        "attribute": "visibility",
+        "expression": {
+          "STRAIGHT": "visible",
+          "TURN": "hidden"
+        },
+        "quality": {
+          "unknown": "hidden"
+        }
+      }
+    ],
+    "LEFT_SWITCH_TURN": [
+      {
+        "attribute": "visibility",
+        "expression": {
+          "STRAIGHT": "hidden",
+          "TURN": "visible"
+        },
+        "quality": {
+          "unknown": "hidden"
+        }
+      }
+    ],
+    "RIGHT_SWITCH_STRAIGHT": [
+      {
+        "attribute": "visibility",
+        "expression": {
+          "STRAIGHT": "visible",
+          "TURN": "hidden"
+        },
+        "quality": {
+          "unknown": "hidden"
+        }
+      }
+    ],
+    "RIGHT_SWITCH_TURN": [
+      {
+        "attribute": "visibility",
+        "expression": {
+          "STRAIGHT": "hidden",
+          "TURN": "visible"
+        },
+        "quality": {
+          "unknown": "hidden"
+        }
+      }
+    ],
+    "SIGNAL_STRAIGHT": [
+      {
+        "attribute": "href",
+        "expression": {
+          "STRAIGHT": "#clear",
+          "TURN": "#stop"
+        },
+        "quality": {
+          "unknown": "none"
+        }
+      }
+    ],
+    "SIGNAL_TURN": [
+      {
+        "attribute": "href",
+        "expression": {
+          "STRAIGHT": "#stop",
+          "TURN": "#clear"
+        },
+        "quality": {
+          "unknown": "none"
+        }
+      }
+    ],
+    "SWITCH_CONTROL": [
+      {
+        "attribute": "fill",
+        "expression": {
+          "STRAIGHT": "green",
+          "TURN": "red"
+        },
+        "quality": {
+          "unknown": "gray"
+        }
+      }
+    ],
     "fill_level": [
       {
         "attribute": "y",
@@ -97,13 +198,7 @@
         "TOGGLE"
       ]
     },
-    "TEMPERATURE": {
-      "default": 120,
-      "max": 150,
-      "min": 100,
-      "type": "enum"
-    },
-    "TRAIN_SWITCH": {
+    "SWITCH_CONTROL": {
       "default": "STRAIGHT",
       "max": 100,
       "min": 0,
@@ -112,6 +207,21 @@
         "STRAIGHT",
         "TURN"
       ]
+    },
+    "SWITCH_CONTROL_CMD": {
+      "default": "TOGGLE",
+      "max": 100,
+      "min": 0,
+      "type": "enum",
+      "values": [
+        "TOGGLE"
+      ]
+    },
+    "TEMPERATURE": {
+      "default": 120,
+      "max": 150,
+      "min": 100,
+      "type": "enum"
     }
   },
   "drivers": [
@@ -196,6 +306,33 @@
       ],
       "driver_class": "BoilerTestDriver",
       "name": "Server2"
+    },
+    {
+      "command_datapoints": [
+        {
+          "name": "RIGHT_SWITCH_CONTROL_CMD",
+          "type": "SWITCH_CONTROL_CMD"
+        },
+        {
+          "name": "LEFT_SWITCH_CONTROL_CMD",
+          "type": "SWITCH_CONTROL_CMD"
+        }
+      ],
+      "connection_info": {
+        "server_name": "TrainTestDriver"
+      },
+      "datapoints": [
+        {
+          "name": "RIGHT_SWITCH_CONTROL",
+          "type": "SWITCH_CONTROL"
+        },
+        {
+          "name": "LEFT_SWITCH_CONTROL",
+          "type": "SWITCH_CONTROL"
+        }
+      ],
+      "driver_class": "TrainTestDriver",
+      "name": "TrainTestDriver"
     }
   ],
   "modules": [
@@ -216,8 +353,8 @@
     },
     {
       "config": {
-        "p1": "file",
-        "p2": "flow_events.log"
+        "file_path": "flow_events.log",
+        "mode": "file"
       },
       "name": "tracking"
     }
@@ -257,6 +394,24 @@
       ],
       "on_condition": "Server2@TEMPERATURE > 80",
       "rule_id": "temperature_high_warning"
+    },
+    {
+      "off_actions": [],
+      "off_condition": "",
+      "on_actions": [
+        "raise_alarm()"
+      ],
+      "on_condition": "TrainTestDriver@RIGHT_SWITCH_CONTROL == 'STRAIGHT' and TrainTestDriver@LEFT_SWITCH_CONTROL == 'TURN'",
+      "rule_id": "switch_error_straight"
+    },
+    {
+      "off_actions": [],
+      "off_condition": "",
+      "on_actions": [
+        "raise_alarm()"
+      ],
+      "on_condition": "TrainTestDriver@RIGHT_SWITCH_CONTROL == 'TURN' and TrainTestDriver@LEFT_SWITCH_CONTROL == 'STRAIGHT'",
+      "rule_id": "switch_error_turn"
     }
   ]
 }

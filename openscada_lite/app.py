@@ -89,9 +89,12 @@ def initialize_modules(config: dict, socketio: SocketIO, event_bus: EventBus) ->
         print(f"Instantiating: {module_name}")
         # Instantiate
         model = model_cls()
+        print(f"Model: {model}")
         controller = controller_cls(model, socketio, module_name, app)
+        print(f"Controller: {controller}")
         service = service_cls(event_bus, model, controller)
-
+        print(f"Service: {service}")
+        
         module_instances[module_name] = {
             "model": model,
             "controller": controller,

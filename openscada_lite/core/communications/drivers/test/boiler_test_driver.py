@@ -1,7 +1,5 @@
 # tank_test_driver.py
-import asyncio
 import datetime
-import random
 from openscada_lite.core.communications.drivers.test.test_driver import TestDriver
 
 

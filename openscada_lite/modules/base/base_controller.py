@@ -5,6 +5,8 @@ from typing import Generic, TypeVar, Optional, Type, TYPE_CHECKING, Union
 from flask import request, jsonify
 from flask_socketio import SocketIO, join_room, emit
 
+from openscada_lite.common.tracking.decorators import publish_data_flow_from_arg_sync
+from openscada_lite.common.tracking.tracking_types import DataFlowStatus
 from openscada_lite.common.models.dtos import StatusDTO
 from openscada_lite.modules.base.base_model import BaseModel
 from openscada_lite.modules.base.base_service import BaseService
@@ -75,6 +77,7 @@ class BaseController(ABC, Generic[T, U]):
         )
         self._initializing_clients.discard(sid)
 
+    @publish_data_flow_from_arg_sync(status=DataFlowStatus.FORWARDED)
     def publish(self, msg: T):
         """Publishes a T message to all subscribed clients in the room."""
         if self._initializing_clients:

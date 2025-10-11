@@ -53,6 +53,7 @@ class TestDriver(DriverProtocol, ABC):
 
     async def initValues(self):
         now = datetime.datetime.now()
+        print(f"[INIT] Initializing values for {self._server_name} tags: {self._tags}")
         for tag in self._tags.values():            
             tag.value = Config.get_instance().get_default_value(tag.datapoint_identifier)
             tag.timestamp = now
@@ -141,6 +142,7 @@ class TestDriver(DriverProtocol, ABC):
             await self._safe_invoke(self._command_feedback_callback, msg)            
 
     async def handle_special_command(self, datapoint_name: str, value: str ) -> str:
+        print(f"[COMMAND] Handling special command: {datapoint_name} = {value}")
         if datapoint_name == "TEST_CMD":
             if value == "START":
                 await self.start_test()
@@ -162,6 +164,12 @@ class TestDriver(DriverProtocol, ABC):
             if base_name in self._tags:
                 current_value = self._tags[base_name].value
                 new_value = "OPENED" if current_value == "CLOSED" else "CLOSED"
+                return new_value
+        elif datapoint_name in ["LEFT_SWITCH_CONTROL_CMD", "RIGHT_SWITCH_CONTROL_CMD"]:
+            base_name = datapoint_name[:-4]  # Remove _CMD
+            if base_name in self._tags:
+                current_value = self._tags[base_name].value
+                new_value = "STRAIGHT" if current_value == "TURN" else "TURN"
                 return new_value
 
     async def start_test(self):

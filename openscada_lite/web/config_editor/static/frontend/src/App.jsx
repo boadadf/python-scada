@@ -17,7 +17,7 @@ This is a single-file React implementation using fetch (no external libs).
 Keep index.jsx as entry that mounts this App.
 */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, lazy, Suspense } from 'react';
 import "./App.css";
 import { AuthProvider, useAuth, Login } from "login";
 import TopMenu from "./components/TopMenu";
@@ -27,6 +27,9 @@ import DatapointTypesTab from "./components/DatapointTypesTab";
 import DriversTab from "./components/DriversTab";
 import RulesTab from "./components/RulesTab";
 import AnimationsTab from "./components/AnimationsTab";
+
+// Lazy-load AnimationTestTab
+const AnimationTestTab = lazy(() => import("./components/AnimationTestTab"));
 
 const DEFAULT_CONFIG = {
   modules: [],
@@ -74,7 +77,6 @@ export default function App() {
       if (!res.ok) throw new Error(await res.text());
       alert('Saved. The application will now restart.');
       await fetch('/config-editor/api/restart', { method: 'POST' });
-      // Optionally, show a "restarting" message or reload the page after a delay
     } catch (err) {
       alert('Failed to save: ' + err.message);
     }
@@ -103,7 +105,7 @@ export default function App() {
           />
           <div style={{ padding: 8 }}>
             <Tabs
-              tabs={['Modules', 'Datapoint Types', 'Drivers', 'Rules', 'Animations']}
+              tabs={['Modules', 'Datapoint Types', 'Drivers', 'Rules', 'Animations', 'Animation Test']}
               active={activeTab}
               onChange={setActiveTab}
             />
@@ -123,6 +125,11 @@ export default function App() {
               <div className={activeTab === 'Animations' ? 'tab-content active' : 'tab-content'}>
                 <AnimationsTab config={config} setConfig={c => { setConfig(c); setDirty(true); }} />
               </div>
+              {activeTab === 'Animation Test' && (
+                <Suspense fallback={<div style={{padding: 40, textAlign: "center"}}>Loading Animation Test...</div>}>
+                  <AnimationTestTab />
+                </Suspense>
+              )}
             </div>
           </div>
           <div style={{ padding: 8, borderTop: '1px solid #ddd', background: '#fafafa' }}>

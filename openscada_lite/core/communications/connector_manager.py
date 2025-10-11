@@ -46,12 +46,13 @@ class ConnectorManager:
             await driver.register_communication_status_listener(self.emit_communication_status)
 
     @publish_data_flow_from_arg_async(status=DataFlowStatus.RECEIVED)
-    async def handle_driver_connect(self, data: DriverConnectCommand):
+    async def handle_driver_connect(self, data: DriverConnectCommand):        
         driver_name = data.driver_name
-        status = data.status
-        driver = self.driver_instances.get(driver_name)
-        if driver:
-            if status == "connect":
+        status = data.status        
+        driver = self.driver_instances.get(driver_name)        
+        print(f"[CONNECT CMD] Driver '{driver_name}' -> {status} {self.driver_instances}" )
+        if driver:            
+            if status == "connect":                
                 await driver.connect()
             elif status == "disconnect":
                 await driver.disconnect()

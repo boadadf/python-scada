@@ -3,10 +3,10 @@ from openscada_lite.modules.alarm.model import AlarmModel
 
 class Utils:
     @staticmethod
-    def get_latest_alarm(model: AlarmModel, datapoint_identifier: str):
+    def get_latest_alarm(model: AlarmModel, rule_id: str):
         alarms = [
             alarm for alarm in model._store.values()
-            if alarm.datapoint_identifier == datapoint_identifier
+            if alarm.rule_id == rule_id
         ]
         if not alarms:
             return None

@@ -56,6 +56,7 @@ class TagUpdateMsg(DTO):
     value: Any
     quality: str = "good"
     timestamp: Optional[datetime.datetime] = None
+    test: bool = False
 
     @classmethod
     def get_event_type(cls) -> EventType:
@@ -151,9 +152,9 @@ class CommandFeedbackMsg(DTO):
 @dataclass
 class RaiseAlarmMsg(DTO):
     datapoint_identifier: str
+    rule_id: str
     timestamp: datetime.datetime = field(default_factory=datetime.datetime.now)
-    rule_id: Optional[str] = None
-
+    
     @classmethod
     def get_event_type(cls) -> EventType:
         return EventType.RAISE_ALARM
@@ -162,7 +163,7 @@ class RaiseAlarmMsg(DTO):
         return self._default_to_dict()
 
     def get_id(self) -> str:
-        return self.datapoint_identifier
+        return self.rule_id
 
     def get_track_payload(self):
         return {
@@ -173,8 +174,8 @@ class RaiseAlarmMsg(DTO):
 @dataclass
 class LowerAlarmMsg(DTO):
     datapoint_identifier: str
-    timestamp: datetime.datetime = field(default_factory=datetime.datetime.now)
-    rule_id: Optional[str] = None
+    rule_id: str
+    timestamp: datetime.datetime = field(default_factory=datetime.datetime.now)    
 
     @classmethod
     def get_event_type(cls) -> EventType:
@@ -184,7 +185,7 @@ class LowerAlarmMsg(DTO):
         return self._default_to_dict()
 
     def get_id(self) -> str:
-        return self.datapoint_identifier
+        return self.rule_id
 
     def get_track_payload(self):
         return {
@@ -340,6 +341,7 @@ class AnimationUpdateMsg(DTO):
     value: float
     config: dict
     timestamp: Optional[datetime.datetime] = None
+    test: bool = False
     
     @classmethod
     def get_event_type(cls) -> EventType:
@@ -354,9 +356,9 @@ class AnimationUpdateMsg(DTO):
     def get_track_payload(self):
         return {
             "element_id": self.element_id,
-            "animation": self.animation,
+            "animation": self.animation_type,
             "value": self.value,
-            "svg_file": self.svg_file,
+            "svg_name": self.svg_name,
             "timestamp": self.timestamp.isoformat() if self.timestamp else None
         }
 
@@ -382,3 +384,11 @@ class AnimationUpdateRequestMsg(DTO):
             "quality": self.quality,
             "value": self.value
         }                
+    
+    def to_test_tag_update_msg(self) -> TagUpdateMsg:
+        return TagUpdateMsg(
+            datapoint_identifier=self.datapoint_identifier,
+            value=self.value,
+            quality=self.quality,
+            test=True       
+        )

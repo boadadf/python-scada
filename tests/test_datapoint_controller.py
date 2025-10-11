@@ -29,7 +29,7 @@ def controller(model):
 def test_publish_tag_blocks_when_initializing(controller):
     controller._initializing_clients.add("sid1")
     controller.socketio.emit.reset_mock()
-    controller.publish(TagUpdateMsg(datapoint_identifier="Test@TAG", value=456, quality="good", timestamp="2025-09-15T12:01:00Z"))
+    controller.publish(TagUpdateMsg(datapoint_identifier="Test@TAG", value=456, quality="good", timestamp=datetime.datetime.now()))
     controller.socketio.emit.assert_not_called()
 
 @pytest.mark.asyncio
