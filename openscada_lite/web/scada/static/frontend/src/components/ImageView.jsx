@@ -115,6 +115,22 @@ export default function ImageView() {
             .catch(() => alert("Error sending command"));
         }
       }
+      // Command datapoint or driver communication
+      if (target && target.hasAttribute("command-communication")) {
+        const driver = target.getAttribute("command-communication");
+        const value = target.getAttribute("command-value") || "";
+
+        if (window.confirm(`Send command "${driver}" with value "${value}"?`)) {
+          fetch("/communication_send_driverconnectcommand", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ driver_name: driver, status: value })
+          })
+            .then(res => res.json())
+            .then(data => alert(data.reason || "Command sent!"))
+            .catch(err => alert("Error sending command: " + err));
+        }
+      }
     }
     svgElem.addEventListener("click", handleClick);
     return () => svgElem.removeEventListener("click", handleClick);
