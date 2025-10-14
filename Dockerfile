@@ -1,7 +1,7 @@
 # ==========================================
 # 1. Build all React frontends in place
 # ==========================================
-FROM node:18 AS frontend
+FROM node:20 AS frontend
 
 WORKDIR /app
 
