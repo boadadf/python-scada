@@ -10,7 +10,10 @@ module.exports = {
     rules: [
       {
         test: /\.(js|jsx)$/,
-        exclude: /node_modules/,
+        exclude: (modulePath) => {
+          // Exclude node_modules except for the linked login package
+          return /node_modules/.test(modulePath) && !/node_modules[\\/](login)/.test(modulePath);
+        },
         use: {
           loader: "babel-loader",
           options: {
