@@ -2,7 +2,7 @@ import asyncio
 import pytest
 
 from openscada_lite.common.bus.event_bus import EventBus
-from openscada_lite.core.rule.rule_manager import RuleEngine
+from openscada_lite.modules.rule.manager.rule_manager import RuleEngine
 from openscada_lite.common.bus.event_types import EventType
 from openscada_lite.common.models.entities import Rule
 from openscada_lite.common.models.dtos import SendCommandMsg, RaiseAlarmMsg, LowerAlarmMsg, TagUpdateMsg

@@ -9,7 +9,7 @@ from openscada_lite.common.config.config import Config
 from openscada_lite.common.tracking.decorators import publish_data_flow_from_arg_async
 from openscada_lite.common.tracking.tracking_types import DataFlowStatus
 from openscada_lite.common.models.dtos import DriverConnectStatus, RawTagUpdateMsg, CommandFeedbackMsg, SendCommandMsg
-from openscada_lite.core.communications.drivers.driver_protocol import DriverProtocol
+from openscada_lite.modules.communication.drivers.driver_protocol import DriverProtocol
 from openscada_lite.common.models.entities import Datapoint
 
 
@@ -47,7 +47,7 @@ class TestDriver(DriverProtocol, ABC):
 
     async def disconnect(self):
         self._connected = False
-        self.stop_test()
+        await self.stop_test()
         print(f"[DISCONNECT] Disconnecting driver {self._server_name}")        
         await self.publish_driver_state("offline")        
 

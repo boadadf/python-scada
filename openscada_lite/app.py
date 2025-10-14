@@ -22,9 +22,7 @@ from openscada_lite.modules.security.controller import SecurityController
 from openscada_lite.modules.security.model import SecurityModel
 from openscada_lite.modules.security.service import SecurityService
 from openscada_lite.common.config.config import Config
-from openscada_lite.core.rule.rule_manager import RuleEngine
 from openscada_lite.common.bus.event_bus import EventBus
-from openscada_lite.core.communications.connector_manager import ConnectorManager
 from openscada_lite.web.config_editor.routes import config_bp
 from openscada_lite.web.security_editor.routes import security_bp
 from openscada_lite.web.scada.routes import scada_bp
@@ -107,16 +105,13 @@ def initialize_modules(config: dict, socketio: SocketIO, event_bus: EventBus) ->
 
 module_instances = initialize_modules(system_config, socketio, event_bus)
 
+async def async_init_all(module_instances):
+    for mod in module_instances.values():
+        service = mod.get("service")
+        if hasattr(service, "async_init"):
+            await service.async_init()
 
-# ---------------------------------------------------------------------
-# Rule engine & connector manager
-# ---------------------------------------------------------------------
-RuleEngine.get_instance(event_bus)
-
-connector_manager = ConnectorManager(event_bus)
-# Run async initialization safely at startup
-asyncio.run(connector_manager.init_drivers())
-
+asyncio.run(async_init_all(module_instances))
 
 #Security modules are not part of the dynamic modules
 print(f"[APP] Initializing Security Module {(app)}")

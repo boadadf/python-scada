@@ -42,15 +42,17 @@ class BaseService(ABC, Generic[T, U, V]):
         self.V_cls = V_cls
 
         # Subscribe to all event types
-        for t_cls in self.T_cls_list:
-            self.event_bus.subscribe(t_cls.get_event_type(), self.handle_bus_message)
+        if T_cls is not None:
+            for t_cls in self.T_cls_list:
+                if t_cls is not None:
+                    self.event_bus.subscribe(t_cls.get_event_type(), self.handle_bus_message)
 
     @publish_data_flow_from_arg_async(status=DataFlowStatus.RECEIVED)
     async def handle_bus_message(self, data:T):
         accept_update = self.should_accept_update(data)
         if not accept_update:
             return
-        processed_msg = self.process_msg(data)
+        processed_msg = self.process_msg(data)        
         # Support both single and list of updates
         if isinstance(processed_msg, list):
             for msg in processed_msg:
@@ -95,4 +97,7 @@ class BaseService(ABC, Generic[T, U, V]):
         Must be implemented by subclasses.
         By default, all messages are accepted.
         """
+        pass
+
+    async def async_init(self):
         pass

@@ -1,7 +1,7 @@
 import asyncio
 import pytest
-from core.communications.drivers.test.tank_test_driver import TankTestDriver
-from openscada_lite.common.models.dtos import SendCommandMsg, TagUpdateMsg, CommandFeedbackMsg
+from openscada_lite.modules.communication.drivers.test.tank_test_driver import TankTestDriver
+from openscada_lite.common.models.dtos import SendCommandMsg, TagUpdateMsg
 from openscada_lite.common.models.entities import Datapoint
 
 import asyncio

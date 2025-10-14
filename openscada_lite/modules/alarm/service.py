@@ -59,7 +59,6 @@ class AlarmService(BaseService[Union[RaiseAlarmMsg, LowerAlarmMsg], AckAlarmMsg,
         alarm.acknowledge_time = data.timestamp
         self.model.update(alarm)
         await self.event_bus.publish(alarm.get_event_type(), alarm)
-        print(f"[AlarmService] Alarm {alarm.get_id()} acknowledged at {alarm.acknowledge_time}. Is finished: {alarm.isFinished()}")
         if self.controller:
             self.controller.publish(alarm)
 

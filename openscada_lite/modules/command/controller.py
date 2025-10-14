@@ -7,10 +7,4 @@ class CommandController(BaseController[CommandFeedbackMsg, SendCommandMsg]):
         super().__init__(model, socketio, CommandFeedbackMsg, SendCommandMsg, base_event=base_event, flask_app=flask_app)
 
     def validate_request_data(self, data):
-        # Accepts either a dict or a SendCommandMsg
-        if isinstance(data, SendCommandMsg):
-            return data
-        try:
-            return SendCommandMsg(**data)
-        except Exception as e:
-            return StatusDTO(status="error", reason=f"Invalid input data: {e}")
+        return data

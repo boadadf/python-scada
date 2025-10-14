@@ -1,6 +1,6 @@
 import pytest
 import datetime
-from unittest.mock import AsyncMock, patch, MagicMock
+from unittest.mock import patch, MagicMock
 from openscada_lite.common.models.dtos import RawTagUpdateMsg, StatusDTO, TagUpdateMsg
 from openscada_lite.common.config.config import Config
 from openscada_lite.modules.datapoint.model import DatapointModel

@@ -11,8 +11,8 @@ class CommunicationController(BaseController[DriverConnectStatus, DriverConnectC
     def validate_request_data(self, driver_connected_command: DriverConnectCommand) -> Union[DriverConnectCommand, StatusDTO]:
         try:
             status = driver_connected_command.status
-            if status not in ("connect", "disconnect"):
-                return StatusDTO(status="error", reason="Invalid status. Must be 'connect' or 'disconnect'.")
+            if status not in ("connect", "disconnect", "toggle"):
+                return StatusDTO(status="error", reason="Invalid status. Must be 'connect', 'disconnect', or 'toggle'.")
             return driver_connected_command
         except TypeError as e:
             return StatusDTO(status="error", reason='Invalid input data: ' + str(e))

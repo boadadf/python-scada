@@ -10,6 +10,9 @@ class DummyEventBus:
         pass
     def subscribe(self, event_type, handler):
         pass
+class DummyModel:
+    def update(self, msg):
+        pass
 
 class DummyController:
     def __init__(self):
@@ -94,7 +97,7 @@ def dummy_config(monkeypatch, tmp_path):
 @pytest.mark.asyncio
 async def test_tag_update_triggers_animation(dummy_config):
     controller = DummyController()
-    service = AnimationService(DummyEventBus(), model=None, controller=controller)
+    service = AnimationService(DummyEventBus(), model=DummyModel(), controller=controller)
 
     msg = TagUpdateMsg(datapoint_identifier="Server1@TANK", value=50, quality="good")
     updates = service.process_msg(msg)
@@ -114,7 +117,7 @@ async def test_tag_update_triggers_animation(dummy_config):
 @pytest.mark.asyncio
 async def test_alarm_update_triggers_alarm_animation(dummy_config):
     controller = DummyController()
-    service = AnimationService(DummyEventBus(), model=None, controller=controller)
+    service = AnimationService(DummyEventBus(), model=DummyModel(), controller=controller)
 
     # Add alarm animation manually to dummy_config for testing
     service.animations["ALARM_TEST"] = Animation(

@@ -9,13 +9,13 @@ the lifecycle state for each rule.
 import re
 from asteval import Interpreter
 from openscada_lite.common.tracking.decorators import publish_data_flow_from_arg_async
-from openscada_lite.core.rule.actioncommands.action import Action
+from openscada_lite.modules.rule.actioncommands.action import Action
 from openscada_lite.common.tracking.tracking_types import DataFlowStatus
 from openscada_lite.common.bus.event_types import EventType
 from openscada_lite.common.config.config import Config
 from openscada_lite.common.bus.event_bus import EventBus
 from openscada_lite.common.models.dtos import TagUpdateMsg
-from openscada_lite.core.rule.actioncommands.command_map import ACTION_MAP
+from openscada_lite.modules.rule.actioncommands.command_map import ACTION_MAP
 
 class RuleEngine:
     """
@@ -77,7 +77,7 @@ class RuleEngine:
         """
         self.tag_to_rules.clear()
         tag_pattern = re.compile(r"[A-Za-z0-9_]+@[A-Za-z0-9_]+")
-
+        all_tags = set()
         for rule in self.rules:
             conditions = [rule.on_condition]
             if getattr(rule, "off_condition", None):
@@ -86,10 +86,12 @@ class RuleEngine:
             for condition in conditions:
                 for tag in tag_pattern.findall(condition or ""):
                     self.tag_to_rules.setdefault(tag, []).append(rule)
-
-        print(f"[RuleEngine] Tag-to-rule index built:")
-        for tag, rules in self.tag_to_rules.items():
-            print(f"  {tag} → {[r.rule_id for r in rules]}")
+                    all_tags.add(tag)
+        # Initialize all tags in asteval symtable
+        for tag in all_tags:
+            safe_key = self._safe_key(tag)
+            if safe_key not in self.asteval.symtable:
+                self.asteval.symtable[safe_key] = None
 
     def subscribe_to_eventbus(self):
         """
@@ -108,7 +110,6 @@ class RuleEngine:
         Args:
             data (dict): The tag update event data, must include 'tag_id' and 'value'.
         """
-        print(f"[RuleEngine] Received tag update: {msg.datapoint_identifier} = {msg.value}")
         tag_id = msg.datapoint_identifier
         value = msg.value
         self.datapoint_state[tag_id] = value
@@ -118,12 +119,9 @@ class RuleEngine:
 
         impacted_rules = self.tag_to_rules.get(tag_id, [])
         for rule in impacted_rules:
-            print(f"[RuleEngine] Evaluating rule: {rule.rule_id}")
             rule_id = rule.rule_id
             on_active = self.rule_states.get(rule_id, False)
             try:
-                print("Evaluating:", rule.on_condition.replace("@", "__"))
-                print("Symtable value for {}: {}", safe_key , self.asteval.symtable.get(safe_key))
                 on_result = self.asteval(rule.on_condition.replace("@", "__"))
                 if self.asteval.error:
                     print("asteval errors:", self.asteval.error)
@@ -135,9 +133,7 @@ class RuleEngine:
             except Exception as e:
                 print(f"[RuleEngine] Error evaluating rule {rule_id}: {e}")
                 continue
-            print(f"[RuleEngine] Rule {rule_id} evaluation results: on_condition={on_result}, off_condition={off_result if has_off else 'N/A'}, on_active={on_active}")
             if has_off:
-                print(f"[RuleEngine] Rule {rule_id} has off_condition.")
                 # ON transition: only if not already active
                 if not on_active and on_result:
                     self.rule_states[rule_id] = True
@@ -149,11 +145,9 @@ class RuleEngine:
                     for action in getattr(rule, "off_actions", []):
                         await self.execute_action(action, tag_id, msg.track_id, active=False, rule_id=rule_id)
             else:
-                print(f"[RuleEngine] Rule {rule_id} has no off_condition.")
                 # Only trigger on rising edge (transition from false to true)
                 prev_active = self.rule_states.get(rule_id, False)
                 if not prev_active and on_result:
-                    print(f"[RuleEngine] Rule {rule_id} on_condition transitioned to true; executing on_actions.")
                     self.rule_states[rule_id] = True
                     for action in getattr(rule, "on_actions", []):
                         await self.execute_action(action, tag_id, msg.track_id, active=True, rule_id=rule_id)
@@ -161,9 +155,7 @@ class RuleEngine:
                     # Reset state so next true will trigger again
                     self.rule_states[rule_id] = False
                     # If raise_alarm is in on_actions, trigger lower_alarm automatically
-                    print(f"[RuleEngine] ======== Rule {rule_id} on_condition transitioned to false. {getattr(rule, "on_actions", [])}")
                     if any("raise_alarm" in action for action in getattr(rule, "on_actions", [])):
-                        print(f"[RuleEngine] Rule {rule_id} on_condition transitioned to false; executing lower_alarm.")
                         await self.execute_action("lower_alarm()", tag_id, msg.track_id, active=False, rule_id=rule_id)
 
     def parse_action(self, action_str):
@@ -176,7 +168,7 @@ class RuleEngine:
         Returns:
             tuple: (action_name, params)
         """
-        match = re.match(r"(\w+)\((.*)\)", action_str)
+        match = re.match(r"(\w+)\((.*)\)", action_str, re.DOTALL)
         if not match:
             raise ValueError(f"Invalid action string: {action_str}")
         action_name, params_str = match.groups()
@@ -184,7 +176,6 @@ class RuleEngine:
         return action_name, params
 
     async def execute_action(self, action_str, identifier, track_id, active=True, rule_id=None):
-        print(f"[RuleEngine] Executing action: {action_str} for {identifier} (active={active})")
         """
         Execute an action by looking up its handler and calling it.
 

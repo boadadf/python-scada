@@ -1,6 +1,6 @@
 from dataclasses import dataclass, asdict, field
 from enum import Enum
-from typing import Any, Optional
+from typing import Any, Optional, Union
 import datetime
 import uuid
 
@@ -221,6 +221,7 @@ class AlarmUpdateMsg(DTO):
     deactivation_time: Optional[datetime.datetime] = None
     acknowledge_time: Optional[datetime.datetime] = None
     rule_id: Optional[str] = None
+    test: bool = False
 
     @property
     def alarm_occurrence_id(self) -> str:
@@ -366,7 +367,8 @@ class AnimationUpdateMsg(DTO):
 class AnimationUpdateRequestMsg(DTO):
     datapoint_identifier: str
     quality: str
-    value: float
+    value: float = 0.09
+    alarm_status: str | None = None  # <-- NEW
     
     @classmethod
     def get_event_type(cls) -> EventType:
@@ -384,11 +386,76 @@ class AnimationUpdateRequestMsg(DTO):
             "quality": self.quality,
             "value": self.value
         }                
+
+    def to_test_update_msg(self) -> Union[AlarmUpdateMsg, TagUpdateMsg]:
+        if self.alarm_status:
+            """Generate a simulated AlarmUpdateMsg for testing animations."""
+            now = datetime.datetime.now()
+            status = (self.alarm_status or "UNKNOWN").upper()
+
+            activation_time = now if status in ["ACTIVE", "ACK", "INACTIVE", "FINISHED"] else None
+            acknowledge_time = now if status in ["ACK", "INACTIVE", "FINISHED"] else None
+            deactivation_time = now if status in ["INACTIVE", "FINISHED"] else None
+
+            return AlarmUpdateMsg(
+                datapoint_identifier=self.datapoint_identifier,
+                activation_time=activation_time,
+                acknowledge_time=acknowledge_time,
+                deactivation_time=deactivation_time,
+                rule_id="manual_test_alarm",
+                test=True,
+            )
+        else:
+            return TagUpdateMsg(
+                datapoint_identifier=self.datapoint_identifier,
+                value=self.value,
+                quality=self.quality,
+                test=True
+            )
+
+
+@dataclass
+class ClientAlertMsg(DTO):    
+    message: str
+    alert_type: str
+    show: bool = True  # True to show, False to hide
+    command_datapoint: Optional[str] = None
+    command_value: Optional[str] = None
+    timeout: Optional[int] = None  # in seconds
+
+    @classmethod
+    def get_event_type(cls) -> EventType:
+        return EventType.CLIENT_ALERT
+
+    def to_dict(self):
+        return self._default_to_dict()
+
+    def get_id(self) -> str:
+        return self.track_id
+
+    def get_track_payload(self):
+        return {
+            "message": self.message,
+            "command_datapoint": self.command_datapoint,
+            "command_value": self.command_value
+        }
     
-    def to_test_tag_update_msg(self) -> TagUpdateMsg:
-        return TagUpdateMsg(
-            datapoint_identifier=self.datapoint_identifier,
-            value=self.value,
-            quality=self.quality,
-            test=True       
-        )
+@dataclass
+class ClientAlertFeedbackMsg(DTO):
+    #track_id is inherited from DTO
+    feedback: str  # e.g., "confirm" "cancel"
+
+    @classmethod
+    def get_event_type(cls) -> EventType:
+        return EventType.CLIENT_ALERT_FEEDBACK
+
+    def to_dict(self):
+        return self._default_to_dict()
+
+    def get_id(self) -> str:
+        return self.track_id
+
+    def get_track_payload(self):
+        return {
+            "feedback": self.feedback
+        }    

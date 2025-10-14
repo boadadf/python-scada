@@ -1,24 +1,36 @@
 from typing import Dict
+from openscada_lite.modules.communication.manager.communication_listener import CommunicationListener
 from openscada_lite.common.tracking.tracking_types import DataFlowStatus
 from openscada_lite.common.tracking.decorators import publish_data_flow_from_arg_async
 from openscada_lite.common.models.dtos import DriverConnectCommand, CommandFeedbackMsg, DriverConnectStatus, RawTagUpdateMsg, SendCommandMsg
-from openscada_lite.core.communications.drivers import DRIVER_REGISTRY
-from openscada_lite.common.bus.event_types import EventType
-from openscada_lite.common.bus.event_bus import EventBus
+from openscada_lite.modules.communication.drivers import DRIVER_REGISTRY
 from openscada_lite.common.models.entities import Datapoint
-from openscada_lite.core.communications.drivers.driver_protocol import DriverProtocol
+from openscada_lite.modules.communication.drivers.driver_protocol import DriverProtocol
 from openscada_lite.common.config.config import Config
 import datetime
 
 class ConnectorManager:
-    def __init__(self, event_bus: EventBus):
+    _instance = None
+
+    def __new__(cls, *args, **kwargs):
+        if cls._instance is not None:
+            raise RuntimeError("Use EventBus.get_instance() instead of direct instantiation.")
+        return super().__new__(cls)
+
+    @classmethod
+    def get_instance(cls):
+        if cls._instance is None:
+            # Temporarily allow instantiation
+            cls._instance = super().__new__(cls)
+            cls.__init__(cls._instance)
+        return cls._instance
+    
+    def __init__(self):
         self.config = Config.get_instance()
-        self.event_bus = event_bus
-        self.event_bus.subscribe(EventType.DRIVER_CONNECT_COMMAND, self.handle_driver_connect)
-        self.event_bus.subscribe(EventType.SEND_COMMAND, self.send_command)
         self.driver_instances: Dict[str, DriverProtocol] = {}  # key: driver name
         self.types = self.config.get_types()
         self.driver_status: Dict[str, str] = {}  # key: driver name, value: last status
+        self.listener: CommunicationListener = None
 
         for cfg in self.config.get_drivers():
             datapoint_objs = []
@@ -45,8 +57,11 @@ class ConnectorManager:
             driver.register_command_feedback(self.emit_command_feedback)
             await driver.register_communication_status_listener(self.emit_communication_status)
 
+    def register_listener(self, listener: CommunicationListener):
+        self.listener = listener
+
     @publish_data_flow_from_arg_async(status=DataFlowStatus.RECEIVED)
-    async def handle_driver_connect(self, data: DriverConnectCommand):        
+    async def handle_driver_connect_command(self, data: DriverConnectCommand):        
         driver_name = data.driver_name
         status = data.status        
         driver = self.driver_instances.get(driver_name)        
@@ -56,18 +71,23 @@ class ConnectorManager:
                 await driver.connect()
             elif status == "disconnect":
                 await driver.disconnect()
+            elif status == "toggle":
+                if driver.is_connected:
+                    await driver.disconnect()
+                else:
+                    await driver.connect()
 
     @publish_data_flow_from_arg_async(status=DataFlowStatus.RECEIVED)
     async def emit_value(self, data: RawTagUpdateMsg):
-        await self.event_bus.publish(EventType.RAW_TAG_UPDATE, data)
+        await self.listener.on_raw_tag_update(data) if self.listener else None        
 
     @publish_data_flow_from_arg_async(status=DataFlowStatus.RECEIVED)
     async def emit_command_feedback(self, data: CommandFeedbackMsg):
-        await self.event_bus.publish(EventType.COMMAND_FEEDBACK, data)
+        await self.listener.on_command_feedback(data) if self.listener else None
 
     @publish_data_flow_from_arg_async(status=DataFlowStatus.RECEIVED)
     async def emit_communication_status(self, data: DriverConnectStatus):
-        await self.event_bus.publish(EventType.DRIVER_CONNECT_STATUS, data)
+        await self.listener.on_driver_connect_status(data) if self.listener else None
         # If the driver went offline, publish all tags as unknown
         driver_name = data.driver_name
         status = data.status

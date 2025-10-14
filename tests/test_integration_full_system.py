@@ -1,13 +1,15 @@
 import uuid
 import pytest
 import asyncio
-from openscada_lite.core.communications.drivers.test.test_driver import TestDriver
+from openscada_lite.modules.communication.model import CommunicationModel
+from openscada_lite.modules.communication.service import CommunicationService
+from openscada_lite.modules.communication.drivers.test.test_driver import TestDriver
 from openscada_lite.modules.alarm.model import AlarmModel
 from openscada_lite.common.bus.event_bus import EventBus
 from openscada_lite.modules.datapoint.model import DatapointModel
 from openscada_lite.modules.datapoint.service import DatapointService
-from openscada_lite.core.communications.connector_manager import ConnectorManager
-from openscada_lite.core.rule.rule_manager import RuleEngine
+from openscada_lite.modules.communication.manager.connector_manager import ConnectorManager
+from openscada_lite.modules.rule.manager.rule_manager import RuleEngine
 from openscada_lite.modules.alarm.service import AlarmService
 from openscada_lite.common.bus.event_types import EventType
 from openscada_lite.common.models.dtos import CommandFeedbackMsg, LowerAlarmMsg, RaiseAlarmMsg, SendCommandMsg
@@ -30,8 +32,9 @@ async def test_full_system_with_recursive_alarms_and_feedback():
     DatapointService(bus, datapointModel, controller=None)
 
     # Configuration & Connector
-    connector_manager = ConnectorManager(bus)
-    await connector_manager.start_all()
+    connection_service = CommunicationService(bus, CommunicationModel(), None)       
+    manager = connection_service.connection_manager    
+    await manager.start_all()
 
     # Rule Engine
     rule_engine = RuleEngine.get_instance()
@@ -62,7 +65,7 @@ async def test_full_system_with_recursive_alarms_and_feedback():
     bus.subscribe(EventType.LOWER_ALARM, capture_alarm_inactive)
     bus.subscribe(EventType.COMMAND_FEEDBACK, capture_feedback)
 
-    driver: TestDriver = connector_manager.driver_instances["Server2"]
+    driver: TestDriver = manager.driver_instances["Server2"]
 
     # --- Simulate driver updates ---
     # Trigger first alarm    
@@ -76,7 +79,7 @@ async def test_full_system_with_recursive_alarms_and_feedback():
     await asyncio.sleep(0.05)
 
     # Send a command through connector
-    await connector_manager.send_command(SendCommandMsg(uuid.uuid4(), "Server2@VALVE1_POS", 0))
+    await manager.send_command(SendCommandMsg(uuid.uuid4(), "Server2@VALVE1_POS", 0))
     await asyncio.sleep(0.05)
 
     # Command feedback captured

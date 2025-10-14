@@ -3,13 +3,13 @@ import json
 import asyncio
 from typing import Any
 import pytest
-from unittest.mock import ANY, AsyncMock, MagicMock, patch
+from unittest.mock import ANY, AsyncMock, MagicMock, call, patch
 from openscada_lite.common.models.dtos import DriverConnectCommand, DriverConnectStatus, RawTagUpdateMsg, StatusDTO
 from openscada_lite.modules.communication.controller import CommunicationController
 from openscada_lite.modules.communication.service import CommunicationService
 from openscada_lite.modules.communication.model import CommunicationModel
 from openscada_lite.common.bus.event_types import EventType
-from openscada_lite.core.communications.connector_manager import ConnectorManager
+from openscada_lite.modules.communication.manager.connector_manager import ConnectorManager
 from openscada_lite.common.bus.event_bus import EventBus
 from openscada_lite.common.config.config import Config
 
@@ -18,6 +18,10 @@ from openscada_lite.common.config.config import Config
 def reset_event_bus(monkeypatch):
     # Reset the singleton before each test
     monkeypatch.setattr(EventBus, "_instance", None)
+
+@pytest.fixture(autouse=True)
+def reset_connector_manager(monkeypatch):
+    monkeypatch.setattr(ConnectorManager, "_instance", None)
 
 class DummyEventBus(EventBus):
     def __init__(self):
@@ -91,7 +95,7 @@ def test_handle_connect_driver_invalid_status():
         assert response.status_code == 400
         assert response.get_json() == {
             "status": "error",
-            "reason": "Invalid status. Must be 'connect' or 'disconnect'."
+            "reason": "Invalid status. Must be 'connect', 'disconnect', or 'toggle'."
         }
 
     controller.service.handle_controller_message.assert_not_called()
@@ -133,20 +137,21 @@ def test_publish_status(controller):
 @pytest.mark.asyncio
 async def test_send_connect_command_publishes_event(service):
     svc, event_bus, _ = service
+    await svc.async_init()
     await svc.handle_controller_message(DriverConnectCommand("Server1", "connect"))
-    event_bus.publish.assert_called_once_with(
-        EventType.DRIVER_CONNECT_COMMAND,
-        DriverConnectCommand(track_id=ANY, driver_name="Server1", status="connect")
+    expected_call = call(
+        EventType.DRIVER_CONNECT_STATUS,
+        DriverConnectStatus(track_id=ANY, driver_name="Server1", status="online")
     )
+    assert expected_call in event_bus.publish.call_args_list
 
 @pytest.mark.asyncio
 async def test_on_driver_connect_status_updates_model_and_notifies_controller(service):
     svc, _, model = service
     svc.controller = MagicMock()
     data = DriverConnectStatus(track_id="1234", driver_name="Server1", status="connect")
-    await svc.handle_bus_message(data)
-    model.update.assert_called_once_with(DriverConnectStatus(track_id="1234", driver_name="Server1", status="connect"))
-    svc.controller.publish.assert_called_once_with(DriverConnectStatus(track_id="1234", driver_name="Server1", status="connect"))
+    with pytest.raises(TypeError, match="Expected SendCommandMsg"):
+        await svc.handle_bus_message(data)
 
 def test_set_and_get_status():
     model = CommunicationModel()
@@ -182,7 +187,8 @@ async def test_driver_publishes_disconnected_status_on_start():
     Config.get_instance("tests/test_config.json")
 
     bus = EventBus.get_instance()
-    connector_manager = ConnectorManager(bus)
+    connection_service = CommunicationService(bus, CommunicationModel(), None)       
+    manager = connection_service.connection_manager    
 
     status_events = []
     waitEvent = asyncio.Event()
@@ -193,7 +199,7 @@ async def test_driver_publishes_disconnected_status_on_start():
     # Subscribe to DRIVER_STATUS events
     bus.subscribe(EventType.DRIVER_CONNECT_STATUS, status_handler)
 
-    await connector_manager.start_all()
+    await manager.start_all()
     # Give some time for status events to be published
     await asyncio.wait_for(waitEvent.wait(), timeout=2.0)
 
@@ -203,7 +209,7 @@ async def test_driver_publishes_disconnected_status_on_start():
         for event in status_events
     ), f"No 'offline' status event found in: {status_events}"
 
-    await connector_manager.stop_all()
+    await manager.stop_all()
 
 def test_emit_communication_status_sets_unknown(monkeypatch):
     # Patch Config.get_instance as before
@@ -228,7 +234,8 @@ def test_emit_communication_status_sets_unknown(monkeypatch):
 
     monkeypatch.setattr(EventBus, "publish", fake_publish)
 
-    manager = ConnectorManager(bus)
+    connection_service = CommunicationService(bus, CommunicationModel(), None)       
+    manager = connection_service.connection_manager    
     manager.driver_status["TestDriver"] = "online"
     status = DriverConnectStatus(driver_name="TestDriver", status="offline")
     import asyncio

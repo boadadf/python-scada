@@ -1,11 +1,12 @@
 import asyncio
 import uuid
 import pytest
+from openscada_lite.modules.communication.model import CommunicationModel
+from openscada_lite.modules.communication.service import CommunicationService
 from openscada_lite.common.bus.event_bus import EventBus
 from openscada_lite.modules.datapoint.model import DatapointModel
 from openscada_lite.modules.datapoint.service import DatapointService
-from core.communications.drivers.test.test_driver import TestDriver
-from openscada_lite.core.communications.connector_manager import ConnectorManager
+from openscada_lite.modules.communication.manager.connector_manager import ConnectorManager
 from openscada_lite.common.bus.event_types import EventType
 from openscada_lite.common.models.dtos import CommandFeedbackMsg, SendCommandMsg
 from openscada_lite.common.config.config import Config
@@ -28,10 +29,9 @@ def setup_function():
 @pytest.mark.asyncio
 async def test_connector_drivers_publish_to_datapoint_engine():
     bus = EventBus.get_instance()
-    dp_engine = DatapointService(bus, DatapointModel(), None)   
-    connector_manager = ConnectorManager(bus)
-    await connector_manager.init_drivers()
-    await connector_manager.start_all()
+    dp_engine = DatapointService(bus, DatapointModel(), None)       
+    connection_service = CommunicationService(bus, CommunicationModel(), None)        
+    await connection_service.connection_manager.start_all()
     # Let TestDrivers publish some values
     await asyncio.sleep(2)
 
@@ -42,13 +42,13 @@ async def test_connector_drivers_publish_to_datapoint_engine():
         assert all_tags[tag_id].value is not None
 
     # Stop drivers
-    await connector_manager.stop_all()
+    await connection_service.connection_manager.stop_all()
 
 @pytest.mark.asyncio
 async def test_send_command_routing():
     bus = EventBus.get_instance()    
-
-    connector_manager = ConnectorManager(bus)
+    connection_service = CommunicationService(bus, CommunicationModel(), None)       
+    connector_manager = connection_service.connection_manager
     
     await connector_manager.start_all()
     

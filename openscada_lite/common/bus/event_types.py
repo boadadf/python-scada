@@ -18,3 +18,5 @@ class EventType(Enum):
     FLOW_EVENT = "flow_event"
     ANIMATION_EVENT = "animation_event"
     ANIMATION_REQUEST = "animation_request"
+    CLIENT_ALERT = "client_alert"
+    CLIENT_ALERT_FEEDBACK = "client_alert_feedback"

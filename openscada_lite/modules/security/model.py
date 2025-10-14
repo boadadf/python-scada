@@ -25,16 +25,12 @@ class SecurityModel:
 
     def _load_endpoints(self):
         """Scan Flask app for all registered POST endpoint names."""
-        print("[SecurityModel] Scanning Flask app for POST endpoints...")
         with self._lock:
             self.endpoints = set(
                 rule.endpoint
                 for rule in self.app.url_map.iter_rules()
                 if "POST" in rule.methods
             )
-            for rule in self.app.url_map.iter_rules():
-                if "POST" in rule.methods:
-                    print(f"Rule: {rule} endpoint: {rule.endpoint} methods: {rule.methods}")
 
     def _load(self):
         if os.path.exists(self.file_path):

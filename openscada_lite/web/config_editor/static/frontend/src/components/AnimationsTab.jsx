@@ -4,14 +4,10 @@ import Table from "./Table";
 /**
  * AnimationTab.jsx
  *
- * - triggerType: "datapoint" | "alarm"
- * - if triggerType === "alarm":
- *     - show alarmEvent selector
- *     - force "Alarm Expression" editor: two fields ACTIVE / INACTIVE
- * - otherwise allow Eval or Mapping expressions
- *
- * Expression for alarm entries is stored as an object:
- *   { "ACTIVE": "<value-for-active>", "INACTIVE": "<value-for-inactive>" }
+ * - triggerType: "datapoint" | "alarm" | "connection"
+ * - Expression for alarm entries is stored as an object:
+ *   { "ACTIVE": "<value-for-active>", "INACTIVE": "<value-for-inactive>", "FINISHED": ..., "ACK": ... }
+ * - Expression for communication entries: { "ONLINE": "<value>", "OFFLINE": "<value>" }
  */
 
 export default function AnimationTab({ config, setConfig }) {
@@ -20,7 +16,6 @@ export default function AnimationTab({ config, setConfig }) {
   const animations = config.animations || {};
   const keys = Object.keys(animations);
 
-  // Initialize expression modes whenever a group is selected
   useEffect(() => {
     if (!selectedKey) return;
     const newModes = {};
@@ -62,17 +57,15 @@ export default function AnimationTab({ config, setConfig }) {
     const copy = structuredClone(config);
     const newEntry = {
       triggerType: "datapoint",
-      alarmEvent: "",          // used only when triggerType === 'alarm'
       attribute: "",
       quality: { unknown: "" },
-      expression: "",          // string or object or alarm-mapping object
+      expression: "",          // string or object
       duration: 0.5,
-      default: "",             // explicit revert target
+      default: "",
       revertAfter: 0
     };
     copy.animations[selectedKey].push(newEntry);
     saveConfig(copy);
-    // set expression mode for the new entry
     setExpressionModes(prev => ({ ...prev, [copy.animations[selectedKey].length - 1]: "eval" }));
   }
 
@@ -92,7 +85,7 @@ export default function AnimationTab({ config, setConfig }) {
     if (!selectedKey) return;
     const copy = structuredClone(config);
     const entry = copy.animations[selectedKey][idx];
-    // normalize numeric fields
+
     if (field === "duration" || field === "revertAfter") {
       entry[field] = rawValue === "" ? 0 : Number(rawValue);
     } else if (field === "quality") {
@@ -100,22 +93,22 @@ export default function AnimationTab({ config, setConfig }) {
       entry.quality.unknown = rawValue;
     } else if (field === "triggerType") {
       entry.triggerType = rawValue;
-      // if switched to alarm, force expression mode to 'alarm' and ensure structure
       if (rawValue === "alarm") {
         setExpressionModes(prev => ({ ...prev, [idx]: "alarm" }));
-        // initialize alarm expression mapping when missing
-        if (!entry.expression || typeof entry.expression !== "object" || !("ACTIVE" in entry.expression)) {
-          entry.expression = { ACTIVE: "", INACTIVE: "" };
+        if (!entry.expression || typeof entry.expression !== "object") {
+          entry.expression = { ACTIVE: "", INACTIVE: "", FINISHED: "", ACK: "" };
         }
-        if (!entry.alarmEvent) entry.alarmEvent = "onAlarmActive";
+      } else if (rawValue === "connection") {
+        setExpressionModes(prev => ({ ...prev, [idx]: "alarm" })); // reuse alarm mode for simplicity
+        if (!entry.expression || typeof entry.expression !== "object") {
+          entry.expression = { ONLINE: "", OFFLINE: "" };
+        }
       } else {
-        // switch to non-alarm: set default mode if needed
         setExpressionModes(prev => ({ ...prev, [idx]: typeof entry.expression === "object" ? "mapping" : "eval" }));
       }
     } else if (field === "expression") {
       const mode = expressionModes[idx];
       if (mode === "mapping") {
-        // user provides JSON string (rare) — try parse
         try {
           entry.expression = JSON.parse(rawValue);
         } catch {
@@ -166,22 +159,21 @@ export default function AnimationTab({ config, setConfig }) {
           <table style={{ width: "100%", borderCollapse: "collapse", marginTop: 8 }}>
             <thead>
               <tr>
-                <th style={{ width: 120 }}>Trigger</th>
-                <th style={{ width: 140 }}>Alarm Event</th>
-                <th>Attribute</th>
-                <th>Quality (unknown)</th>
-                <th>Expr / Alarm values</th>
-                <th>Default</th>
+                <th style={{ width: 90 }}>Trigger</th>
+                <th style={{ width: 120 }}>Attribute</th>
+                <th style={{ width: 120 }}>Quality (unknown)</th>
+                <th style={{ width: 420 }}>Expr / Values</th>
+                <th style={{ width: 120 }}>Default</th>
                 <th style={{ width: 110 }}>Revert After (s)</th>
-                <th style={{ width: 70 }}></th>
+                <th style={{ width: 50 }}></th>
               </tr>
             </thead>
             <tbody>
               {(animations[selectedKey] || []).map((entry, idx) => {
-                const mode = expressionModes[idx] || (entry.triggerType === "alarm" ? "alarm" : (typeof entry.expression === "object" ? "mapping" : "eval"));
+                const mode = expressionModes[idx] || (typeof entry.expression === "object" ? "mapping" : "eval");
                 return (
                   <tr key={idx}>
-                    <td style={{ width: 120, padding: "0 8px" }}>
+                    <td style={{ width: 90, padding: "0 8px" }}>
                       <select
                         value={entry.triggerType || "datapoint"}
                         onChange={e => updateEntryField(idx, "triggerType", e.target.value)}
@@ -189,60 +181,52 @@ export default function AnimationTab({ config, setConfig }) {
                       >
                         <option value="datapoint">Datapoint</option>
                         <option value="alarm">Alarm</option>
+                        <option value="connection">Communication</option>
                       </select>
                     </td>
-                    <td style={{ width: 140, padding: "0 8px" }}>
-                      {entry.triggerType === "alarm" ? (
-                        <select
-                          value={entry.alarmEvent || "onAlarmActive"}
-                          onChange={e => updateEntryField(idx, "alarmEvent", e.target.value)}
-                          style={{ width: "100%", boxSizing: "border-box", padding: "2px 6px" }}
-                        >
-                          <option value="onAlarmActive">onAlarmActive</option>
-                          <option value="onAlarmAck">onAlarmAck</option>
-                          <option value="onAlarmInactive">onAlarmInactive</option>
-                          <option value="onAlarmFinished">onAlarmFinished</option>
-                        </select>
-                      ) : (
-                        <span style={{ opacity: 0.5 }}>—</span>
-                      )}
-                    </td>
-                    <td style={{ padding: "0 8px" }}>
+                    <td style={{ width: 120, padding: "0 8px" }}>
                       <input
                         value={entry.attribute || ""}
                         onChange={e => updateEntryField(idx, "attribute", e.target.value)}
                         style={{ width: "100%", boxSizing: "border-box", padding: "2px 6px" }}
                       />
                     </td>
-                    <td style={{ padding: "0 8px" }}>
+                    <td style={{ width: 120, padding: "0 8px" }}>
                       <input
                         value={entry.quality?.unknown || ""}
                         onChange={e => updateEntryField(idx, "quality", e.target.value)}
                         style={{ width: "100%", boxSizing: "border-box", padding: "2px 6px" }}
                       />
                     </td>
-                    <td style={{ padding: "0 8px" }}>
-                      {/* Expression area */}
+                    <td style={{ width: 420, padding: "0 8px" }}>
+                      {/* Expr / Values cell */}
                       {entry.triggerType === "alarm" ? (
                         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                          <div>
-                            <label style={{ fontSize: 12, color: "#333" }}>When {entry.alarmEvent || "onAlarmActive"} is TRUE (ACTIVE):</label><br />
-                            <input
-                              style={{ width: "100%", boxSizing: "border-box", padding: "2px 6px" }}
-                              value={(entry.expression && entry.expression.ACTIVE) || ""}
-                              onChange={e => updateAlarmExpression(idx, "ACTIVE", e.target.value)}
-                              placeholder="value when ACTIVE"
-                            />
-                          </div>
-                          <div>
-                            <label style={{ fontSize: 12, color: "#333" }}>When FALSE (INACTIVE):</label><br />
-                            <input
-                              style={{ width: "100%", boxSizing: "border-box", padding: "2px 6px" }}
-                              value={(entry.expression && entry.expression.INACTIVE) || ""}
-                              onChange={e => updateAlarmExpression(idx, "INACTIVE", e.target.value)}
-                              placeholder="value when INACTIVE"
-                            />
-                          </div>
+                          {["ACTIVE", "INACTIVE", "FINISHED", "ACK"].map(f => (
+                            <div key={f}>
+                              <label style={{ fontSize: 12, color: "#333" }}>{f}:</label><br />
+                              <input
+                                style={{ width: "100%", boxSizing: "border-box", padding: "2px 6px" }}
+                                value={(entry.expression && entry.expression[f]) || ""}
+                                onChange={e => updateAlarmExpression(idx, f, e.target.value)}
+                                placeholder={`value for ${f}`}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      ) : entry.triggerType === "connection" ? (
+                        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                          {["ONLINE", "OFFLINE"].map(f => (
+                            <div key={f}>
+                              <label style={{ fontSize: 12, color: "#333" }}>{f}:</label><br />
+                              <input
+                                style={{ width: "100%", boxSizing: "border-box", padding: "2px 6px" }}
+                                value={(entry.expression && entry.expression[f]) || ""}
+                                onChange={e => updateAlarmExpression(idx, f, e.target.value)}
+                                placeholder={`value for ${f}`}
+                              />
+                            </div>
+                          ))}
                         </div>
                       ) : (
                         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
@@ -270,7 +254,7 @@ export default function AnimationTab({ config, setConfig }) {
                         </div>
                       )}
                     </td>
-                    <td style={{ padding: "0 8px" }}>
+                    <td style={{ width: 120, padding: "0 8px" }}>
                       <input
                         value={entry.default || ""}
                         onChange={e => updateEntryField(idx, "default", e.target.value)}
@@ -288,7 +272,7 @@ export default function AnimationTab({ config, setConfig }) {
                         style={{ width: "80px", boxSizing: "border-box", padding: "2px 6px" }}
                       />
                     </td>
-                    <td style={{ width: 70, padding: "0 8px" }}>
+                    <td style={{ width: 50, padding: "0 8px" }}>
                       <button onClick={() => removeEntry(idx)}>Del</button>
                     </td>
                   </tr>
@@ -296,14 +280,13 @@ export default function AnimationTab({ config, setConfig }) {
               })}
             </tbody>
           </table>
-
         </div>
       )}
     </div>
   );
 }
 
-/* MappingEditor kept for non-alarm mapping expressions */
+/* MappingEditor kept for non-alarm/mapping expressions */
 function MappingEditor({ value, onChange }) {
   const [mapData, setMapData] = useState(Object.entries(value || {}));
 
@@ -327,8 +310,7 @@ function MappingEditor({ value, onChange }) {
   function removeRow(idx) {
     const copy = [...mapData];
     copy.splice(idx, 1);
-    setMapData(copy);
-    onChange(Object.fromEntries(copy));
+    setMapData(Object.fromEntries(copy));
   }
 
   return (

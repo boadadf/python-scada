@@ -1,0 +1,17 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+env/
+venv/
+.git/
+.gitignore
+*.log
+
+# Ignore node_modules and temp build dirs
+openscada_lite/web/**/node_modules/
+openscada_lite/web/**/dist/
+openscada_lite/web/**/build/
+
+# Tests and other local stuff
+test/

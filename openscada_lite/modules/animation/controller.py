@@ -1,7 +1,7 @@
-from typing import override
+from typing import Union, override
 from openscada_lite.common.config.config import Config
 from openscada_lite.modules.base.base_controller import BaseController
-from openscada_lite.common.models.dtos import AnimationUpdateRequestMsg, StatusDTO, AnimationUpdateMsg
+from openscada_lite.common.models.dtos import AlarmUpdateMsg, AnimationUpdateRequestMsg, StatusDTO, AnimationUpdateMsg, TagUpdateMsg
 
 class AnimationController(BaseController[AnimationUpdateMsg, AnimationUpdateRequestMsg]):
     def __init__(self, model, socketio, base_event="animation", flask_app=None):

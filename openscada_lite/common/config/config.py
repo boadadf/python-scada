@@ -18,7 +18,6 @@ class Config:
         else:
             # If a file is given, use it directly
             config_file = config_path
-        print(f"[CONFIG] Loading config from: {config_file}")
         with open(config_file) as f:
             self._config = json.load(f)
         self._config_path = config_path  # Save the config directory path for later use
@@ -115,7 +114,6 @@ class Config:
         for driver in self.get_drivers():
             driver_name = driver["name"]
             for dp in driver.get("datapoints", []) + driver.get("command_datapoints", []):
-                print(f"[VALIDATE] Checking {driver_name}@{dp['name']} against {datapoint_identifier} with value {value}")
                 if f"{driver_name}@{dp['name']}" == datapoint_identifier:
                     dp_type_name = dp.get("type")
                     dp_types = self.get_types()
@@ -199,7 +197,6 @@ class Config:
                 dp = elem.attrib.get("data-datapoint")
                 anim = elem.attrib.get("data-animation")
                 if dp and anim:
-                    print(f"*********************Found animation mapping in {fname}: {dp} -> {anim} (element id: {elem.attrib.get('id')})")
                     datapoint_map.setdefault(dp, []).append(
                         (fname, elem.attrib.get("id"), anim)
                     )

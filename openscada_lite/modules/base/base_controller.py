@@ -97,7 +97,6 @@ class BaseController(ABC, Generic[T, U]):
 
         endpoint_name = f"{self.base_event}_send_{self.U_cls.__name__.lower()}"
         route_path = f"/{endpoint_name}"
-        print(f"Registering HTTP POST endpoint: {route_path}")
         @flask_app.route(route_path, methods=["POST"], endpoint=endpoint_name)
         def _incoming_handler():
             data = request.get_json() or {}
@@ -135,16 +134,3 @@ class BaseController(ABC, Generic[T, U]):
     @classmethod
     def is_allowed(cls, username: str, endpoint_name: str) -> bool:
         return True
-        """ try:
-            from openscada_lite.modules.security.service import SecurityService
-
-            service: SecurityService = SecurityService.get_instance()
-            if service:
-                return service.is_allowed(username, endpoint_name)
-            return True
-        except ImportError:
-            # Security module not present → allow everything
-            return True
-        except Exception:
-            # Fail-safe → deny if security exists but errors
-            return False """

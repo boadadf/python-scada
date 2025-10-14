@@ -2,7 +2,6 @@
   "animations": {
     "ALARM_SWITCHES": [
       {
-        "alarmEvent": "",
         "attribute": "href",
         "default": "#",
         "expression": {
@@ -92,6 +91,7 @@
     "SWITCH_CONTROL": [
       {
         "attribute": "fill",
+        "default": "gray",
         "expression": {
           "STRAIGHT": "green",
           "TURN": "red"
@@ -99,6 +99,21 @@
         "quality": {
           "unknown": "gray"
         }
+      }
+    ],
+    "driver_connection": [
+      {
+        "attribute": "fill",
+        "default": "gray",
+        "duration": 0.5,
+        "expression": {
+          "OFFLINE": "red",
+          "ONLINE": "green"
+        },
+        "quality": {
+          "unknown": "gray"
+        },
+        "triggerType": "connection"
       }
     ],
     "fill_level": [
@@ -352,6 +367,12 @@
       "name": "animation"
     },
     {
+      "name": "alert"
+    },    
+    {
+      "name": "rule"
+    },
+    {
       "config": {
         "file_path": "flow_events.log",
         "mode": "file"
@@ -399,7 +420,8 @@
       "off_actions": [],
       "off_condition": "",
       "on_actions": [
-        "raise_alarm()"
+        "raise_alarm()",
+        "client_alert('Switches are in an invalid state!\\nSolve issue by setting right switch to TURN?', 'confirm_cancel', 'TrainTestDriver@RIGHT_SWITCH_CONTROL', 'TURN', 30)"
       ],
       "on_condition": "TrainTestDriver@RIGHT_SWITCH_CONTROL == 'STRAIGHT' and TrainTestDriver@LEFT_SWITCH_CONTROL == 'TURN'",
       "rule_id": "switch_error_straight"
@@ -408,7 +430,8 @@
       "off_actions": [],
       "off_condition": "",
       "on_actions": [
-        "raise_alarm()"
+        "raise_alarm()",
+        "client_alert('Switches are in an invalid state!\\nSolve issue by setting right switch to STRAIGHT?', 'confirm_cancel', 'TrainTestDriver@RIGHT_SWITCH_CONTROL', 'STRAIGHT', 30)"
       ],
       "on_condition": "TrainTestDriver@RIGHT_SWITCH_CONTROL == 'TURN' and TrainTestDriver@LEFT_SWITCH_CONTROL == 'STRAIGHT'",
       "rule_id": "switch_error_turn"

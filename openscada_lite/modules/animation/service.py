@@ -1,104 +1,101 @@
 import asyncio
-from typing import Union
-from openscada_lite.common.config.config import Config
-from openscada_lite.modules.base.base_service import BaseService
-from openscada_lite.common.models.dtos import AlarmUpdateMsg, AnimationUpdateMsg, AnimationUpdateRequestMsg, DriverConnectStatus, TagUpdateMsg
-from openscada_lite.common.models.entities import Animation, AnimationEntry
 from simpleeval import simple_eval
+from typing import Union
+from openscada_lite.common.models.entities import AnimationEntry
+from openscada_lite.modules.base.base_service import BaseService
+from openscada_lite.common.models.dtos import (
+    AlarmUpdateMsg, AnimationUpdateMsg, AnimationUpdateRequestMsg,
+    DriverConnectStatus, TagUpdateMsg
+)
+from openscada_lite.common.config.config import Config
+from .handlers.tag_handler import TagHandler
+from .handlers.alarm_handler import AlarmHandler
+from .handlers.connection_handler import ConnectionHandler
 
 
-class AnimationService(BaseService[Union[TagUpdateMsg,AlarmUpdateMsg], AnimationUpdateRequestMsg, AnimationUpdateMsg]):
+class AnimationService(BaseService[
+    Union[TagUpdateMsg, AlarmUpdateMsg, DriverConnectStatus],
+    AnimationUpdateRequestMsg,
+    AnimationUpdateMsg
+]):
     """
-    AnimationService processes datapoint updates and generates animation instructions for the SCADA frontend.
-
-    - It loads animation rules from the configuration (see the "animations" section in system_config.json).
-    - Each animation rule can specify an 'expression' field, which is either:
-        * a string formula (e.g., "390 - ((value/100) * 340)") evaluated using the 'simpleeval' library,
-        * or a dictionary mapping enum values to results (e.g., {"OPENED": "green", "CLOSED": "red"}).
-    - When a TagUpdateMsg is received, the service:
-        1. Looks up the animation config for the affected datapoint.
-        2. Evaluates the expression(s) using the current value.
-        3. Builds a GSAP-compatible config object for the frontend to animate SVG elements.
-
-    Example supported animation config:
-        "animations": {
-            "fill_level": [
-                {
-                    "attribute": "y",
-                    "quality": { "unknown": 390 },
-                    "expression": "390 - ((value/100) * 340)"
-                },
-                {
-                    "attribute": "height",
-                    "quality": { "unknown": 0 },
-                    "expression": "(value/100) * 340"
-                }
-            ],
-            "toggle_opened_closed": [
-                {
-                    "attribute": "fill",
-                    "quality": { "unknown": "gray" },
-                    "expression": {
-                        "OPENED": "green",
-                        "CLOSED": "red"
-                    }
-                }
-            ],
-            "toggle_start_stop": [
-                {
-                    "attribute": "fill",
-                    "quality": { "unknown": "gray" },
-                    "expression": {
-                        "STARTED": "green",
-                        "STOPPED": "brown"
-                    }
-                }
-            ],
-            "level_text": [
-                {
-                    "attribute": "text",
-                    "quality": { "unknown": "0.0" },
-                    "expression": "str(value)"
-                }
-            ]
-        }
-
-    This allows flexible, safe, and dynamic SVG animation logic in the SCADA UI.
+    Central animation orchestration service.
+    Delegates to specialized handlers depending on the message type.
     """
+    DURATION_DEFAULT = 0.5
+
     def __init__(self, event_bus, model, controller):
-        super().__init__(event_bus, model, controller, [TagUpdateMsg, AlarmUpdateMsg], AnimationUpdateRequestMsg, AnimationUpdateMsg)
+        super().__init__(
+            event_bus, model, controller,
+            [TagUpdateMsg, AlarmUpdateMsg, DriverConnectStatus],
+            AnimationUpdateRequestMsg, AnimationUpdateMsg
+        )
         config = Config.get_instance()
         self.animations = config.get_animations()
-        # datapoint_map maps identifiers -> list of (svg_name, element_id, animation_name)
         self.datapoint_map = config.get_animation_datapoint_map()
-        self.DURATION_DEFAULT = 0.5
+
+        # register handlers
+        self.handlers = [
+            TagHandler(),
+            AlarmHandler(),
+            ConnectionHandler(),
+        ]
+
+        # initialize default visuals
+        self._init_animations_to_default()
+
+    def _init_animations_to_default(self):
+        """Initialize all animations in the model with their default values."""
+        for dp_id, mappings in self.datapoint_map.items():
+            for svg_name, elem_id, anim_name in mappings:
+                animation = self.animations.get(anim_name)
+                if not animation:
+                    continue
+
+                agg_attr = {}
+                agg_text = None
+                for entry in animation.entries:
+                    if getattr(entry, "default", None) is None:
+                        continue
+                    if entry.attribute == "text":
+                        agg_text = str(entry.default)
+                    else:
+                        agg_attr[entry.attribute] = entry.default
+
+                cfg = {"attr": agg_attr, "duration": self.DURATION_DEFAULT}
+                if agg_text:
+                    cfg["text"] = agg_text
+
+                self.model.update(AnimationUpdateMsg(
+                    svg_name=svg_name,
+                    element_id=elem_id,
+                    animation_type=anim_name,
+                    value=None,
+                    config=cfg,
+                    test=False
+                ))
+
+    def process_msg(self, msg):
+        """Delegate the processing to the appropriate handler."""
+        for handler in self.handlers:
+            if handler.can_handle(msg):
+                return handler.handle(msg, self)
+        print(f"[AnimationService] No handler found for message {msg}")
+        return []
+
+    async def handle_controller_message(self, data: AnimationUpdateRequestMsg):
+        animations = self.process_msg(data.to_test_update_msg())
+        for anim in animations:
+            self.controller.publish(anim)
 
     def should_accept_update(self, msg) -> bool:
         # Accept TagUpdateMsg if there's a configured animation for that datapoint
         if isinstance(msg, TagUpdateMsg):
             return msg.datapoint_identifier in self.datapoint_map
-        # Accept all AlarmUpdateMsg (we filter by mapping entries later)
-        if isinstance(msg, AlarmUpdateMsg):
-            return True
-        return False
+        return True
+    
 
-    def _evaluate_expression(self, expr, value, quality):
-        """
-        Evaluate expression.
-        - if expr is dict, return expr.get(str(value))
-        - if expr is string, evaluate with simple_eval (names={"value": value})
-        """
-        if isinstance(expr, dict):
-            return expr.get(str(value))
-        elif isinstance(expr, str):
-            try:
-                return simple_eval(expr, names={"value": value})
-            except Exception as e:
-                print(f"AnimationService: error evaluating '{expr}' with value={value}: {e}")
-                return None
-        return None
-
-    def _process_single_entry(self, entry: AnimationEntry, value, quality):
+    def process_single_entry(self, entry: AnimationEntry, value, quality):
         """
         Process a single AnimationEntry and return (attr_changes: dict, text: str or None, duration)
         """
@@ -127,7 +124,7 @@ class AnimationService(BaseService[Union[TagUpdateMsg,AlarmUpdateMsg], Animation
 
         return attr_changes, text_change, duration
 
-    async def _schedule_revert(self, svg_name, element_id, animation_name, entry):
+    async def schedule_revert(self, svg_name, element_id, animation_name, entry):
         """
         Revert a single animation entry to its configured default after entry.revertAfter seconds.
         The revert uses entry.default, not any quality logic.
@@ -154,125 +151,18 @@ class AnimationService(BaseService[Union[TagUpdateMsg,AlarmUpdateMsg], Animation
             test=False
         ))
 
-    def process_msg(self, msg):
+    def _evaluate_expression(self, expr, value, quality):
         """
-        Unified processing for TagUpdateMsg and AlarmUpdateMsg.
-        For alarms, we determine the event_name based on timestamps and trigger animations
-        whose 'alarmEvent' matches that event.
+        Evaluate expression.
+        - if expr is dict, return expr.get(str(value))
+        - if expr is string, evaluate with simple_eval (names={"value": value})
         """
-        updates = []
-        identifier = getattr(msg, "datapoint_identifier", None) or getattr(msg, "alarm_id", None)
-        if not identifier:
-            return updates
-
-        mappings = self.datapoint_map.get(identifier, [])
-        if not mappings:
-            return updates
-
-        # --- TAG UPDATES ---
-        if isinstance(msg, TagUpdateMsg):
-            for svg_name, elem_id, anim_name in mappings:
-                animation = self.animations.get(anim_name)
-                if not animation:
-                    continue
-
-                agg_attr = {}
-                agg_text = None
-                duration = self.DURATION_DEFAULT
-
-                for entry in animation.entries:
-                    if getattr(entry, "triggerType", "datapoint") == "alarm":
-                        continue
-
-                    attr_changes, text_change, dur = self._process_single_entry(entry, msg.value, msg.quality)
-                    agg_attr.update(attr_changes)
-                    if text_change is not None:
-                        agg_text = text_change
-                    duration = dur or duration
-
-                    if getattr(entry, "revertAfter", 0):
-                        asyncio.create_task(self._schedule_revert(svg_name, elem_id, anim_name, entry))
-
-                cfg = {"attr": agg_attr, "duration": duration}
-                if agg_text is not None:
-                    cfg["text"] = agg_text
-
-                updates.append(AnimationUpdateMsg(
-                    svg_name=svg_name,
-                    element_id=elem_id,
-                    animation_type=anim_name,
-                    value=msg.value,
-                    config=cfg,
-                    test=getattr(msg, "test", False)
-                ))
-
-        # --- ALARM UPDATES ---
-        elif isinstance(msg, AlarmUpdateMsg):
-            print(f"Processing AlarmUpdateMsg: {msg} mappings {mappings}")
-
-            # Determine the alarm event type from timestamps
-            if msg.deactivation_time and msg.acknowledge_time and msg.activation_time:
-                event_name = "FINISHED"
-            elif msg.deactivation_time:
-                event_name = "INACTIVE"
-            elif msg.acknowledge_time:
-                event_name = "ACK"
-            elif msg.activation_time:
-                event_name = "ACTIVE"
-            else:
-                event_name = "UNKNOWN"
-
-            print(f"[AnimationService] Derived alarm event: {event_name}")
-
-            for svg_name, elem_id, anim_name in mappings:
-                animation = self.animations.get(anim_name)
-                if not animation:
-                    continue
-
-                agg_attr = {}
-                agg_text = None
-                duration = self.DURATION_DEFAULT
-
-                for entry in animation.entries:
-                    if getattr(entry, "triggerType", "datapoint") != "alarm":
-                        continue
-
-                    entry_event = getattr(entry, "alarmEvent", "") or "onAlarmActive"
-
-                    # Determine whether this animation entry should trigger
-                    trigger_map = {
-                        "onAlarmActive": event_name == "ACTIVE",
-                        "onAlarmAck": event_name == "ACK",
-                        "onAlarmInactive": event_name == "INACTIVE",
-                        "onAlarmFinished": event_name == "FINISHED",
-                    }
-
-                    condition = trigger_map.get(entry_event, False)
-                    value_key = "ACTIVE" if condition else "INACTIVE"
-
-                    attr_changes, text_change, dur = self._process_single_entry(entry, value_key, getattr(msg, "quality", None))
-                    agg_attr.update(attr_changes)
-                    if text_change is not None:
-                        agg_text = text_change
-                    duration = dur or duration
-
-                    if getattr(entry, "revertAfter", 0):
-                        asyncio.create_task(self._schedule_revert(svg_name, elem_id, anim_name, entry))
-
-            cfg = {"attr": agg_attr, "duration": duration}
-            if agg_text is not None:
-                cfg["text"] = agg_text
-
-            print(f"AnimationService: Alarm {msg.datapoint_identifier} producing config {cfg}")
-
-            updates.append(AnimationUpdateMsg(
-                svg_name=svg_name,
-                element_id=elem_id,
-                animation_type=anim_name,
-                value=None,
-                config=cfg,
-                test=getattr(msg, "test", False)
-            ))
-
-        return updates
-    
+        if isinstance(expr, dict):
+            return expr.get(str(value))
+        elif isinstance(expr, str):
+            try:
+                return simple_eval(expr, names={"value": value})
+            except Exception as e:
+                print(f"AnimationService: error evaluating '{expr}' with value={value}: {e}")
+                return None
+        return None

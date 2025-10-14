@@ -1,7 +1,5 @@
-Internal datapoints x communication status
 Unit testing web
 
-ClientAlert service (show alert, show accept to send command)
 Driver for GPIO, opc ua client
 Allow server drivers to expose datapoints from another drivers
 Drvier for Opc ua server
@@ -18,4 +16,7 @@ animations by datapoint type
 SVG editor
 Add dynamically a module
 AI that predicts when alarms will happen
+
+ERROR
+asteval errors: [ExceptionHolder(<class 'NameError'>, name 'TrainTestDriver__LEFT_SWITCH_CONTROL' is not defined)]
 
