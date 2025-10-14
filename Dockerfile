@@ -54,7 +54,6 @@ RUN pip install gunicorn
 
 # Copy backend + config + modules
 COPY openscada_lite ./openscada_lite
-COPY app.py ./app.py
 COPY config ./config
 
 # Copy built frontends from previous stage
