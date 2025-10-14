@@ -8,6 +8,9 @@ import CommunicationsView from "./components/CommunicationsView";
 import AlarmsView from "./components/AlarmsView";
 import CommandsView from "./components/CommandsView";
 import TrackingView from "./components/TrackingView";
+import { AlertProvider } from "./contexts/AlertContext";
+import AlertPopup from "./components/AlertPopup";
+
 
 // Tab definitions
 const TABS = [
@@ -87,10 +90,13 @@ export default function App() {
     );
   }
 
-  return (
+    return (
     <AuthProvider>
       <RequireAuth>
-        <PrivateApp />
+        <AlertProvider>
+          <PrivateApp />
+          <AlertPopup />
+        </AlertProvider>
       </RequireAuth>
     </AuthProvider>
   );
