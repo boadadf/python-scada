@@ -3,7 +3,7 @@ Unit testing web
 Driver for GPIO, opc ua client
 Allow server drivers to expose datapoints from another drivers
 Drvier for Opc ua server
-Add new rule actions, send_message, set_value, send_confirm_message
+
 Add headers to all files
 Better SVGs
 Documentation (README.md)
