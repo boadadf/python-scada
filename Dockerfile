@@ -38,7 +38,7 @@ RUN npm run build
 # ==============================
 # 2. Python backend
 # ==============================
-FROM python:3.11-slim
+FROM python:3.12-slim
 
 WORKDIR /app
 
