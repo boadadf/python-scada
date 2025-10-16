@@ -2,7 +2,7 @@ import importlib
 import os
 import sys
 import asyncio
-from flask import Flask, send_from_directory
+from flask import Flask, redirect, send_from_directory
 from flask_socketio import SocketIO
 
 
@@ -126,6 +126,9 @@ security_service = SecurityService(event_bus, security_model)
 security_controller = SecurityController(security_model, security_service)
 security_controller.register_routes(app)
 
+@app.route("/")
+def home():
+    return redirect("/scada")
 
 # ---------------------------------------------------------------------
 # Entrypoint
