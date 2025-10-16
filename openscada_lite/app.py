@@ -9,13 +9,15 @@ from flask_socketio import SocketIO
 
 # Set SCADA_CONFIG_PATH from command-line argument or default
 if "SCADA_CONFIG_PATH" not in os.environ:
-    if len(sys.argv) > 1:
-        os.environ["SCADA_CONFIG_PATH"] = sys.argv[1]
+    for arg in sys.argv[1:]:
+        if not arg.startswith("-"):  # skip Gunicorn flags like -b, -w, etc.
+            os.environ["SCADA_CONFIG_PATH"] = arg
+            break
     else:
-        # Default to ./config/system_config.json
         os.environ["SCADA_CONFIG_PATH"] = os.path.abspath(
             os.path.join(os.path.dirname(__file__), "..", "config", "system_config.json")
         )
+        
 print(f"[APP] Using SCADA_CONFIG_PATH: {os.environ['SCADA_CONFIG_PATH']}")
 
 from openscada_lite.modules.security.controller import SecurityController
