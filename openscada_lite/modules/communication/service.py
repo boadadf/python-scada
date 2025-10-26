@@ -3,15 +3,20 @@ from typing import override
 from openscada_lite.common.tracking.decorators import publish_data_flow_from_arg_async
 from openscada_lite.common.tracking.tracking_types import DataFlowStatus
 from openscada_lite.common.bus.event_types import EventType
-from openscada_lite.modules.communication.manager.connector_manager import ConnectorManager
+from openscada_lite.modules.communication.manager.connector_manager import ConnectorManager, CommandListener
 from openscada_lite.modules.base.base_service import BaseService
-from openscada_lite.common.models.dtos import CommandFeedbackMsg, DriverConnectStatus, DriverConnectCommand, RawTagUpdateMsg, SendCommandMsg
+from openscada_lite.common.models.dtos import CommandFeedbackMsg, DriverConnectStatus, DriverConnectCommand, RawTagUpdateMsg, SendCommandMsg, TagUpdateMsg
 
-class CommunicationService(BaseService[SendCommandMsg, DriverConnectCommand, DriverConnectStatus]):
+class CommunicationService(BaseService[SendCommandMsg, DriverConnectCommand, DriverConnectStatus], CommandListener):
     def __init__(self, event_bus, model, controller):
-        super().__init__(event_bus, model, controller, SendCommandMsg, DriverConnectCommand, DriverConnectStatus)
+        super().__init__(
+            event_bus, model, controller,
+            [SendCommandMsg, TagUpdateMsg],  # <-- Listen for both
+            DriverConnectCommand, DriverConnectStatus
+        )
         self.connection_manager = ConnectorManager.get_instance()
         self.connection_manager.register_listener(self)
+        self.connection_manager.set_command_listener(self)  # Register as command listener
 
     @override
     async def async_init(self):
@@ -22,12 +27,13 @@ class CommunicationService(BaseService[SendCommandMsg, DriverConnectCommand, Dri
         return True
 
     @publish_data_flow_from_arg_async(status=DataFlowStatus.RECEIVED)
-    async def handle_bus_message(self, data: SendCommandMsg):
-        if( not isinstance(data, SendCommandMsg)):
-            raise TypeError("Expected SendCommandMsg")
-        # Forward command to connection manager
-        print(f"CommunicationService forwarding SendCommandMsg to ConnectorManager: {data}")
-        await self.connection_manager.send_command(data)
+    async def handle_bus_message(self, data):
+        if isinstance(data, SendCommandMsg):
+            # Forward command to connection manager
+            await self.connection_manager.send_command(data)
+        elif isinstance(data, TagUpdateMsg):
+            # Forward TagUpdateMsg to connection manager
+            await self.connection_manager.forward_tag_update(data)
 
     async def on_raw_tag_update(self, msg: RawTagUpdateMsg):
         await self.event_bus.publish(EventType.RAW_TAG_UPDATE, msg)
@@ -41,3 +47,6 @@ class CommunicationService(BaseService[SendCommandMsg, DriverConnectCommand, Dri
 
     async def handle_controller_message(self, data: DriverConnectCommand):
         await self.connection_manager.handle_driver_connect_command(data)
+
+    async def on_driver_command(self, msg: SendCommandMsg):
+        await self.event_bus.publish(SendCommandMsg, msg)

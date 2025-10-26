@@ -1,11 +1,13 @@
 from typing import Dict
+from openscada_lite.modules.communication.manager.command_listener import CommandListener
 from openscada_lite.modules.communication.manager.communication_listener import CommunicationListener
 from openscada_lite.common.tracking.tracking_types import DataFlowStatus
 from openscada_lite.common.tracking.decorators import publish_data_flow_from_arg_async
-from openscada_lite.common.models.dtos import DriverConnectCommand, CommandFeedbackMsg, DriverConnectStatus, RawTagUpdateMsg, SendCommandMsg
+from openscada_lite.common.models.dtos import DriverConnectCommand, CommandFeedbackMsg, DriverConnectStatus, RawTagUpdateMsg, SendCommandMsg, TagUpdateMsg
 from openscada_lite.modules.communication.drivers import DRIVER_REGISTRY
 from openscada_lite.common.models.entities import Datapoint
 from openscada_lite.modules.communication.drivers.driver_protocol import DriverProtocol
+from openscada_lite.modules.communication.drivers.server_protocol import ServerProtocol
 from openscada_lite.common.config.config import Config
 import datetime
 
@@ -46,6 +48,7 @@ class ConnectorManager:
             if not driver_cls:
                 raise ValueError(f"Unknown driver class: {cfg['driver_class']}")
             driver_instance: DriverProtocol = driver_cls(**cfg.get("connection_info", {}))
+            driver_instance.initialize(cfg.get("params", {}))  # Pass params if present, else empty dict
             driver_instance.subscribe(datapoint_objs)        
             # Optionally assign datapoints to driver_instance if needed
             self.driver_instances[cfg["name"]] = driver_instance
@@ -57,8 +60,19 @@ class ConnectorManager:
             driver.register_command_feedback(self.emit_command_feedback)
             await driver.register_communication_status_listener(self.emit_communication_status)
 
+    async def forward_tag_update(self, msg: TagUpdateMsg):
+        for driver in self.driver_instances.values():
+            if isinstance(driver, ServerProtocol):
+                await driver.handle_tag_update(msg)
+
     def register_listener(self, listener: CommunicationListener):
         self.listener = listener
+
+    def set_command_listener(self, listener: CommandListener):
+        # Set the command listener for all drivers that implement ServerProtocol
+        for driver in self.driver_instances.values():
+            if isinstance(driver, ServerProtocol):
+                driver.set_command_listener(listener)
 
     @publish_data_flow_from_arg_async(status=DataFlowStatus.RECEIVED)
     async def handle_driver_connect_command(self, data: DriverConnectCommand):        
@@ -151,3 +165,7 @@ class ConnectorManager:
                     timestamp=datetime.datetime.now()
                 )
                 await self.emit_command_feedback(feedback)
+
+    async def notify_driver_command(self, msg: SendCommandMsg):
+        if self._command_listener:
+            await self._command_listener.on_driver_command(msg)

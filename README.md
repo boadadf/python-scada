@@ -313,6 +313,11 @@ You can see with almost no code your datapoint service is ready!
 
 ---
 ## 5 Modules 
+
+Like we saw in the previous section, the server is composed of modules binded by the event bus. Each module has a specific purpose and is composed always of controller.py, model.py and service.py
+
+Next we will describe the properties of the main modules
+
 ### 5.1 Communication Module
 
 The **communication module** in OpenSCADA Lite manages all driver interactions, enabling connectivity to real or simulated devices.  
@@ -320,7 +325,7 @@ It uses a flexible driver protocol, making it easy to add support for new hardwa
 
 ---
 
-## How Drivers Work
+#### 5.1.1 How Drivers Work
 
 - Each driver implements the `DriverProtocol` interface (see `driver_protocol.py`).
 - Drivers are managed by the `ConnectorManager`, which handles driver lifecycle, subscriptions, and event routing.
@@ -328,9 +333,9 @@ It uses a flexible driver protocol, making it easy to add support for new hardwa
 
 ---
 
-## Adding a New Driver
+#### 5.1.2 Adding a New Driver
 
-1. **Create a Driver Class**
+5.1.2.1. **Create a Driver Class**
 
    - Inherit from `DriverProtocol` (see `driver_protocol.py`).
    - Implement required methods:  
@@ -356,7 +361,7 @@ It uses a flexible driver protocol, making it easy to add support for new hardwa
        def is_connected(self): ...
    ```
 
-2. **Register Your Driver**
+5.1.2.2. **Register Your Driver**
 
    - Add your driver class to the `DRIVER_REGISTRY` dictionary in the communication module.
    - Example:
@@ -369,7 +374,7 @@ It uses a flexible driver protocol, making it easy to add support for new hardwa
      }
      ```
 
-3. **Configure Your Driver in the System Config**
+5.1.2.3. **Configure Your Driver in the System Config**
 
    - Add a new entry to the `"drivers"` section of your `system_config.json`:
      ```json
@@ -387,19 +392,19 @@ It uses a flexible driver protocol, making it easy to add support for new hardwa
      }
      ```
 
-4. **Implement Simulation or Hardware Logic**
+5.1.2.4. **Implement Simulation or Hardware Logic**
 
    - For simulated drivers, implement the `_simulate_values` method to periodically update datapoint values.
    - For real hardware, implement communication logic in `send_command`, `connect`, etc.
 
-5. **Test Your Driver**
+5.1.2.5. **Test Your Driver**
 
    - Start the backend and verify your driver connects, publishes updates, and responds to commands.
    - Use the SCADA frontend and Config Editor to monitor and control your new device.
 
 ---
 
-## Example Drivers
+#### 5.1.3 Example Drivers
 
 - **TankTestDriver:** Simulates a tank with level, pump, and door.
 - **BoilerTestDriver:** Simulates a boiler with valve, pressure, temperature, and heater.
@@ -409,7 +414,7 @@ See the `drivers/test/` folder for reference implementations.
 
 ---
 
-## Tips
+#### 5.1.4 Tips
 
 - Use async methods for all I/O and event publishing.
 - Always register your driver in `DRIVER_REGISTRY` and the config file.
@@ -417,71 +422,151 @@ See the `drivers/test/` folder for reference implementations.
 - Test with both simulated and real hardware for reliability.
 
 ---
----
 
-# Animation System
+### 5.2 Rule Module
 
-The **Animation module** enables the SCADA web interface to dynamically update SVG elements based on live datapoints from the backend.  
-This allows real-time visualizations such as **tank levels, boiler temperatures, pumps, valves, doors, and interactive controls**.
-
----
-
-## How It Works
-
-### 1. SVG Parsing
-The `AnimationService` loads SVG files from a predefined folder (e.g., `/svg`) and scans for elements with `data-datapoint` and `data-animation` attributes.
-
-**Example:**
-```xml
-<rect id="tank_fill"
-      x="100" y="390" width="200" height="0"
-      fill="blue"
-      data-datapoint="Server1@TANK"
-      data-animation="fill_level" />
-```
+The **Rule Module** in OpenSCADA Lite enables automatic actions and logic based on datapoint values, alarms, and system events.  
+It allows you to define rules for triggering commands, alarms, alerts, or other actions—including direct action commands—when specific conditions are met.
 
 ---
 
-### 2. Animation Configuration
-Each `data-animation` refers to a type defined in **`animation_config.json`**.  
-This JSON maps animation types to GSAP behavior.
+#### 5.2.1 Features
 
-**Example:**
-```json
-{
-  "fill_level": {
-    "type": "height_y",
-    "maxHeight": 340,
-    "baseY": 390,
-    "duration": 0.5
-  },
-  "toggle_start_stop": {
-    "type": "fill_toggle",
-    "map": {
-      "STARTED": "green",
-      "STOPPED": "gray"
-    },
-    "duration": 0.3
-  },
-  "level_text": {
-    "type": "text",
-    "duration": 0.2
-  }
+- **Flexible Rule Engine:** Define rules using expressions based on datapoint values.
+- **Automatic Actions:** Trigger commands, alarms, alerts, or other actions when rule conditions are satisfied.
+- **Action Commands:** Rules can directly send commands to devices or drivers, automating control logic.
+- **Modular Actions:** Each action is implemented as a class and registered in the `ACTION_MAP`, making it easy to add new types of rule actions.
+- **Datapoint Monitoring:** Rules can react to any datapoint update in the system.
+- **Extensible:** Add new rule types or actions as needed.
+
+---
+
+#### 5.2.2 How Rules Work
+
+- Rules are defined in the `system_config.json` file under the `"rules"` section.
+- Each rule specifies:
+  - **Conditions:** Expressions evaluated against current datapoint values.
+  - **Actions:** What to do when the condition is met (e.g., send a command, raise an alarm, trigger an alert).
+- The rule engine monitors all relevant datapoints and evaluates rule conditions in real time.
+
+---
+
+#### 5.2.3 Modular Action Commands
+
+A unique feature of the Rule Module is its **modular action system**.  
+Each action (such as sending a command, raising an alarm, or alerting a client) is implemented as a class derived from the abstract `Action` base class.  
+Actions are registered in the `ACTION_MAP` dictionary, allowing the rule engine to dynamically execute them by name.
+
+**Example: `ACTION_MAP` registration**
+
+```python
+ACTION_MAP = {
+    "send_command": SendCommandAction(),
+    "raise_alarm": RaiseAlarmAction(),
+    "lower_alarm": LowerAlarmAction(),
+    "client_alert": ClientAlertAction()
 }
 ```
 
----
-
-### 3. Live Updates
-- The backend listens for `TagUpdateMsg` on the internal bus.  
-- When a tag update arrives, it:
-  1. Uses `animation_config.json` to compute the GSAP config (attributes, text, duration).  
-  2. Sends an `AnimationUpdateMsg` to subscribed clients.  
+**Adding a new action:**  
+To add a new type of rule action, simply create a new class inheriting from `Action`, implement the `get_event_data` method, and register it in `ACTION_MAP`.
 
 ---
 
-### 4. Frontend Rendering
-- The HTML page loads the selected SVG and subscribes to `AnimationUpdateMsg`.  
+#### 5.2.4 Example Rule Definition (with Action Commands)
+
+```json
+{
+  "rules": [
+    {
+      "name": "HighTankLevelAlarm",
+      "on_condition": "Server1@TANK > 80",
+      "on_actions": ["raise_alarm('Tank level high!')"],
+      "off_actions": ["lower_alarm()"]
+    },
+    {
+      "name": "AutoPumpStart",
+      "on_condition": "Server1@TANK > 60 and Server1@PUMP == 'CLOSED'",
+      "on_actions": ["send_command('Server1@PUMP', 'OPEN')"]
+    },
+    {
+      "name": "ShowClientAlert",
+      "on_condition": "Server2@VALVE == 'CLOSED' and Server2@PRESSURE > 100",
+      "on_actions": ["client_alert('Pressure high!', 'warning', 'Server2@VALVE', 'TOGGLE', 10)"]
+    }
+  ]
+}
+```
+
+- The `"send_command"` action will send a command to the specified target datapoint with the given value when the condition is met.
+- The `"raise_alarm"` and `"lower_alarm"` actions manage alarm lifecycle.
+- The `"client_alert"` action sends a notification to the frontend, optionally with a command button.
+
+---
+
+#### 5.2.5 How to Add or Edit Rules
+
+1. **Open `system_config.json`**  
+   Locate the `"rules"` section.
+
+2. **Define a new rule**  
+   - Set a unique `name`.
+   - Write an `on_condition` expression using datapoint identifiers.
+   - Specify the `on_actions` and/or `off_actions` as a list of action strings.
+
+3. **Save and reload**  
+   - Save your changes.
+   - The backend will reload the config and apply new rules automatically.
+
+---
+
+#### 5.2.6 Extending the Rule Module
+
+- Add new action types by creating a new class in `modules/rule/actioncommands/`, inheriting from `Action`, and registering it in `ACTION_MAP`.
+- Rules can be made more complex by combining multiple conditions or chaining actions.
+
+---
+
+#### 5.2.7 Tips
+
+- Use clear, descriptive rule names.
+- Test rule conditions and action commands to avoid unintended triggers.
+- Use the Config Editor for a user-friendly way to manage rules.
+
+---
+### 5.3 Animation Module
+
+The **Animation Module** enables dynamic, real-time updates of SVG elements in the SCADA web interface. It supports animations triggered by datapoint changes, alarm events, and communication status, providing rich and informative visual feedback.
+
+---
+
+#### 5.3.1 How It Works
+
+- **SVG Mapping:**  
+  SVG elements are annotated with attributes such as `data-datapoint`, `data-animation`, and optionally `command-datapoint` for interactive controls.
+
+- **Animation Configuration:**  
+  Animation types and behaviors are defined in `animation_config.json`, mapping triggers to attribute changes, text updates, and durations.
+
+- **Handlers:**  
+  Specialized handlers process different types of backend messages:
+  - `TagHandler`: Handles datapoint value changes.
+  - `AlarmHandler`: Handles alarm lifecycle events.
+  - `ConnectionHandler`: Handles driver communication status.
+
+- **Live Updates:**  
+  When a relevant event occurs, the backend uses the appropriate handler to process the message and generate an `AnimationUpdateMsg`.  
+  This message contains the animation configuration (attributes, text, duration) and is sent to subscribed clients.
+
+---
+
+#### 5.3.2 Client Notification and GSAP Rendering
+
+- The backend listens for `TagUpdateMsg` (and other relevant messages) on the internal bus.
+- When an update arrives:
+  1. The backend uses `animation_config.json` to compute the GSAP config (attributes, text, duration).
+  2. It sends an `AnimationUpdateMsg` to subscribed clients.
+- The HTML page loads the selected SVG and subscribes to `AnimationUpdateMsg`.
 - **GSAP** applies animations to target elements:
 
 ```js
@@ -496,12 +581,11 @@ gsap.to(elem, {
 
 ---
 
-## Configuring Animations
+#### 5.3.3 Configuring Animations
 
-### Define SVG Elements
+**Define SVG Elements:**  
 Each interactive or animated element must include `data-datapoint` and `data-animation`.
 
-**Example:**
 ```xml
 <circle id="pump"
         cx="70" cy="200" r="20"
@@ -512,16 +596,14 @@ Each interactive or animated element must include `data-datapoint` and `data-ani
         command-value="TOGGLE" />
 ```
 
----
-
-### Define Animation Types
+**Define Animation Types:**  
 Animation behaviors are defined in **`animation_config.json`**.
 
 Supported types:
-- **height_y** → animates height and y attributes (e.g., tank level)  
-- **fill_color** → animates fill color based on numeric values (e.g., temperature)  
-- **fill_toggle** → changes color based on enum/string/boolean values (e.g., STARTED/STOPPED)  
-- **text** → animates text content  
+- **height_y** → animates height and y attributes (e.g., tank level)
+- **fill_color** → animates fill color based on numeric values (e.g., temperature)
+- **fill_toggle** → changes color based on enum/string/boolean values (e.g., STARTED/STOPPED)
+- **text** → animates text content
 
 **Example toggle mapping:**
 ```json
@@ -537,7 +619,7 @@ Supported types:
 
 ---
 
-## Adding a New Animation
+#### 5.3.4 Adding a New Animation
 
 1. **Update `animation_config.json`:**
 ```json
@@ -566,35 +648,390 @@ The GSAP client automatically renders the animation.
 
 ---
 
-## Summary
-- **SVG elements** declare datapoints and animation types.  
-- **animation_config.json** defines how values map to GSAP animations.  
-- **Backend** listens for datapoint updates and broadcasts animation updates.  
-- **Frontend** applies animations seamlessly with GSAP.  
+#### 5.3.5 Handler Architecture and Extensibility
 
-This architecture ensures **scalable, flexible, and easily extensible** animations for SCADA systems.
+Handlers are responsible for processing messages and updating SVG elements:
+
+- **TagHandler:**  
+  Triggers on datapoint updates. Applies attribute or text changes based on value and quality.
+- **AlarmHandler:**  
+  Triggers on alarm events. Determines alarm state (`ACTIVE`, `ACK`, `INACTIVE`, `FINISHED`) and updates mapped SVG elements.
+- **ConnectionHandler:**  
+  Triggers on driver connection status. Updates SVG elements to reflect communication health.
+
+Each handler uses the shared animation configuration and can schedule automatic reverts using the `revertAfter` property.
+
+**To add a new handler:**
+
+1. **Create a Handler Class:**  
+   Inherit from a base handler or follow the pattern in `handlers/`. Implement `can_handle(msg)` and `handle(msg, service)` methods.
+
+   ```python
+   class CustomHandler:
+       def can_handle(self, msg) -> bool:
+           return isinstance(msg, CustomMsgType)
+
+       def handle(self, msg, service):
+           # Process message and return list of AnimationUpdateMsg
+           ...
+   ```
+
+2. **Register the Handler:**  
+   Add your handler to the `handlers` list in `AnimationService`.
+
+   ```python
+   self.handlers = [
+       TagHandler(),
+       AlarmHandler(),
+       ConnectionHandler(),
+       CustomHandler(),  # <-- Add your new handler here
+   ]
+   ```
+
+3. **Update Animation Config:**  
+   Define new animation types or triggers in `animation_config.json` as needed.
 
 ---
 
-## Troubleshooting & Tips
-If after pasting this README you still see HTML rendering from section 2 onward, try the following:
+#### 5.3.6 Summary
 
-1. **Check for missing/incorrect code fences**: Ensure every opening triple backtick (```) has a corresponding closing triple backtick and that they are on their own lines with no extra characters.
-2. **Look for stray HTML outside code blocks**: If any `<tag>` appears outside a fenced block, the Markdown renderer may treat it as HTML and render it. Move such tags inside a fenced block or escape them.
-3. **Use raw/plain-text view**: Some editors have a rich-text/WYSIWYG mode that can convert pasted Markdown into HTML. Switch to the raw editor or "Edit file" view.
-4. **Try an HTML-safe variant**: If the editor still misbehaves, replace angle brackets in XML samples with entities (`&lt;` and `&gt;`) so they cannot be interpreted as HTML.
-5. **Preview vs commit**: Use the repository’s Preview feature (or open the raw file) to verify source Markdown.
-
-If you want, I can also add a version where every XML example uses `&lt;`/`&gt;` (HTML-safe) to guarantee literal display in any environment—tell me and I’ll add it.
+- SVG elements declare datapoints and animation types.
+- Handlers process backend events and broadcast `AnimationUpdateMsg` to clients.
+- Frontend applies animations using GSAP.
+- Architecture is scalable, flexible, and easily extensible for new event types and handlers.
 
 
+---
+
+### 5.4 Alarm Module
+
+The **Alarm Module** manages the lifecycle of alarms within the SCADA system, including raising, acknowledging, and lowering alarms. It ensures that alarm states are tracked, validated, and broadcast to other modules and the frontend.
+
+---
+
+#### 5.4.1 Components
+
+- **AlarmModel:**  
+  Stores and updates alarm messages. Automatically removes finished alarms (deactivated and acknowledged) from the store.
+
+- **AlarmController:**  
+  Handles incoming requests to acknowledge alarms. Validates requests to ensure the alarm exists, is not finished, and has not already been acknowledged.
+
+- **AlarmService:**  
+  Processes messages to raise or lower alarms, updates the model, and publishes alarm updates to the event bus. Handles controller messages for acknowledgments and ensures proper state transitions.
+
+- **Utils:**  
+  Provides helper functions, such as retrieving the latest alarm for a given rule.
+
+---
+
+#### 5.4.2 Alarm Lifecycle
+
+- **Raise Alarm:**  
+  Creates a new alarm or resets deactivation and acknowledgment times for an existing alarm.
+
+- **Acknowledge Alarm:**  
+  Marks the alarm as acknowledged if it is active and not already acknowledged.
+
+- **Lower Alarm:**  
+  Sets the deactivation time for the alarm.
+
+- **Finish Alarm:**  
+  An alarm is considered finished when both deactivation and acknowledgment times are set. Finished alarms are removed from the store.
+
+---
+
+#### 5.4.3 Extending the Alarm Module
+
+To add new alarm behaviors or integrate with other modules:
+
+1. **Extend the Model:**  
+   Add new fields or methods to `AlarmModel` as needed.
+
+2. **Customize the Controller:**  
+   Override validation or request handling logic in `AlarmController`.
+
+3. **Enhance the Service:**  
+   Implement new message types or processing logic in `AlarmService`.  
+   Use the event bus to broadcast custom alarm events.
+
+4. **Add Utilities:**  
+   Place reusable logic in `Utils` for easier maintenance.
+
+---
+
+#### 5.4.4 Summary
+
+- Centralized alarm management with clear lifecycle handling.
+- Validation and state transitions are enforced by the controller and service.
+- Extensible architecture for custom alarm logic and integrations.
+- Alarm updates are published to the event bus for system-wide visibility.
+
+---
+
+### 5.5 Command Module
+
+The **Command Module** manages the sending and feedback of control commands within the SCADA system. It provides a secure and structured way for clients to issue commands to devices and receive execution feedback.
+
+---
+
+#### 5.5.1 Components
+
+- **CommandModel:**  
+  Maintains the set of allowed commands and stores feedback for each command. Initializes feedback entries for all permitted command identifiers.
+
+- **CommandController:**  
+  Handles incoming command requests from clients. Validates request data and forwards commands to the backend for execution.
+
+- **CommandService:**  
+  Processes command messages, updates the model with feedback, and publishes command feedback to the event bus. Accepts all feedback updates from command executors by default.
+
+---
+
+#### 5.5.2 Command Workflow
+
+- **Send Command:**  
+  Clients send a `SendCommandMsg` specifying the target datapoint and desired value.
+
+- **Validate and Forward:**  
+  The controller validates the request and forwards it to the backend.
+
+- **Execute and Feedback:**  
+  The backend executes the command and generates a `CommandFeedbackMsg` containing the result and any feedback.
+
+- **Notify Clients:**  
+  The service updates the model and notifies subscribed clients with the feedback message.
+
+---
+
+#### 5.5.3 Extending the Command Module
+
+To add new command types or customize command handling:
+
+1. **Extend the Model:**  
+   Add new fields or logic to `CommandModel` for custom feedback or command tracking.
+
+2. **Customize the Controller:**  
+   Override `validate_request_data` in `CommandController` to enforce additional validation rules.
+
+3. **Enhance the Service:**  
+   Implement custom acceptance logic in `should_accept_update` or add new processing steps in `CommandService`.
+
+---
+
+#### 5.5.4 Summary
+
+- Centralized command management and feedback.
+- Secure validation and execution workflow.
+- Extensible architecture for custom command logic and integrations.
+- Feedback is published to the event bus for system-wide visibility.
+
+
+---
+
+### 5.6 Datapoint Module
+
+The **Datapoint Module** manages the acquisition, validation, and distribution of real-time process values (tags) within the SCADA system. It ensures that only valid and up-to-date datapoint updates are accepted and broadcast to other modules and clients.
+
+---
+
+#### 5.6.1 Components
+
+- **DatapointModel:**  
+  Stores the current state of all allowed datapoints as `TagUpdateMsg` objects. Initializes all tags with default values and tracks updates.
+
+- **DatapointController:**  
+  Handles incoming requests to update datapoints. Validates request data for required fields and correct format before passing to the model.
+
+- **DatapointService:**  
+  Processes raw tag update messages, validates them using `Utils.is_valid`, and publishes accepted updates to the event bus. Converts raw messages to structured `TagUpdateMsg` objects.
+
+- **Utils:**  
+  Provides helper functions for validation, such as checking allowed tags and timestamp ordering to prevent outdated updates.
+
+---
+
+#### 5.6.2 Datapoint Workflow
+
+- **Receive Update:**  
+  The backend receives a `RawTagUpdateMsg` from a driver or client.
+
+- **Validate:**  
+  The controller checks for required fields and correct format.  
+  The service uses `Utils.is_valid` to ensure the tag is allowed and the timestamp is not older than the current value.
+
+- **Process and Broadcast:**  
+  Valid updates are converted to `TagUpdateMsg` and published to the event bus for system-wide visibility.
+
+---
+
+#### 5.6.3 Extending the Datapoint Module
+
+To add new datapoint behaviors or customize validation:
+
+1. **Extend the Model:**  
+   Add new fields or logic to `DatapointModel` for custom tracking or initialization.
+
+2. **Customize the Controller:**  
+   Override `validate_request_data` in `DatapointController` to enforce additional validation rules.
+
+3. **Enhance the Service:**  
+   Implement custom acceptance logic in `should_accept_update` or add new processing steps in `DatapointService`.
+
+4. **Add Utilities:**  
+   Place reusable validation or processing logic in `Utils` for easier maintenance.
+
+---
+
+#### 5.6.4 Summary
+
+- Centralized management and validation of process values.
+- Ensures only valid and up-to-date datapoint updates are accepted.
+- Extensible architecture for custom datapoint logic and integrations.
+- Updates are published to the event bus for system-wide visibility.
+
+
+---
+
+### 5.7 Security Module
+
+The **Security Module** provides authentication and authorization for the SCADA system. It manages user credentials, group permissions, and access control for API endpoints using JWT-based authentication.
+
+---
+
+#### 5.7.1 Components
+
+- **SecurityModel:**  
+  Stores users and groups loaded from the configuration file. Maintains an in-memory copy and provides access to endpoint and permission data.
+
+- **SecurityController:**  
+  Exposes REST API endpoints for login, configuration management, and endpoint listing. Handles JWT token issuance and validation.
+
+- **SecurityService:**  
+  Implements user authentication, password hashing, and permission checks. Issues JWT tokens for authenticated users and verifies access rights for endpoints.
+
+- **Utils:**  
+  Provides helper functions for password hashing and JWT creation/verification.
+
+---
+
+#### 5.7.2 Workflow
+
+- **Login:**  
+  Clients send credentials to `/security/login`. If valid, a JWT token is returned for session authentication.
+
+- **Authorization:**  
+  Protected endpoints require a valid JWT token. The controller verifies the token and checks user permissions before granting access.
+
+- **Configuration Management:**  
+  Security configuration (users, groups, permissions) can be retrieved and updated via the `/security-editor/api/config` endpoints.
+
+---
+
+#### 5.7.3 Architectural Note
+
+Unlike other modules, the Security Module does **not** listen to the internal event bus or publish messages.  
+It operates independently, providing synchronous REST API endpoints for authentication and authorization.  
+This design ensures that security logic is isolated and does not follow the base event-driven pattern used by datapoint, alarm, and command modules.
+
+---
+
+#### 5.7.4 Summary
+
+- Centralized authentication and authorization using JWT.
+- REST API endpoints for login and configuration management.
+- No event bus integration; operates independently from the base module pattern.
+- Extensible for custom authentication logic and permission models.
+
+---
+### 5.8 Tracking Module
+
+The **Tracking Module** provides automatic tracking of data flow events throughout the SCADA system. It records the status and movement of DTOs (data transfer objects) for auditing, debugging, and monitoring purposes.
+
+---
+
+#### 5.8.1 Components
+
+- **TrackingModel:**  
+  Stores the most recent data flow events (up to a configurable limit) using an ordered dictionary for efficient rotation.
+
+- **TrackingController:**  
+  Exposes a read-only API for retrieving tracking events. Does not accept incoming requests for updates.
+
+- **TrackingService:**  
+  Accepts all incoming tracking events and updates the model. Publishes events to the event bus for system-wide visibility.
+
+- **TrackingPublisher:**  
+  Handles publishing of tracking events. Uses a background worker thread to enqueue and process events, publishing to the event bus and optionally writing to a log file.
+
+---
+
+#### 5.8.2 Workflow
+
+- **Event Generation:**  
+  Tracking events are generated whenever a decorated function is called or a DTO is processed.  
+  Events include metadata such as source, status, timestamp, and payload.
+
+- **Event Publishing:**  
+  The publisher enqueues events for background processing.  
+  Events are published to the event bus and optionally logged to a file.
+
+- **Event Retrieval:**  
+  Clients can query the tracking API to retrieve recent data flow events for auditing or debugging.
+
+---
+
+#### 5.8.3 Automatic Tracking with Decorators
+
+To automatically generate tracking information, use the provided decorators in `common/tracking/decorators.py`.  
+These decorators can be applied to methods to publish tracking events based on arguments or return values.
+
+**Examples:**
+
+- **Async function, DTO as first argument:**
+  ```python
+  from openscada_lite.common.tracking.decorators import publish_data_flow_from_arg_async
+  from openscada_lite.common.tracking.tracking_types import DataFlowStatus
+
+  @publish_data_flow_from_arg_async(DataFlowStatus.RECEIVED)
+  async def process_dto(self, dto):
+      ...
+  ```
+
+- **Sync function, DTO as return value:**
+  ```python
+  from openscada_lite.common.tracking.decorators import publish_data_flow_from_return_sync
+  from openscada_lite.common.tracking.tracking_types import DataFlowStatus
+
+  @publish_data_flow_from_return_sync(DataFlowStatus.SUCCESS)
+  def handle_result(self, ...):
+      ...
+  ```
+
+- **Decorator options:**  
+  - `publish_data_flow_from_arg_async` / `publish_data_flow_from_arg_sync`
+  - `publish_data_flow_from_return_async` / `publish_data_flow_from_return_sync`
+  - Specify `status` and optionally `source` for each event.
+
+These decorators ensure that tracking events are published automatically whenever the decorated function is called, reducing manual tracking code and improving consistency.
+
+---
+
+#### 5.8.4 Summary
+
+- Centralized tracking of data flow events for auditing and debugging.
+- Automatic event generation using decorators for async and sync functions.
+- Efficient background publishing and optional file logging.
+- Read-only API for retrieving recent tracking events.
+
+---
 
 ## Testing
 
 Run all tests with:
 
 ```bash
-pytest
+pytest -v tests/
 ```
 
 You can run specific tests or integration suites as needed.

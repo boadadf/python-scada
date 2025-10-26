@@ -7,7 +7,6 @@ Drvier for Opc ua server
 Add headers to all files
 Better SVGs
 Documentation (README.md)
-Pipeline to compile/deploy into railway
 
 
 -----
@@ -16,7 +15,4 @@ animations by datapoint type
 SVG editor
 Add dynamically a module
 AI that predicts when alarms will happen
-
-ERROR
-asteval errors: [ExceptionHolder(<class 'NameError'>, name 'TrainTestDriver__LEFT_SWITCH_CONTROL' is not defined)]
 
