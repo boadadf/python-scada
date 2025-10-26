@@ -134,8 +134,8 @@ def home():
 # Entrypoint
 # ---------------------------------------------------------------------
 def main():
-    print("✅ OpenSCADA-Lite is starting...")
-    socketio.run(app, debug=True)
+    print("OpenSCADA-Lite is starting...")
+    socketio.run(app, debug=True, port=5443)
 
 
 if __name__ == "__main__":
