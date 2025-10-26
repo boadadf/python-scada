@@ -371,13 +371,6 @@
     },    
     {
       "name": "rule"
-    },
-    {
-      "config": {
-        "file_path": "flow_events.log",
-        "mode": "file"
-      },
-      "name": "tracking"
     }
   ],
   "rules": [
