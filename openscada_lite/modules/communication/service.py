@@ -7,7 +7,7 @@ from openscada_lite.modules.communication.manager.connector_manager import Conne
 from openscada_lite.modules.base.base_service import BaseService
 from openscada_lite.common.models.dtos import CommandFeedbackMsg, DriverConnectStatus, DriverConnectCommand, RawTagUpdateMsg, SendCommandMsg, TagUpdateMsg
 
-class CommunicationService(BaseService[SendCommandMsg, DriverConnectCommand, DriverConnectStatus], CommandListener):
+class CommunicationService(BaseService[[SendCommandMsg, TagUpdateMsg], DriverConnectCommand, DriverConnectStatus], CommandListener):
     def __init__(self, event_bus, model, controller):
         super().__init__(
             event_bus, model, controller,
@@ -48,5 +48,6 @@ class CommunicationService(BaseService[SendCommandMsg, DriverConnectCommand, Dri
     async def handle_controller_message(self, data: DriverConnectCommand):
         await self.connection_manager.handle_driver_connect_command(data)
 
+    @publish_data_flow_from_arg_async(status=DataFlowStatus.RECEIVED)
     async def on_driver_command(self, msg: SendCommandMsg):
-        await self.event_bus.publish(SendCommandMsg, msg)
+        await self.event_bus.publish(EventType.SEND_COMMAND, msg)

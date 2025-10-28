@@ -76,12 +76,10 @@ class TestDriver(DriverProtocol, ABC):
     def register_value_listener(self, callback: Callable[[RawTagUpdateMsg], Any]):
         self._value_callback = callback
 
-    async def register_communication_status_listener(
+    def register_communication_status_listener(
         self, callback: Callable[[DriverConnectStatus], Any]
     ):
         self._communication_status_callback = callback
-        publish_state = "online" if self._running else "offline"
-        await self.publish_driver_state(publish_state)
 
     def register_command_feedback(self, callback: Callable[[CommandFeedbackMsg], Any]):
         self._command_feedback_callback = callback
@@ -136,7 +134,7 @@ class TestDriver(DriverProtocol, ABC):
                 command_id=command_id,
                 datapoint_identifier=data.datapoint_identifier,
                 feedback=feedback,
-                value=value,
+                value=data.value,
                 timestamp=datetime.datetime.now()
             )
             await self._safe_invoke(self._command_feedback_callback, msg)            

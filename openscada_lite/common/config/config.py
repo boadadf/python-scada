@@ -67,7 +67,10 @@ class Config:
         for driver in self.get_drivers():
             driver_name = driver["name"]
             for datapoint_identifier in driver.get("datapoints", []):
-                datapoint_identifiers.append(f"{driver_name}@{datapoint_identifier['name']}")
+                # Check if the datapoint_identifier is already fully qualified
+                # Fully qualified dps are handle by its own driver
+                if "@" not in datapoint_identifier["name"]:
+                    datapoint_identifiers.append(f"{driver_name}@{datapoint_identifier['name']}")
         return datapoint_identifiers
 
     def get_allowed_command_identifiers(self):

@@ -58,7 +58,10 @@ class ConnectorManager:
         for driver in self.driver_instances.values():
             driver.register_value_listener(self.emit_value)
             driver.register_command_feedback(self.emit_command_feedback)
-            await driver.register_communication_status_listener(self.emit_communication_status)
+            driver.register_communication_status_listener(self.emit_communication_status)
+            await self.emit_communication_status(DriverConnectStatus(
+                driver_name=driver.server_name, status="offline"
+            ))
 
     async def forward_tag_update(self, msg: TagUpdateMsg):
         for driver in self.driver_instances.values():

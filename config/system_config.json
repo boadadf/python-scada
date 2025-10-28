@@ -295,79 +295,27 @@
       ],
       "driver_class": "TankTestDriver",
       "name": "Server1"
-    },
+    },    
     {
-      "command_datapoints": [
-        {
-          "name": "VALVE_CMD",
-          "type": "OPENED_CLOSED_CMD"
-        },
-        {
-          "name": "HEATER_CMD",
-          "type": "OPEN_CLOSE_CMD"
-        },
-        {
-          "name": "TEST_CMD",
-          "type": "START_STOP_CMD"
-        }
-      ],
-      "connection_info": {
-        "server_name": "Server2"
-      },
-      "datapoints": [
-        {
-          "name": "VALVE",
-          "type": "OPENED_CLOSED"
-        },
-        {
-          "name": "PRESSURE",
-          "type": "PRESSURE"
-        },
-        {
-          "name": "TEMPERATURE",
-          "type": "TEMPERATURE"
-        },
-        {
-          "name": "HEATER",
-          "type": "OPENED_CLOSED"
-        },
-        {
-          "name": "TEST",
-          "type": "START_STOP"
-        }
-      ],
-      "driver_class": "BoilerTestDriver",
-      "name": "Server2"
-    },
-    {
-      "command_datapoints": [
-        {
-          "name": "RIGHT_SWITCH_CONTROL_CMD",
-          "type": "SWITCH_CONTROL_CMD"
-        },
-        {
-          "name": "LEFT_SWITCH_CONTROL_CMD",
-          "type": "SWITCH_CONTROL_CMD"
-        }
-      ],
+      "command_datapoints": [],
       "connection_info": {
         "server_name": "OPCUAServer"
       },
       "datapoints": [
         {
-          "name": "RIGHT_SWITCH_CONTROL",
+          "name": "TrainTestDriver@RIGHT_SWITCH_CONTROL",
           "type": "SWITCH_CONTROL"
         },
         {
-          "name": "LEFT_SWITCH_CONTROL",
+          "name": "TrainTestDriver@LEFT_SWITCH_CONTROL",
           "type": "SWITCH_CONTROL"
         },
         {
-          "name": "RIGHT_SWITCH_CONTROL_CMD",
+          "name": "TrainTestDriver@RIGHT_SWITCH_CONTROL_CMD",
           "type": "SWITCH_CONTROL_CMD"
         },
         {
-          "name": "LEFT_SWITCH_CONTROL_CMD",
+          "name": "TrainTestDriver@LEFT_SWITCH_CONTROL_CMD",
           "type": "SWITCH_CONTROL_CMD"
         }
       ],
@@ -384,7 +332,17 @@
       "connection_info": {
         "server_name": "StressTest"
       },
+      "command_datapoints": [        
+        {
+          "name": "TEST_CMD",
+          "type": "START_STOP_CMD"
+        }
+      ],
       "datapoints": [
+        {
+          "name": "TEST",
+          "type": "START_STOP"
+        },
         { "name": "DP_0", "type": "BOOL" },
         { "name": "DP_1", "type": "BOOL" },
         { "name": "DP_2", "type": "BOOL" },
@@ -693,18 +651,6 @@
   ],
   "rules": [
     {
-      "off_actions": [
-        "lower_alarm()"
-      ],
-      "off_condition": "Server2@PRESSURE < 80",
-      "on_actions": [
-        "send_command('Server2@VALVE', 0)",
-        "raise_alarm()"
-      ],
-      "on_condition": "Server2@PRESSURE > 100",
-      "rule_id": "close_valve_if_high"
-    },
-    {
       "on_actions": [
         "send_command('Server1@PUMP_CMD', 'OPEN')",
         "send_command('Server1@DOOR_CMD', 'CLOSE')",
@@ -719,13 +665,6 @@
       ],
       "on_condition": "Server1@DOOR == OPENED",
       "rule_id": "door_open_alarm"
-    },
-    {
-      "on_actions": [
-        "raise_alarm()"
-      ],
-      "on_condition": "Server2@TEMPERATURE > 80",
-      "rule_id": "temperature_high_warning"
     },
     {
       "off_actions": [],
