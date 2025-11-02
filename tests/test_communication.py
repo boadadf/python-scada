@@ -150,7 +150,7 @@ async def test_on_driver_connect_status_updates_model_and_notifies_controller(se
     svc, _, model = service
     svc.controller = MagicMock()
     data = DriverConnectStatus(track_id="1234", driver_name="Server1", status="connect")
-    with pytest.raises(TypeError, match="Expected SendCommandMsg"):
+    with pytest.raises(TypeError, match="Expected SendCommandMsg or TagUpdateMsg"):
         await svc.handle_bus_message(data)
 
 def test_set_and_get_status():

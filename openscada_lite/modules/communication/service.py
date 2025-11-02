@@ -15,7 +15,7 @@
 # -----------------------------------------------------------------------------
 
 # communications_service.py
-from typing import override
+from typing import Union, override
 from openscada_lite.common.tracking.decorators import publish_data_flow_from_arg_async
 from openscada_lite.common.tracking.tracking_types import DataFlowStatus
 from openscada_lite.common.bus.event_types import EventType
@@ -23,7 +23,7 @@ from openscada_lite.modules.communication.manager.connector_manager import Conne
 from openscada_lite.modules.base.base_service import BaseService
 from openscada_lite.common.models.dtos import CommandFeedbackMsg, DriverConnectStatus, DriverConnectCommand, RawTagUpdateMsg, SendCommandMsg, TagUpdateMsg
 
-class CommunicationService(BaseService[[SendCommandMsg, TagUpdateMsg], DriverConnectCommand, DriverConnectStatus], CommandListener):
+class CommunicationService(BaseService[Union[SendCommandMsg, TagUpdateMsg], DriverConnectCommand, DriverConnectStatus], CommandListener):
     def __init__(self, event_bus, model, controller):
         super().__init__(
             event_bus, model, controller,
@@ -50,6 +50,8 @@ class CommunicationService(BaseService[[SendCommandMsg, TagUpdateMsg], DriverCon
         elif isinstance(data, TagUpdateMsg):
             # Forward TagUpdateMsg to connection manager
             await self.connection_manager.forward_tag_update(data)
+        else:
+            raise TypeError("Expected SendCommandMsg or TagUpdateMsg")
 
     async def on_raw_tag_update(self, msg: RawTagUpdateMsg):
         await self.event_bus.publish(EventType.RAW_TAG_UPDATE, msg)

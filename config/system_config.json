@@ -1,4 +1,43 @@
 {
+  "gis_icons": [
+    {
+      "id": "pump",
+      "icon": "/static/icons/pump.png",
+      "latitude": 47.4233,
+      "longitude": 8.307, 
+      "datapoint": "Server1@PUMP",
+      "label": "Pump Station",
+      "navigation": "image/2_tank.svg",
+      "states": {
+        "OPENED": "/static/icons/pump_open.png",
+        "CLOSED": "/static/icons/pump_closed.png"
+      }
+    },
+    {
+      "id": "train",
+      "icon": "/static/icons/train.png",
+      "latitude": 47.4233,
+      "longitude": 8.3055,
+      "rule_id": "switch_error_straight",
+      "label": "Train Station",
+      "navigation": "image/1_train.svg",
+      "alarm": {
+        "ACTIVE": "/static/icons/train_alarm.png"
+      }
+    },
+    {
+      "id": "train",
+      "icon": "/static/icons/train.png",
+      "latitude": 47.4233,
+      "longitude": 8.3055,
+      "rule_id": "switch_error_turn",
+      "label": "Train Station",
+      "navigation": "image/1_train.svg",
+      "alarm": {
+        "ACTIVE": "/static/icons/train_alarm.png"
+      }
+    }
+  ],
   "animations": {
     "ALARM_SWITCHES": [
       {
@@ -300,6 +339,49 @@
       ],
       "driver_class": "TankTestDriver",
       "name": "Server1"
+    },
+    {
+      "command_datapoints": [
+        {
+          "name": "VALVE_CMD",
+          "type": "OPENED_CLOSED_CMD"
+        },
+        {
+          "name": "HEATER_CMD",
+          "type": "OPEN_CLOSE_CMD"
+        },
+        {
+          "name": "TEST_CMD",
+          "type": "START_STOP_CMD"
+        }
+      ],
+      "connection_info": {
+        "server_name": "Server2"
+      },
+      "datapoints": [
+        {
+          "name": "VALVE",
+          "type": "OPENED_CLOSED"
+        },
+        {
+          "name": "PRESSURE",
+          "type": "PRESSURE"
+        },
+        {
+          "name": "TEMPERATURE",
+          "type": "TEMPERATURE"
+        },
+        {
+          "name": "HEATER",
+          "type": "OPENED_CLOSED"
+        },
+        {
+          "name": "TEST",
+          "type": "START_STOP"
+        }
+      ],
+      "driver_class": "BoilerTestDriver",
+      "name": "Server2"
     },
     {
       "command_datapoints": [],
@@ -1399,6 +1481,9 @@
     },
     {
       "name": "alert"
+    },
+    {
+      "name": "gis"
     },
     {
       "name": "rule"

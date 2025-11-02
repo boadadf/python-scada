@@ -15,6 +15,7 @@
 # -----------------------------------------------------------------------------
 
 from typing import Dict
+from openscada_lite.modules.communication.drivers.test.test_driver import TestDriver
 from openscada_lite.modules.communication.manager.command_listener import CommandListener
 from openscada_lite.modules.communication.manager.communication_listener import CommunicationListener
 from openscada_lite.common.tracking.tracking_types import DataFlowStatus
@@ -147,11 +148,13 @@ class ConnectorManager:
     async def start_all(self):
         await self.init_drivers()
         for driver in self.driver_instances.values():
-            await driver.connect()
+            if isinstance(driver, TestDriver):
+                await driver.connect()
 
     async def stop_all(self):
         for driver in self.driver_instances.values():
-            await driver.disconnect()
+            if isinstance(driver, TestDriver):
+                await driver.disconnect()
 
     @publish_data_flow_from_arg_async(status=DataFlowStatus.FORWARDED)
     async def send_command(self, data: SendCommandMsg):

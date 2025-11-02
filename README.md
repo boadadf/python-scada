@@ -70,7 +70,7 @@ pip install -r requirements.txt
 python -m openscada_lite.app
 ```
 
-The server will start on `http://localhost:5000`.
+The server will start on `http://localhost:5443`.
 
 ---
 
@@ -85,7 +85,7 @@ The **Security Editor** is a react web-based application that lets you manage us
 3.1.1. **Open the Security Editor in your browser**  
    Navigate to:
    ```
-   http://localhost:5000/security_editor
+   http://localhost:5443/security_editor
    ```
    (or the URL provided by your deployment)
 
@@ -130,7 +130,7 @@ It provides a user-friendly interface for editing datapoints, drivers, rules, an
    
 3.2.1. **Open the Config Editor in your browser**
    ```
-   http://localhost:5000/config_editor
+   http://localhost:5443/config_editor
    ```
    (or your deployed Railway/production URL)
 
@@ -211,7 +211,7 @@ It provides real-time visualization, control, and monitoring of your automation 
 
 3.3.1. **Open the SCADA frontend in your browser**
    ```
-   http://localhost:5000/scada
+   http://localhost:5443/scada
    ```
    (or your deployed Railway/production URL)
 
@@ -1060,8 +1060,17 @@ See the `TODO` file for upcoming features and ideas, including:
 
 ## License
 
-MIT License
+This project is licensed under the [Apache License 2.0](LICENSE).
 
 ---
 
-**OpenSCADA Lite** — Fast, flexible, and open SCADA for everyone!
+## Support the Project
+
+Keeping the demo server and OPC UA instance online has some running costs.  
+If you find **OpenSCADA Lite** useful and would like to support development or hosting, you can contribute here:
+
+[Buy Me a Coffee](https://buymeacoffee.com/boadadf)  
+[GitHub Sponsors](https://github.com/sponsors/boadadf)  
+[PayPal](https://paypal.me/boadadf)
+
+Your help keeps the demo server running and allows me to keep improving the project. Thank you!

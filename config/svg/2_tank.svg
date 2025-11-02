@@ -96,32 +96,4 @@
      data-animation="toggle_start_stop"
      command-datapoint="Server1@TEST_CMD"
      command-value="TOGGLE"/>
-  <!-- Instructions and rules -->
-  <text
-     x="500"
-     y="300"
-     font-size="16"
-     text-anchor="middle"
-     fill="darkblue"
-     id="svg_instructions">
-     1. Start the connection to Server1 in the Servers tab.
-  </text>
-  <text
-     x="500"
-     y="320"
-     font-size="16"
-     text-anchor="middle"
-     fill="darkblue"
-     id="svg_instructions2">
-     2. Click 'Test' to start/stop, or Pump/Door to open/close.
-  </text>
-  <text
-     x="500"
-     y="340"
-     font-size="14"
-     text-anchor="middle"
-     fill="firebrick"
-     id="svg_rule">
-     Alarm: If tank level &lt; 10, pump opens, door closes, alarm is raised.
-  </text>
 </svg>

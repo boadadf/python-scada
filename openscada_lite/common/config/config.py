@@ -84,7 +84,7 @@ class Config:
             driver_name = driver["name"]
             for datapoint_identifier in driver.get("datapoints", []):
                 # Check if the datapoint_identifier is already fully qualified
-                # Fully qualified dps are handle by its own driver
+                # Fully qualified dps are handled by its own driver
                 if "@" not in datapoint_identifier["name"]:
                     datapoint_identifiers.append(f"{driver_name}@{datapoint_identifier['name']}")
         return datapoint_identifiers
@@ -227,3 +227,9 @@ class Config:
         """
         config_dir = os.path.dirname(self._config_path) if hasattr(self, "_config_path") else os.getcwd()
         return os.path.join(config_dir, "security_config.json")
+
+    def get_gis_icons(self) -> list:
+        """
+        Returns the list of GIS icon configs from system_config.json.
+        """
+        return self._config.get("gis_icons", [])

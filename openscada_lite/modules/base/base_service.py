@@ -68,8 +68,9 @@ class BaseService(ABC, Generic[T, U, V]):
         accept_update = self.should_accept_update(data)
         if not accept_update:
             return
-        processed_msg = self.process_msg(data)        
-        # Support both single and list of updates
+        processed_msg = self.process_msg(data)
+        if processed_msg is None:            
+            return
         if isinstance(processed_msg, list):
             for msg in processed_msg:
                 self.model.update(msg)

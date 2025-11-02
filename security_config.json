@@ -1,20 +1,35 @@
 {
   "groups": [
     {
-      "name": "test_group",
-      "permissions": []
+      "name": "g1",
+      "permissions": [
+        "p1",
+        "p2"
+      ]
+    },
+    {
+      "name": "g2",
+      "permissions": [
+        "p3"
+      ]
     }
   ],
   "users": [
     {
-      "allowed_apps": [
-        "security_editor"
-      ],
+      "allowed_apps": [],
       "groups": [
-        "test_group"
+        "g1"
       ],
-      "password_hash": "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918",
-      "username": "admin"
+      "password_hash": "",
+      "username": "u1"
+    },
+    {
+      "allowed_apps": [],
+      "groups": [
+        "g2"
+      ],
+      "password_hash": "",
+      "username": "u2"
     }
   ]
 }

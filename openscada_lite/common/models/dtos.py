@@ -475,3 +475,23 @@ class ClientAlertFeedbackMsg(DTO):
         return {
             "feedback": self.feedback
         }    
+    
+@dataclass
+class GisUpdateMsg(DTO):
+    id: str
+    latitude: float
+    longitude: float
+    icon: str
+    label: str | None = None
+    navigation: str | None = None
+    extra: dict = field(default_factory=dict)
+
+    @classmethod
+    def get_event_type(cls) -> EventType:
+        return EventType.CLIENT_ALERT  # Or define a new EventType if needed
+
+    def get_id(self) -> str:
+        return self.id
+
+    def to_dict(self):
+        return self._default_to_dict()
