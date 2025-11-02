@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState } from "react";
-
 // Make sure to install gsap: npm install gsap
 import { gsap } from "gsap";
 import { TextPlugin } from "gsap/TextPlugin";
@@ -7,12 +6,24 @@ import { TextPlugin } from "gsap/TextPlugin";
 // Register GSAP TextPlugin
 gsap.registerPlugin(TextPlugin);
 
-export default function ImageView() {
+export default function ImageView({ selectedSvgProp, onSvgChange }) {
   const [svgList, setSvgList] = useState([]);
-  const [selectedSvg, setSelectedSvg] = useState("");
+  const [selectedSvg, setSelectedSvg] = useState(selectedSvgProp || null);
   const [svgContent, setSvgContent] = useState("");
   const svgContainerRef = useRef(null);
   const socketRef = useRef(null);
+
+  // Sync prop change from outside (e.g., GIS navigation button)
+  useEffect(() => {
+    if (selectedSvgProp && selectedSvgProp !== selectedSvg) {
+      setSelectedSvg(selectedSvgProp);
+    }
+  }, [selectedSvgProp]);
+
+  // Notify parent when user changes selection via dropdown
+  useEffect(() => {
+    if (onSvgChange) onSvgChange(selectedSvg);
+  }, [selectedSvg]);
 
   // Fetch SVG list on mount
   useEffect(() => {
@@ -20,11 +31,11 @@ export default function ImageView() {
       .then(r => r.json())
       .then(svgs => {
         setSvgList(svgs);
-        if (svgs.length) setSelectedSvg(svgs[0]);
+        if (!selectedSvg && svgs.length) setSelectedSvg(svgs[0]);
       });
   }, []);
 
-  // Fetch SVG content when selectedSvg changes
+  // Fetch SVG content whenever selectedSvg changes
   useEffect(() => {
     if (!selectedSvg) return;
     fetch(`/svg/${selectedSvg}`)
@@ -34,7 +45,6 @@ export default function ImageView() {
 
   // Setup Socket.IO and animation logic
   useEffect(() => {
-    // Dynamically load socket.io if not present
     let socket;
     if (!window.io) {
       const script = document.createElement("script");
@@ -51,6 +61,7 @@ export default function ImageView() {
         if (socketRef.current) socketRef.current.disconnect();
       };
     }
+
     function setupSocket() {
       socket = window.io();
       socketRef.current = socket;
@@ -74,28 +85,27 @@ export default function ImageView() {
         socket.emit("animation_subscribe_live_feed");
       });
 
-      // --- Handle initial state (when page reloads / reconnects)
       socket.on("animation_initial_state", msgs => {
-        // Replay all animations after a short delay to ensure SVG is rendered
         setTimeout(() => {
           if (!Array.isArray(msgs)) return;
           msgs.forEach(applyAnimation);
         }, 100);
       });
 
-      // --- Handle live animation updates
       socket.on("animation_animationupdatemsg", msg => {
         applyAnimation(msg);
       });
     }
   }, [selectedSvg]);
 
-  // Handle command clicks in SVG
+  // Handle SVG click commands
   useEffect(() => {
     const svgElem = svgContainerRef.current;
     if (!svgElem) return;
+
     function handleClick(e) {
       const target = e.target;
+
       if (target && target.hasAttribute("command-datapoint")) {
         const command = target.getAttribute("command-datapoint");
         const value = target.getAttribute("command-value") || "";
@@ -103,28 +113,27 @@ export default function ImageView() {
           const payload = {
             command_id: command,
             datapoint_identifier: command,
-            value: value
+            value: value,
           };
           fetch("/command_send_sendcommandmsg", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
+            body: JSON.stringify(payload),
           })
             .then(resp => resp.json())
             .then(data => alert(data.reason || "Command sent!"))
             .catch(() => alert("Error sending command"));
         }
       }
-      // Command datapoint or driver communication
+
       if (target && target.hasAttribute("command-communication")) {
         const driver = target.getAttribute("command-communication");
         const value = target.getAttribute("command-value") || "";
-
         if (window.confirm(`Send command "${driver}" with value "${value}"?`)) {
           fetch("/communication_send_driverconnectcommand", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ driver_name: driver, status: value })
+            body: JSON.stringify({ driver_name: driver, status: value }),
           })
             .then(res => res.json())
             .then(data => alert(data.reason || "Command sent!"))
@@ -132,6 +141,7 @@ export default function ImageView() {
         }
       }
     }
+
     svgElem.addEventListener("click", handleClick);
     return () => svgElem.removeEventListener("click", handleClick);
   }, [svgContent]);
@@ -140,12 +150,12 @@ export default function ImageView() {
     <div>
       <h2>Animated SVGs</h2>
       <select
-        value={selectedSvg}
+        value={selectedSvg || ""}
         onChange={e => setSelectedSvg(e.target.value)}
         style={{ marginBottom: 8 }}
       >
-        {svgList.map(name => (
-          <option key={name} value={name}>{name}</option>
+        {svgList.map(svg => (
+          <option key={svg} value={svg}>{svg}</option>
         ))}
       </select>
       <div

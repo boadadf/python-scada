@@ -385,3 +385,9 @@ input[type="text"] {
   box-shadow: 0 2px 10px rgba(0,0,0,0.3);
   text-align: center;
 }
+
+.leaflet-container {
+  height: calc(100vh - 120px) !important;
+  width: 100% !important;
+  border-radius: 8px;
+}

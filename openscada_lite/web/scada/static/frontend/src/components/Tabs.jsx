@@ -3,6 +3,7 @@ import { NavLink } from "react-router-dom";
 
 const tabs = [
   { label: "Image", path: "/image" },
+  { label: "GIS", path: "/gis" },
   { label: "Datapoints", path: "/datapoints" },
   { label: "Communications", path: "/communications" },
   { label: "Alarms", path: "/alarms" },
