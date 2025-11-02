@@ -1,70 +1,30 @@
-import React, { useEffect, useState, useRef } from "react";
-import { io } from "socket.io-client";
+import React from "react";
+import { useLiveFeed } from "../livefeed/useLiveFeed";
+
+function datapointKey(dp) {
+  return dp.datapoint_identifier;
+}
 
 export default function DatapointsView() {
-  const [datapoints, setDatapoints] = useState({});
-  const socketRef = useRef(null);
-
-  useEffect(() => {
-    // Create socket when component mounts
-    const socket = io();
-    socketRef.current = socket;
-
-    socket.on("connect", () => {
-      socket.emit("datapoint_subscribe_live_feed");
-    });
-
-    // Receive initial datapoint list
-    socket.on("datapoint_initial_state", tagList => {
-      const list = Array.isArray(tagList) ? tagList : tagList ? [tagList] : [];
-      const dpMap = {};
-      list.forEach(tag => {
-        dpMap[tag.datapoint_identifier] = tag;
-      });
-      setDatapoints(dpMap);
-    });
-
-    // Receive updates for individual datapoints
-    socket.on("datapoint_tagupdatemsg", tag => {
-      console.log("Received tag update:", tag);
-      setDatapoints(prev => ({
-        ...prev,
-        [tag.datapoint_identifier]: {
-          ...prev[tag.datapoint_identifier],
-          ...tag
-        }
-      }));
-    });
-
-    // Clean up socket on unmount
-    return () => {
-      socket.disconnect();
-    };
-  }, []);
+  // 4th param: postType = "rawtagupdatemsg"
+  const [datapoints, setDatapoints, postJson] = useLiveFeed(
+    "datapoint",
+    "tagupdatemsg",
+    datapointKey,
+    "rawtagupdatemsg"
+  );
 
   async function sendUpdate(datapoint_identifier, value) {
     try {
-      const response = await fetch("/datapoint_send_rawtagupdatemsg", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-User": localStorage.getItem("username") || ""
-        },
-        body: JSON.stringify({
+      await postJson(
+        {
           datapoint_identifier,
           value,
           quality: "good"
-        })
-      });
-
-      const result = await response.json();
-      if (!response.ok) {
-        alert("Update failed: " + result.reason);
-      } else {
-        console.log("Update successful:", result);
-      }
+        }
+      );
     } catch (err) {
-      console.error("Update request failed", err);
+      alert("Update failed: " + err.message);
     }
   }
 

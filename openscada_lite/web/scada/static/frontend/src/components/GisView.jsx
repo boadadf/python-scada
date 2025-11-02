@@ -1,7 +1,8 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import { useLiveFeed } from "../livefeed/useLiveFeed";
 
 // 🧩 Fix Leaflet default icons path issue
 delete L.Icon.Default.prototype._getIconUrl;
@@ -21,54 +22,12 @@ function MapRefresher({ active }) {
   return null;
 }
 
+function markerKey(m) {
+  return m.id + "_" + m.latitude + "_" + m.longitude;
+}
+
 export default function GisView({ active, onMarkerClick }) {
-  const [markers, setMarkers] = useState({});
-  const socketRef = useRef(null);
-
-  // Connect to server via Socket.IO
-  useEffect(() => {
-    let socket;
-
-    function setupSocket() {
-      socket = window.io();
-      socketRef.current = socket;
-
-      socket.on("connect", () => {
-        console.log("[GIS] Connected to Socket.IO");
-        socket.emit("gis_subscribe_live_feed");
-      });
-
-      socket.on("gis_initial_state", (msgs) => {
-        if (Array.isArray(msgs)) {
-          const newMarkers = {};
-          msgs.forEach((m) => (newMarkers[m.id + "_" + m.latitude + "_" + m.longitude] = m));
-          setMarkers(newMarkers);
-        }
-      });
-
-      socket.on("gis_gisupdatemsg", (msg) => {
-        if (!msg?.id) return;
-        setMarkers((prev) => ({
-          ...prev,
-          [msg.id + "_" + msg.latitude + "_" + msg.longitude]: msg,
-        }));
-      });
-    }
-
-    if (!window.io) {
-      const script = document.createElement("script");
-      script.src = "https://cdn.socket.io/4.7.5/socket.io.min.js";
-      script.onload = setupSocket;
-      document.body.appendChild(script);
-      return () => {
-        if (socketRef.current) socketRef.current.disconnect();
-        document.body.removeChild(script);
-      };
-    } else {
-      setupSocket();
-      return () => socketRef.current?.disconnect();
-    }
-  }, []);
+  const [markers] = useLiveFeed("gis", "gisupdatemsg", markerKey);
 
   const baseUrl =
     "https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.pixelkarte-farbe/default/current/3857/{z}/{x}/{y}.jpeg";
@@ -106,7 +65,7 @@ export default function GisView({ active, onMarkerClick }) {
 
           return (
             <Marker
-              key={m.id + "_" + m.latitude + "_" + m.longitude}
+              key={markerKey(m)}
               position={[m.latitude, m.longitude]}
               icon={icon}
             >

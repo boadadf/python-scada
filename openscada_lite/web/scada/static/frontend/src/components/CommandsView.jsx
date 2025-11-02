@@ -1,65 +1,28 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useState } from "react";
+import { useLiveFeed } from "../livefeed/useLiveFeed";
 
-// Make sure to install socket.io-client: npm install socket.io-client
-import { io } from "socket.io-client";
+function commandKey(cmd) {
+  return cmd.datapoint_identifier;
+}
 
 export default function CommandsView() {
-  const [commands, setCommands] = useState({});
-  const socketRef = useRef(null);
+  // 4th param: postType = "sendcommandmsg"
+  const [commands, setCommands, postJson] = useLiveFeed(
+    "command",
+    "commandfeedbackmsg",
+    commandKey,
+    "sendcommandmsg"
+  );
 
-  // Setup Socket.IO and live updates
-  useEffect(() => {
-    const socket = io();
-    socketRef.current = socket;
-
-    socket.on("connect", () => {
-      socket.emit("command_subscribe_live_feed");
-    });
-
-    socket.on("command_initial_state", cmdList => {
-      const list = Array.isArray(cmdList) ? cmdList : cmdList ? [cmdList] : [];
-      const newCommands = {};
-      list.forEach(cmd => {
-        newCommands[cmd.datapoint_identifier] = cmd;
-      });
-      setCommands(newCommands);
-    });
-
-    socket.on("command_commandfeedbackmsg", cmd => {
-      setCommands(prev => ({
-        ...prev,
-        [cmd.datapoint_identifier]: {
-          ...prev[cmd.datapoint_identifier],
-          ...cmd
-        }
-      }));
-    });
-
-    return () => {
-      socket.disconnect();
-    };
-  }, []);
-
-  // Send command via HTTP POST
+  // Send command via unified postJson
   async function sendCommand(datapoint_identifier, value) {
     try {
       const command_id = 'cmd_' + Math.random().toString(36).substring(2, 10);
-      const response = await fetch('/command_send_sendcommandmsg', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-User': localStorage.getItem('username') || ''
-        },
-        body: JSON.stringify({
-          command_id,
-          datapoint_identifier,
-          value
-        })
+      await postJson({
+        command_id,
+        datapoint_identifier,
+        value
       });
-      const result = await response.json();
-      if (!response.ok) {
-        alert("Command failed: " + result.reason);
-      }
     } catch (err) {
       alert("Failed to send command: " + err.message);
     }

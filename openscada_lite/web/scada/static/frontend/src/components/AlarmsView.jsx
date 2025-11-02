@@ -1,118 +1,37 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect } from "react";
+import { useLiveFeed } from "../livefeed/useLiveFeed";
 
-// Helper to format time
 function formatTime(val) {
   return val ? val : "None";
 }
+function alarmKey(alarm) {
+  return alarm.alarm_occurrence_id || (alarm.datapoint_identifier + "@" + alarm.activation_time);
+}
 
 export default function AlarmsView() {
-  const [alarms, setAlarms] = useState({});
+  // 4th param: postType = "ackalarmmsg"
+  const [alarmsObj, , postJson] = useLiveFeed("alarm", "alarmupdatemsg", alarmKey, "ackalarmmsg");
+  const alarms = Object.values(alarmsObj);
 
-  // Add or update an alarm in state
-  const updateAlarm = useCallback(alarm => {
-    const id = alarm.alarm_occurrence_id || (alarm.datapoint_identifier + "@" + alarm.activation_time);
-    // If finished, remove it
-    if (alarm.deactivation_time && alarm.acknowledge_time) {
-      setAlarms(prev => {
-        const copy = { ...prev };
-        delete copy[id];
-        return copy;
-      });
-      return;
-    }
-    setAlarms(prev => ({ ...prev, [id]: alarm }));
-  }, []);
+  const activeAlarms = alarms.filter(
+    alarm => !(alarm.deactivation_time && alarm.acknowledge_time)
+  );
 
-  // Remove an alarm from state
-  const removeAlarm = useCallback(id => {
-    setAlarms(prev => {
-      const copy = { ...prev };
-      delete copy[id];
-      return copy;
-    });
-  }, []);
-
-  // Send Ack
-  async function sendAck(alarm_occurrence_id) {
-    try {
-      const response = await fetch("/alarm_send_ackalarmmsg", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-User": localStorage.getItem("username") || ""
-        },
-        body: JSON.stringify({ alarm_occurrence_id })
-      });
-      const result = await response.json();
-      if (!response.ok) {
-        alert("Ack failed: " + result.reason);
-      }
-    } catch (err) {
-      alert("Failed to send ack: " + err.message);
-    }
-  }
-
-  // Alarm highlight logic (RaiseAlert/LowerAlert)
   useEffect(() => {
-    const hasUnack = Object.values(alarms).some(alarm => !alarm.acknowledge_time);
+    const hasUnack = activeAlarms.some(alarm => !alarm.acknowledge_time);
     window.parent.postMessage(
       hasUnack ? "RaiseAlert:Alarms" : "LowerAlert:Alarms",
       "*"
     );
-  }, [alarms]);
+  }, [activeAlarms]);
 
-  // Socket.IO logic
-  useEffect(() => {
-    // Dynamically load socket.io if not already loaded
-    let socket;
-    let script = document.createElement("script");
-    script.src = "https://cdn.socket.io/4.7.5/socket.io.min.js";
-    script.onload = () => {
-      // global io now available
-      socket = window.io();
-      socket.on("connect", () => {
-        socket.emit("alarm_subscribe_live_feed");
-      });
-
-      socket.on("alarm_initial_state", alarmList => {
-        const list = Array.isArray(alarmList) ? alarmList : alarmList ? [alarmList] : [];
-        const newAlarms = {};
-        for (const alarm of list) {
-          const id = alarm.alarm_occurrence_id || (alarm.datapoint_identifier + "@" + alarm.activation_time);
-          newAlarms[id] = alarm;
-        }
-        setAlarms(newAlarms);
-      });
-
-      socket.on("alarm_alarmupdatemsg", alarmList => {
-        const list = Array.isArray(alarmList) ? alarmList : alarmList ? [alarmList] : [];
-        const newAlarms = {};
-        for (const alarm of list) {
-          const id = alarm.alarm_occurrence_id || (alarm.datapoint_identifier + "@" + alarm.activation_time);
-          newAlarms[id] = alarm;
-        }
-        setAlarms(newAlarms);
-      });
-    };
-    document.body.appendChild(script);
-
-    return () => {
-      if (socket) socket.disconnect();
-      document.body.removeChild(script);
-    };
-  }, []);
-
-  useEffect(() => {
-    setAlarms(prev => {
-      const copy = { ...prev };
-      Object.entries(copy).forEach(([id, alarm]) => {
-        if (alarm.deactivation_time && alarm.acknowledge_time) {
-          delete copy[id];
-        }
-      });
-      return copy;
-    });
-  }, [alarms]);
+  async function sendAck(alarm_occurrence_id) {
+    try {
+      await postJson({ alarm_occurrence_id });
+    } catch (err) {
+      alert("Ack failed: " + err.message);
+    }
+  }
 
   return (
     <div>
@@ -129,15 +48,15 @@ export default function AlarmsView() {
           </tr>
         </thead>
         <tbody>
-          {Object.entries(alarms).map(([id, alarm]) => (
-            <tr key={id}>
+          {activeAlarms.map(alarm => (
+            <tr key={alarmKey(alarm)}>
               <td>{alarm.rule_id || "N/A"}</td>
               <td>{alarm.datapoint_identifier}</td>
               <td>{formatTime(alarm.activation_time)}</td>
               <td>{formatTime(alarm.deactivation_time)}</td>
               <td>{formatTime(alarm.acknowledge_time)}</td>
               <td>
-                <button onClick={() => sendAck(id)}>Ack</button>
+                <button onClick={() => sendAck(alarmKey(alarm))}>Ack</button>
               </td>
             </tr>
           ))}

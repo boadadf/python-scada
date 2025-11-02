@@ -1,31 +1,39 @@
 import React, { useEffect, useRef, useState } from "react";
-// Make sure to install gsap: npm install gsap
 import { gsap } from "gsap";
 import { TextPlugin } from "gsap/TextPlugin";
+import { useLiveFeed } from "../livefeed/useLiveFeed";
 
-// Register GSAP TextPlugin
 gsap.registerPlugin(TextPlugin);
+
+function animationKey(msg) {
+  // Compose a unique key for each animation message
+  return (msg.svg_name || "") + "_" + (msg.element_id || "");
+}
 
 export default function ImageView({ selectedSvgProp, onSvgChange }) {
   const [svgList, setSvgList] = useState([]);
   const [selectedSvg, setSelectedSvg] = useState(selectedSvgProp || null);
   const [svgContent, setSvgContent] = useState("");
   const svgContainerRef = useRef(null);
-  const socketRef = useRef(null);
 
-  // Sync prop change from outside (e.g., GIS navigation button)
+  // Use the live feed for animation messages
+  const [animations] = useLiveFeed("animation", "animationupdatemsg", animationKey);
+
+  // For commands to datapoint
+  const [, , postCommand] = useLiveFeed("command", "sendcommandmsg", () => {}, "sendcommandmsg");
+  // For commands to communication
+  const [, , postCommunication] = useLiveFeed("communication", "driverconnectcommand", () => {}, "driverconnectcommand");
+
   useEffect(() => {
     if (selectedSvgProp && selectedSvgProp !== selectedSvg) {
       setSelectedSvg(selectedSvgProp);
     }
   }, [selectedSvgProp]);
 
-  // Notify parent when user changes selection via dropdown
   useEffect(() => {
     if (onSvgChange) onSvgChange(selectedSvg);
   }, [selectedSvg]);
 
-  // Fetch SVG list on mount
   useEffect(() => {
     fetch("/animation_svgs")
       .then(r => r.json())
@@ -35,7 +43,6 @@ export default function ImageView({ selectedSvgProp, onSvgChange }) {
       });
   }, []);
 
-  // Fetch SVG content whenever selectedSvg changes
   useEffect(() => {
     if (!selectedSvg) return;
     fetch(`/svg/${selectedSvg}`)
@@ -43,62 +50,26 @@ export default function ImageView({ selectedSvgProp, onSvgChange }) {
       .then(svg => setSvgContent(svg));
   }, [selectedSvg]);
 
-  // Setup Socket.IO and animation logic
+  // Apply animation updates from live feed
   useEffect(() => {
-    let socket;
-    if (!window.io) {
-      const script = document.createElement("script");
-      script.src = "https://cdn.socket.io/4.7.5/socket.io.min.js";
-      script.onload = setupSocket;
-      document.body.appendChild(script);
-      return () => {
-        if (socketRef.current) socketRef.current.disconnect();
-        document.body.removeChild(script);
-      };
-    } else {
-      setupSocket();
-      return () => {
-        if (socketRef.current) socketRef.current.disconnect();
-      };
-    }
+    if (!svgContent) return;
+    const svgElem = svgContainerRef.current;
+    if (!svgElem) return;
 
-    function setupSocket() {
-      socket = window.io();
-      socketRef.current = socket;
+    Object.values(animations).forEach(msg => {
+      if (!msg || msg.svg_name !== selectedSvg) return;
+      const elem = svgElem.querySelector(`#${msg.element_id}`);
+      if (!elem || !msg.config) return;
 
-      function applyAnimation(msg) {
-        if (!msg || msg.svg_name !== selectedSvg) return;
-        const svgElem = svgContainerRef.current;
-        if (!svgElem) return;
+      const gsapConfig = { duration: msg.config.duration || 0.5 };
+      if (msg.config.attr) gsapConfig.attr = msg.config.attr;
+      if (msg.config.text) gsapConfig.text = msg.config.text;
 
-        const elem = svgElem.querySelector(`#${msg.element_id}`);
-        if (!elem || !msg.config) return;
+      gsap.to(elem, gsapConfig);
+    });
+  }, [animations, svgContent, selectedSvg]);
 
-        const gsapConfig = { duration: msg.config.duration || 0.5 };
-        if (msg.config.attr) gsapConfig.attr = msg.config.attr;
-        if (msg.config.text) gsapConfig.text = msg.config.text;
-
-        gsap.to(elem, gsapConfig);
-      }
-
-      socket.on("connect", () => {
-        socket.emit("animation_subscribe_live_feed");
-      });
-
-      socket.on("animation_initial_state", msgs => {
-        setTimeout(() => {
-          if (!Array.isArray(msgs)) return;
-          msgs.forEach(applyAnimation);
-        }, 100);
-      });
-
-      socket.on("animation_animationupdatemsg", msg => {
-        applyAnimation(msg);
-      });
-    }
-  }, [selectedSvg]);
-
-  // Handle SVG click commands
+  // Handle SVG click commands using unified postJson
   useEffect(() => {
     const svgElem = svgContainerRef.current;
     if (!svgElem) return;
@@ -115,12 +86,7 @@ export default function ImageView({ selectedSvgProp, onSvgChange }) {
             datapoint_identifier: command,
             value: value,
           };
-          fetch("/command_send_sendcommandmsg", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload),
-          })
-            .then(resp => resp.json())
+          postCommand(payload)
             .then(data => alert(data.reason || "Command sent!"))
             .catch(() => alert("Error sending command"));
         }
@@ -130,12 +96,10 @@ export default function ImageView({ selectedSvgProp, onSvgChange }) {
         const driver = target.getAttribute("command-communication");
         const value = target.getAttribute("command-value") || "";
         if (window.confirm(`Send command "${driver}" with value "${value}"?`)) {
-          fetch("/communication_send_driverconnectcommand", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ driver_name: driver, status: value }),
+          postCommunication({
+            driver_name: driver,
+            status: value
           })
-            .then(res => res.json())
             .then(data => alert(data.reason || "Command sent!"))
             .catch(err => alert("Error sending command: " + err));
         }
@@ -144,7 +108,7 @@ export default function ImageView({ selectedSvgProp, onSvgChange }) {
 
     svgElem.addEventListener("click", handleClick);
     return () => svgElem.removeEventListener("click", handleClick);
-  }, [svgContent]);
+  }, [svgContent, postCommand, postCommunication]);
 
   return (
     <div>

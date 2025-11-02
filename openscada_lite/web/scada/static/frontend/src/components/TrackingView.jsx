@@ -1,35 +1,27 @@
-import React, { useEffect, useState, useRef } from "react";
-import { io } from "socket.io-client";
+import React, { useState } from "react";
+import { useLiveFeed } from "../livefeed/useLiveFeed";
 
 const MAX_EVENTS = 100;
 
+function eventKey(event) {
+  // Use a composite key for uniqueness
+  return (event.track_id || "") + "_" + (event.timestamp || "") + "_" + (event.event_type || "");
+}
+
 export default function TrackingView() {
-  const [events, setEvents] = useState([]);
+  const [eventsObj] = useLiveFeed(
+    "tracking",
+    "datafloweventmsg",
+    eventKey
+  );
+  // Convert to array and sort by timestamp descending (optional)
+  const events = Object.values(eventsObj)
+    .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
+    .slice(0, MAX_EVENTS);
+
   const [trackIdFilter, setTrackIdFilter] = useState("");
   const [eventTypeFilter, setEventTypeFilter] = useState("");
   const [sourceFilter, setSourceFilter] = useState("");
-  const socketRef = useRef(null);
-
-  useEffect(() => {
-    const socket = io();
-    socketRef.current = socket;
-
-    socket.on("connect", () => {
-      socket.emit("tracking_subscribe_live_feed");
-    });
-
-    socket.on("tracking_initial_state", eventList => {
-      setEvents(Array.isArray(eventList) ? eventList.slice(0, MAX_EVENTS) : []);
-    });
-
-    socket.on("tracking_datafloweventmsg", event => {
-      setEvents(prev => [event, ...prev].slice(0, MAX_EVENTS));
-    });
-
-    return () => {
-      socket.disconnect();
-    };
-  }, []);
 
   // Filter logic
   const filteredEvents = events.filter(event =>
@@ -83,7 +75,7 @@ export default function TrackingView() {
         </thead>
         <tbody>
           {filteredEvents.map((event, idx) => (
-            <tr key={event.track_id + event.timestamp + idx}>
+            <tr key={eventKey(event) + "_" + idx}>
               <td>{event.track_id || ""}</td>
               <td>{event.event_type || ""}</td>
               <td>{event.source || ""}</td>
