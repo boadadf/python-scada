@@ -17,6 +17,8 @@
 # base_controller.py
 from abc import ABC, abstractmethod
 import asyncio
+import threading
+import time
 from typing import Generic, TypeVar, Optional, Type, TYPE_CHECKING, Union
 from flask import request, jsonify
 from flask_socketio import SocketIO, join_room, emit
@@ -52,6 +54,7 @@ class BaseController(ABC, Generic[T, U]):
         base_event: str,
         room: str = None,
         flask_app=None,
+        batch_interval: float = 1.0,  # seconds, configurable
     ):
         self.model = model
         self.socketio = socketio
@@ -62,6 +65,15 @@ class BaseController(ABC, Generic[T, U]):
         self.service = None
         self._initializing_clients = set()
         self.flask_app = flask_app
+
+        # --- Batching ---
+        self._batch_buffer = []
+        self._batch_lock = threading.Lock()
+        self._batch_interval = batch_interval
+        self._batch_thread = threading.Thread(target=self._batch_worker, daemon=True)
+        self._batch_thread.start()
+
+
         # Register websocket and HTTP handlers
         self.register_socketio()
         if flask_app is not None:
@@ -95,14 +107,24 @@ class BaseController(ABC, Generic[T, U]):
 
     @publish_data_flow_from_arg_sync(status=DataFlowStatus.FORWARDED)
     def publish(self, msg: T):
-        """Publishes a T message to all subscribed clients in the room."""
+        """Buffer a T message to be published in batch."""
         if self._initializing_clients:
             return  # Prevent flooding while initializing
-        self.socketio.emit(
-            f"{self.base_event}_{self.T_cls.__name__.lower()}",
-            msg.to_dict(),
-            room=self.room,
-        )
+        with self._batch_lock:
+            self._batch_buffer.append(msg.to_dict())
+
+    def _batch_worker(self):
+        while True:
+            time.sleep(self._batch_interval)
+            with self._batch_lock:
+                if self._batch_buffer:
+                    # Send all buffered messages as a list
+                    self.socketio.emit(
+                        f"{self.base_event}_{self.T_cls.__name__.lower()}",
+                        self._batch_buffer.copy(),
+                        room=self.room,
+                    )
+                    self._batch_buffer.clear()
 
     # ---------------------------------------------------------------------
     # HTTP (for send_* endpoints)

@@ -1,52 +1,29 @@
 // src/contexts/AlertContext.jsx
-import React, { createContext, useContext, useState, useEffect, useRef } from "react";
-import { io } from "socket.io-client";
+import React, { createContext, useContext, useCallback } from "react";
+import { useLiveFeed, postJson } from "../livefeed/openscadalite";
 
 const AlertContext = createContext();
 export const useAlert = () => useContext(AlertContext);
 
 export const AlertProvider = ({ children }) => {
-  const [alert, setAlert] = useState(null);
-  const socketRef = useRef(null);
+  // Use the library for live feed
+  const [alerts] = useLiveFeed(
+    "alert",
+    "clientalertmsg",
+    useCallback(a => a.track_id, [])
+  );
 
-  useEffect(() => {
-    const socket = io();
-    socketRef.current = socket;
+  // Find the latest alert with show === true
+  const alert = Object.values(alerts).find(a => a && a.show);
 
-    socket.on("connect", () => {
-      socket.emit("alert_subscribe_live_feed");
-    });
-
-    // Handle initial alert state (e.g., on page load or reconnect)
-    socket.on("alert_initial_state", (alertList) => {
-      const alerts = Array.isArray(alertList) ? alertList : [alertList];
-      const latestVisible = alerts.find((a) => a.show);
-      if (latestVisible) {
-        setAlert(latestVisible);
-      }
-    });
-
-    // Handle new alerts
-    socket.on("alert_clientalertmsg", (data) => {
-      if (data.show === false) {
-        setAlert(null); // Hide alert
-      } else {
-        setAlert(data); // Show new alert
-      }
-    });
-
-    return () => {
-      socket.disconnect();
-    };
-  }, []);
-
-  const sendFeedback = (trackId, feedback) => {
-    if (!socketRef.current) return;
-    socketRef.current.emit("CLIENT_ALERT_FEEDBACK", {
-      track_id: trackId,
-      feedback: feedback,
-    });
-    setAlert(null);
+  // Use the library for POST
+  const sendFeedback = async (trackId, feedback) => {
+    try {
+      await postJson("alert", "clientalertfeedbackmsg", { track_id: trackId, feedback });
+      // Do not clear alert here; wait for server to send show: false
+    } catch (err) {
+      window.alert("Failed to send alert feedback: " + err.message);
+    }
   };
 
   return (

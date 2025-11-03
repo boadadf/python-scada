@@ -1,12 +1,11 @@
 import React, { useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { TextPlugin } from "gsap/TextPlugin";
-import { useLiveFeed } from "../livefeed/useLiveFeed";
+import { useLiveFeed, postJson } from "../livefeed/openscadalite";
 
 gsap.registerPlugin(TextPlugin);
 
 function animationKey(msg) {
-  // Compose a unique key for each animation message
   return (msg.svg_name || "") + "_" + (msg.element_id || "");
 }
 
@@ -16,118 +15,135 @@ export default function ImageView({ selectedSvgProp, onSvgChange }) {
   const [svgContent, setSvgContent] = useState("");
   const svgContainerRef = useRef(null);
 
-  // Use the live feed for animation messages
+  // Only one live feed for animation!
   const [animations] = useLiveFeed("animation", "animationupdatemsg", animationKey);
 
-  // For commands to datapoint
-  const [, , postCommand] = useLiveFeed("command", "sendcommandmsg", () => {}, "sendcommandmsg");
-  // For commands to communication
-  const [, , postCommunication] = useLiveFeed("communication", "driverconnectcommand", () => {}, "driverconnectcommand");
-
+  // Sync external prop
   useEffect(() => {
     if (selectedSvgProp && selectedSvgProp !== selectedSvg) {
       setSelectedSvg(selectedSvgProp);
     }
   }, [selectedSvgProp]);
 
+  // Notify parent when SVG changes
   useEffect(() => {
     if (onSvgChange) onSvgChange(selectedSvg);
-  }, [selectedSvg]);
+  }, [selectedSvg, onSvgChange]);
 
+  // Load available SVGs
   useEffect(() => {
     fetch("/animation_svgs")
-      .then(r => r.json())
-      .then(svgs => {
+      .then((r) => r.json())
+      .then((svgs) => {
         setSvgList(svgs);
-        if (!selectedSvg && svgs.length) setSelectedSvg(svgs[0]);
-      });
+        if (!selectedSvg && svgs.length > 0) setSelectedSvg(svgs[0]);
+      })
+      .catch((err) => console.error("Failed to load SVG list:", err));
   }, []);
 
+  // Load selected SVG content
   useEffect(() => {
     if (!selectedSvg) return;
     fetch(`/svg/${selectedSvg}`)
-      .then(r => r.text())
-      .then(svg => setSvgContent(svg));
+      .then((r) => r.text())
+      .then((svg) => setSvgContent(svg))
+      .catch((err) => console.error("Failed to load SVG:", err));
   }, [selectedSvg]);
 
-  // Apply animation updates from live feed
+  // Apply animation messages
   useEffect(() => {
     if (!svgContent) return;
     const svgElem = svgContainerRef.current;
     if (!svgElem) return;
 
-    Object.values(animations).forEach(msg => {
+    Object.values(animations).forEach((msg) => {
       if (!msg || msg.svg_name !== selectedSvg) return;
-      const elem = svgElem.querySelector(`#${msg.element_id}`);
-      if (!elem || !msg.config) return;
+
+      const target = svgElem.querySelector(`#${msg.element_id}`);
+      if (!target || !msg.config) return;
 
       const gsapConfig = { duration: msg.config.duration || 0.5 };
       if (msg.config.attr) gsapConfig.attr = msg.config.attr;
       if (msg.config.text) gsapConfig.text = msg.config.text;
 
-      gsap.to(elem, gsapConfig);
+      try {
+        gsap.to(target, gsapConfig);
+      } catch (err) {
+        console.warn("Animation error:", err);
+      }
     });
   }, [animations, svgContent, selectedSvg]);
 
-  // Handle SVG click commands using unified postJson
+  // Handle clickable SVG commands
   useEffect(() => {
     const svgElem = svgContainerRef.current;
     if (!svgElem) return;
 
     function handleClick(e) {
       const target = e.target;
+      if (!target) return;
 
-      if (target && target.hasAttribute("command-datapoint")) {
+      // Command → datapoint
+      if (target.hasAttribute("command-datapoint")) {
         const command = target.getAttribute("command-datapoint");
         const value = target.getAttribute("command-value") || "";
         if (window.confirm(`Send command "${command}" with value "${value}"?`)) {
           const payload = {
-            command_id: command,
+            command_id: "cmd_" + Math.random().toString(36).slice(2),
             datapoint_identifier: command,
-            value: value,
+            value,
           };
-          postCommand(payload)
-            .then(data => alert(data.reason || "Command sent!"))
-            .catch(() => alert("Error sending command"));
+          postJson("command", "sendcommandmsg", payload)
+            .then((data) => window.alert(data?.reason || "Command sent!"))
+            .catch((err) => window.alert("Error sending command: " + err.message));
         }
       }
 
-      if (target && target.hasAttribute("command-communication")) {
+      // Command → communication driver
+      if (target.hasAttribute("command-communication")) {
         const driver = target.getAttribute("command-communication");
         const value = target.getAttribute("command-value") || "";
-        if (window.confirm(`Send command "${driver}" with value "${value}"?`)) {
-          postCommunication({
+        if (window.confirm(`Send driver command "${driver}" = "${value}"?`)) {
+          postJson("communication", "driverconnectcommand", {
             driver_name: driver,
-            status: value
+            status: value,
           })
-            .then(data => alert(data.reason || "Command sent!"))
-            .catch(err => alert("Error sending command: " + err));
+            .then((data) => window.alert(data?.reason || "Command sent!"))
+            .catch((err) => window.alert("Error sending driver command: " + err.message));
         }
       }
     }
 
     svgElem.addEventListener("click", handleClick);
     return () => svgElem.removeEventListener("click", handleClick);
-  }, [svgContent, postCommand, postCommunication]);
+  }, [svgContent]);
 
   return (
     <div>
       <h2>Animated SVGs</h2>
       <select
         value={selectedSvg || ""}
-        onChange={e => setSelectedSvg(e.target.value)}
+        onChange={(e) => setSelectedSvg(e.target.value)}
         style={{ marginBottom: 8 }}
       >
-        {svgList.map(svg => (
-          <option key={svg} value={svg}>{svg}</option>
+        {svgList.map((svg) => (
+          <option key={svg} value={svg}>
+            {svg}
+          </option>
         ))}
       </select>
+
       <div
         id="svgContainer"
         ref={svgContainerRef}
-        // eslint-disable-next-line react/no-danger
         dangerouslySetInnerHTML={{ __html: svgContent }}
-        style={{ minHeight: 300, border: "1px solid #ccc", background: "#fafafa" }}
+        style={{
+          minHeight: 300,
+          border: "1px solid #ccc",
+          background: "#fafafa",
+          borderRadius: 6,
+          padding: 8,
+        }}
       />
     </div>
   );

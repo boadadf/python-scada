@@ -1,34 +1,32 @@
 import React, { useState } from "react";
-import { useLiveFeed } from "../livefeed/useLiveFeed";
+import { useLiveFeed, postJson } from "../livefeed/openscadalite";
 
 function commandKey(cmd) {
   return cmd.datapoint_identifier;
 }
 
 export default function CommandsView() {
-  // 4th param: postType = "sendcommandmsg"
-  const [commands, setCommands, postJson] = useLiveFeed(
+  // Only live feed, no POST logic here
+  const [commands, setCommands] = useLiveFeed(
     "command",
     "commandfeedbackmsg",
-    commandKey,
-    "sendcommandmsg"
+    commandKey
   );
 
-  // Send command via unified postJson
+  // Send command via separated postJson helper
   async function sendCommand(datapoint_identifier, value) {
     try {
-      const command_id = 'cmd_' + Math.random().toString(36).substring(2, 10);
-      await postJson({
+      const command_id = "cmd_" + Math.random().toString(36).substring(2, 10);
+      await postJson("command", "sendcommandmsg", {
         command_id,
         datapoint_identifier,
-        value
+        value,
       });
     } catch (err) {
-      alert("Failed to send command: " + err.message);
+      window.alert("Failed to send command: " + err.message);
     }
   }
 
-  // Render
   return (
     <div>
       <h2>Command List</h2>
@@ -43,10 +41,11 @@ export default function CommandsView() {
           </tr>
         </thead>
         <tbody>
-          {Object.values(commands).map(cmd => {
+          {Object.values(commands).map((cmd) => {
             const valueDisplay = cmd.value ?? "";
             const feedbackDisplay = cmd.feedback ?? "None";
             const timestampDisplay = cmd.timestamp ?? "None";
+
             return (
               <tr key={cmd.datapoint_identifier}>
                 <td>{cmd.datapoint_identifier}</td>
@@ -54,17 +53,17 @@ export default function CommandsView() {
                   <input
                     type="text"
                     value={valueDisplay}
-                    onChange={e => {
+                    onChange={(e) => {
                       const val = e.target.value;
-                      setCommands(prev => ({
+                      setCommands((prev) => ({
                         ...prev,
                         [cmd.datapoint_identifier]: {
                           ...prev[cmd.datapoint_identifier],
-                          value: val
-                        }
+                          value: val,
+                        },
                       }));
                     }}
-                    onKeyDown={e => {
+                    onKeyDown={(e) => {
                       if (e.key === "Enter") {
                         sendCommand(cmd.datapoint_identifier, e.target.value);
                       }

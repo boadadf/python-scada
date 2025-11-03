@@ -1,29 +1,29 @@
 import React from "react";
-import { useLiveFeed } from "../livefeed/useLiveFeed";
+import { useLiveFeed, postJson } from "../livefeed/openscadalite";
 
 function driverKey(driver) {
   return driver.driver_name;
 }
 
 export default function CommunicationsView() {
-  // 4th param: postType = "driverconnectcommand"
-  const [driversObj, , postJson] = useLiveFeed(
+  // Only live feed, no POST logic here
+  const [driversObj] = useLiveFeed(
     "communication",
     "driverconnectstatus",
-    driverKey,
-    "driverconnectcommand"
+    driverKey
   );
+
   const drivers = Object.values(driversObj);
 
-  // Set driver status via unified postJson
+  // Set driver status via separated postJson helper
   async function setDriverStatus(driver, status) {
     try {
-      await postJson({
+      await postJson("communication", "driverconnectcommand", {
         driver_name: driver,
-        status: status
+        status: status,
       });
     } catch (err) {
-      alert("Failed to send driver status update: " + err.message);
+      window.alert("Failed to send driver status update: " + err.message);
     }
   }
 
@@ -31,39 +31,48 @@ export default function CommunicationsView() {
     <div>
       <h2>Driver Communications</h2>
       <div className="driver-list">
-        {drivers.map(driverObj => {
+        {drivers.map((driverObj) => {
           const { driver_name, status } = driverObj;
+          const isOnline = status === "online" || status === "connect";
+
           return (
-            <div className="driver-row" key={driver_name} style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
+            <div
+              className="driver-row"
+              key={driver_name}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 12,
+                marginBottom: 8,
+              }}
+            >
               <span
-                className={
-                  "status-indicator " +
-                  ((status === "online" || status === "connect")
-                    ? "status-online"
-                    : "status-offline")
-                }
+                className="status-indicator"
                 style={{
                   display: "inline-block",
                   width: 12,
                   height: 12,
                   borderRadius: "50%",
-                  background: (status === "online" || status === "connect") ? "green" : "gray"
+                  background: isOnline ? "green" : "gray",
                 }}
               />
-              <span className="driver-name" style={{ minWidth: 100 }}>{driver_name}</span>
-              <span>
-                {(status === "online" || status === "connect") ? "Online" : "Offline"}
+              <span
+                className="driver-name"
+                style={{ minWidth: 100, fontWeight: 500 }}
+              >
+                {driver_name}
               </span>
+              <span>{isOnline ? "Online" : "Offline"}</span>
               <span className="driver-actions" style={{ marginLeft: "auto" }}>
                 <button
                   onClick={() => setDriverStatus(driver_name, "connect")}
-                  disabled={status === "online" || status === "connect"}
+                  disabled={isOnline}
                 >
                   Set Online
                 </button>
                 <button
                   onClick={() => setDriverStatus(driver_name, "disconnect")}
-                  disabled={status === "offline" || status === "disconnect"}
+                  disabled={!isOnline}
                   style={{ marginLeft: 4 }}
                 >
                   Set Offline

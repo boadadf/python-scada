@@ -1,24 +1,29 @@
-import React, { useEffect } from "react";
-import { useLiveFeed } from "../livefeed/useLiveFeed";
+import React, { useEffect, useCallback } from "react";
+import { useLiveFeed, postJson } from "../livefeed/openscadalite";
 
 function formatTime(val) {
-  return val ? val : "None";
-}
-function alarmKey(alarm) {
-  return alarm.alarm_occurrence_id || (alarm.datapoint_identifier + "@" + alarm.activation_time);
+  return val || "None";
 }
 
 export default function AlarmsView() {
-  // 4th param: postType = "ackalarmmsg"
-  const [alarmsObj, , postJson] = useLiveFeed("alarm", "alarmupdatemsg", alarmKey, "ackalarmmsg");
+  // Stable key generator
+  const alarmKey = useCallback(
+    (alarm) =>
+      alarm.alarm_occurrence_id ||
+      `${alarm.datapoint_identifier}@${alarm.activation_time}`,
+    []
+  );
+
+  // Only live feed, no POST logic here
+  const [alarmsObj] = useLiveFeed("alarm", "alarmupdatemsg", alarmKey);
   const alarms = Object.values(alarmsObj);
 
   const activeAlarms = alarms.filter(
-    alarm => !(alarm.deactivation_time && alarm.acknowledge_time)
+    (alarm) => !(alarm.deactivation_time && alarm.acknowledge_time)
   );
 
   useEffect(() => {
-    const hasUnack = activeAlarms.some(alarm => !alarm.acknowledge_time);
+    const hasUnack = activeAlarms.some((alarm) => !alarm.acknowledge_time);
     window.parent.postMessage(
       hasUnack ? "RaiseAlert:Alarms" : "LowerAlert:Alarms",
       "*"
@@ -27,7 +32,7 @@ export default function AlarmsView() {
 
   async function sendAck(alarm_occurrence_id) {
     try {
-      await postJson({ alarm_occurrence_id });
+      await postJson("alarm", "ackalarmmsg", { alarm_occurrence_id });
     } catch (err) {
       alert("Ack failed: " + err.message);
     }
@@ -48,7 +53,7 @@ export default function AlarmsView() {
           </tr>
         </thead>
         <tbody>
-          {activeAlarms.map(alarm => (
+          {activeAlarms.map((alarm) => (
             <tr key={alarmKey(alarm)}>
               <td>{alarm.rule_id || "N/A"}</td>
               <td>{alarm.datapoint_identifier}</td>

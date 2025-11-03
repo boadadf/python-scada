@@ -1,30 +1,28 @@
 import React from "react";
-import { useLiveFeed } from "../livefeed/useLiveFeed";
+import { useLiveFeed, postJson } from "../livefeed/openscadalite";
 
 function datapointKey(dp) {
   return dp.datapoint_identifier;
 }
 
 export default function DatapointsView() {
-  // 4th param: postType = "rawtagupdatemsg"
-  const [datapoints, setDatapoints, postJson] = useLiveFeed(
+  // Only live feed, no POST logic here
+  const [datapoints, setDatapoints] = useLiveFeed(
     "datapoint",
     "tagupdatemsg",
-    datapointKey,
-    "rawtagupdatemsg"
+    datapointKey
   );
 
+  // Send update via separated postJson helper
   async function sendUpdate(datapoint_identifier, value) {
     try {
-      await postJson(
-        {
-          datapoint_identifier,
-          value,
-          quality: "good"
-        }
-      );
+      await postJson("datapoint", "rawtagupdatemsg", {
+        datapoint_identifier,
+        value,
+        quality: "good",
+      });
     } catch (err) {
-      alert("Update failed: " + err.message);
+      window.alert("Update failed: " + err.message);
     }
   }
 
@@ -42,7 +40,7 @@ export default function DatapointsView() {
           </tr>
         </thead>
         <tbody>
-          {Object.values(datapoints).map(dp => {
+          {Object.values(datapoints).map((dp) => {
             const valueDisplay =
               dp.value === undefined || dp.value === null ? "" : dp.value;
             const qualityDisplay = dp.quality ?? "None";
@@ -55,17 +53,17 @@ export default function DatapointsView() {
                   <input
                     type="text"
                     value={valueDisplay}
-                    onChange={e => {
+                    onChange={(e) => {
                       const val = e.target.value;
-                      setDatapoints(prev => ({
+                      setDatapoints((prev) => ({
                         ...prev,
                         [dp.datapoint_identifier]: {
                           ...prev[dp.datapoint_identifier],
-                          value: val
-                        }
+                          value: val,
+                        },
                       }));
                     }}
-                    onKeyDown={e => {
+                    onKeyDown={(e) => {
                       if (e.key === "Enter") {
                         sendUpdate(dp.datapoint_identifier, e.target.value);
                       }

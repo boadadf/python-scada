@@ -1,23 +1,16 @@
 // src/components/AlertPopup.jsx
 import React from "react";
 import { useAlert } from "../contexts/AlertContext";
-import { useLiveFeed } from "../livefeed/useLiveFeed";
 
 const AlertPopup = () => {
   const { alert, sendFeedback } = useAlert();
-  const [, , postJson] = useLiveFeed("alert", "clientalertfeedbackmsg", () => {}, "clientalertfeedbackmsg");
 
   if (!alert) return null;
 
   const { message, alert_type, track_id } = alert;
 
-  const handleFeedback = async (feedback) => {
-    try {
-      await postJson({ track_id, feedback });
-    } catch (err) {
-      alert("Failed to send alert feedback: " + err.message);
-    }
-    sendFeedback(); // Clears alert from context
+  const handleFeedback = (feedback) => {
+    sendFeedback(track_id, feedback);
   };
 
   return (

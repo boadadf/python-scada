@@ -1,70 +1,99 @@
-import React, { useState } from "react";
-import { useLiveFeed } from "../livefeed/useLiveFeed";
+import React, { useState, useMemo } from "react";
+import { useLiveFeed } from "../livefeed/openscadalite";
 
 const MAX_EVENTS = 100;
 
 function eventKey(event) {
-  // Use a composite key for uniqueness
-  return (event.track_id || "") + "_" + (event.timestamp || "") + "_" + (event.event_type || "");
+  return (
+    (event.track_id || "") +
+    "_" +
+    (event.timestamp || "") +
+    "_" +
+    (event.event_type || "")
+  );
 }
 
 export default function TrackingView() {
-  const [eventsObj] = useLiveFeed(
-    "tracking",
-    "datafloweventmsg",
-    eventKey
-  );
-  // Convert to array and sort by timestamp descending (optional)
-  const events = Object.values(eventsObj)
-    .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
-    .slice(0, MAX_EVENTS);
+  const [eventsObj] = useLiveFeed("tracking", "datafloweventmsg", eventKey);
 
   const [trackIdFilter, setTrackIdFilter] = useState("");
   const [eventTypeFilter, setEventTypeFilter] = useState("");
   const [sourceFilter, setSourceFilter] = useState("");
 
-  // Filter logic
-  const filteredEvents = events.filter(event =>
-    (trackIdFilter === "" || (event.track_id || "").toLowerCase().includes(trackIdFilter.toLowerCase())) &&
-    (eventTypeFilter === "" || (event.event_type || "").toLowerCase().includes(eventTypeFilter.toLowerCase())) &&
-    (sourceFilter === "" || (event.source || "").toLowerCase().includes(sourceFilter.toLowerCase()))
-  );
+  // Convert to array and prepare filtered/sorted list
+  const filteredEvents = useMemo(() => {
+    return Object.values(eventsObj)
+      .sort((a, b) => {
+        const tA = new Date(a.timestamp || 0).getTime();
+        const tB = new Date(b.timestamp || 0).getTime();
+        return tB - tA;
+      })
+      .filter(
+        (event) =>
+          (trackIdFilter === "" ||
+            (event.track_id || "")
+              .toLowerCase()
+              .includes(trackIdFilter.toLowerCase())) &&
+          (eventTypeFilter === "" ||
+            (event.event_type || "")
+              .toLowerCase()
+              .includes(eventTypeFilter.toLowerCase())) &&
+          (sourceFilter === "" ||
+            (event.source || "")
+              .toLowerCase()
+              .includes(sourceFilter.toLowerCase()))
+      )
+      .slice(0, MAX_EVENTS);
+  }, [eventsObj, trackIdFilter, eventTypeFilter, sourceFilter]);
 
   return (
     <div>
       <h2>Data Flow Events</h2>
-      <div style={{ marginBottom: "1em" }}>
+
+      {/* 🔍 Filter Bar */}
+      <div
+        style={{
+          marginBottom: "1em",
+          display: "flex",
+          flexWrap: "wrap",
+          gap: "0.5em",
+        }}
+      >
         <label>
           Track ID:{" "}
           <input
             type="text"
             value={trackIdFilter}
-            onChange={e => setTrackIdFilter(e.target.value)}
-            style={{ marginRight: "1em", width: "16em" }}
+            onChange={(e) => setTrackIdFilter(e.target.value)}
+            style={{ width: "14em" }}
           />
         </label>
+
         <label>
           Event Type:{" "}
           <input
             type="text"
             value={eventTypeFilter}
-            onChange={e => setEventTypeFilter(e.target.value)}
-            style={{ marginRight: "1em", width: "16em" }}
+            onChange={(e) => setEventTypeFilter(e.target.value)}
+            style={{ width: "14em" }}
           />
         </label>
+
         <label>
           Source:{" "}
           <input
             type="text"
             value={sourceFilter}
-            onChange={e => setSourceFilter(e.target.value)}
-            style={{ width: "16em" }}
+            onChange={(e) => setSourceFilter(e.target.value)}
+            style={{ width: "14em" }}
           />
         </label>
       </div>
-      <table id="tracking-table">
+
+      {/* 📋 Events Table */}
+      <table id="tracking-table" style={{ width: "100%", borderCollapse: "collapse" }}>
         <thead>
-          <tr>
+          <tr style={{ background: "#f8f8f8" }}>
             <th>Track ID</th>
             <th>Event Type</th>
             <th>Source</th>
@@ -75,19 +104,38 @@ export default function TrackingView() {
         </thead>
         <tbody>
           {filteredEvents.map((event, idx) => (
-            <tr key={eventKey(event) + "_" + idx}>
+            <tr
+              key={eventKey(event) + "_" + idx}
+              style={{
+                borderBottom: "1px solid #ddd",
+                verticalAlign: "top",
+              }}
+            >
               <td>{event.track_id || ""}</td>
               <td>{event.event_type || ""}</td>
               <td>{event.source || ""}</td>
               <td>{event.status || ""}</td>
               <td>{event.timestamp || ""}</td>
               <td>
-                <pre style={{ margin: 0 }}>
+                <pre
+                  style={{
+                    margin: 0,
+                    whiteSpace: "pre-wrap",
+                    fontSize: "0.85em",
+                  }}
+                >
                   {JSON.stringify(event.payload, null, 2)}
                 </pre>
               </td>
             </tr>
           ))}
+          {filteredEvents.length === 0 && (
+            <tr>
+              <td colSpan="6" style={{ textAlign: "center", padding: "1em" }}>
+                No events to display
+              </td>
+            </tr>
+          )}
         </tbody>
       </table>
     </div>

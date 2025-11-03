@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
-export function useLiveFeed(endpoint, updateMsgType, getKey, postType) {
+// Live feed hook: only for real-time updates
+export function useLiveFeed(endpoint, updateMsgType, getKey) {
   const [items, setItems] = useState({});
   const socketRef = useRef(null);
 
@@ -52,29 +53,29 @@ export function useLiveFeed(endpoint, updateMsgType, getKey, postType) {
     }
   }, [endpoint, updateMsgType, getKey]);
 
-  // Bound postJson: always adds X-User header
-  const boundPostJson = async (data, extraHeaders = {}) => {
-    const url = `/${endpoint}_send_${postType}`;
-    const headers = {
-      "Content-Type": "application/json",
-      "X-User": localStorage.getItem("username") || "",
-      ...extraHeaders,
-    };
-    const response = await fetch(url, {
-      method: "POST",
-      headers,
-      body: JSON.stringify(data),
-    });
-    if (!response.ok) {
-      let msg = "Unknown error";
-      try {
-        const result = await response.json();
-        msg = result.reason || JSON.stringify(result);
-      } catch {}
-      throw new Error(msg);
-    }
-    return response.json();
-  };
+  return [items, setItems];
+}
 
-  return postType ? [items, setItems, boundPostJson] : [items, setItems];
+// POST-only helper (no socket)
+export async function postJson(endpoint, postType, data, extraHeaders = {}) {
+  const url = `/${endpoint}_send_${postType}`;
+  const headers = {
+    "Content-Type": "application/json",
+    "X-User": localStorage.getItem("username") || "",
+    ...extraHeaders,
+  };
+  const response = await fetch(url, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) {
+    let msg = "Unknown error";
+    try {
+      const result = await response.json();
+      msg = result.reason || JSON.stringify(result);
+    } catch {}
+    throw new Error(msg);
+  }
+  return response.json();
 }

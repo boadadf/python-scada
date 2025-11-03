@@ -1,8 +1,8 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useCallback } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { useLiveFeed } from "../livefeed/useLiveFeed";
+import { useLiveFeed } from "../livefeed/openscadalite";
 
 // 🧩 Fix Leaflet default icons path issue
 delete L.Icon.Default.prototype._getIconUrl;
@@ -13,7 +13,7 @@ L.Icon.Default.mergeOptions({
   shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
 });
 
-// Helper to refresh map size when container becomes visible
+// ✅ Helper to refresh map size when the tab becomes visible
 function MapRefresher({ active }) {
   const map = useMap();
   useEffect(() => {
@@ -22,11 +22,13 @@ function MapRefresher({ active }) {
   return null;
 }
 
-function markerKey(m) {
-  return m.id + "_" + m.latitude + "_" + m.longitude;
-}
-
 export default function GisView({ active, onMarkerClick }) {
+  // ✅ useCallback prevents socket reconnection loops
+  const markerKey = useCallback(
+    (m) => m.id + "_" + m.latitude + "_" + m.longitude,
+    []
+  );
+
   const [markers] = useLiveFeed("gis", "gisupdatemsg", markerKey);
 
   const baseUrl =

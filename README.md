@@ -8,10 +8,10 @@ Following the principle of keeping things simple, it is designed for rapid proto
 
 ## Features
 
-- **Modular architecture**: Easily add new modules (datapoints, commands, alarms, rules, etc.) by extending the base module classes
+- **Backend Modular architecture**: Easily add new modules by extending the base module classes
 - **Driver abstraction**: Plug in new drivers for different protocols or simulated devices.
 - **Real-time updates**: Uses Flask-SocketIO for live data feeds to the frontend.
-- **React front end**: Basic react frontend provided as template, even for configuration.
+- **React front end**: Use the openscadalite.js to easily generate views for the backend modules.
 - **Event bus**: Decoupled communication between modules.
 - **Type-safe DTOs**: All messages use dataclasses for clarity and validation.
 - **Secure**: All endpoints are secured automatically
@@ -233,6 +233,9 @@ It provides real-time visualization, control, and monitoring of your automation 
 - Click a valve to open/close it.
 - Receive an alarm pop-up if a threshold is exceeded.
 - Use the dashboard to track system performance.
+
+
+---
 
 ## 4 Architecture
 
@@ -1023,6 +1026,141 @@ These decorators ensure that tracking events are published automatically wheneve
 - Automatic event generation using decorators for async and sync functions.
 - Efficient background publishing and optional file logging.
 - Read-only API for retrieving recent tracking events.
+
+
+## 6 Creating Views with openscadalite.js
+
+All SCADA frontend views leverage a **common live feed library**, `useLiveFeed`, which unifies real-time updates and command handling.  
+This makes adding new views for any backend MSC module **fast, consistent, and minimal code**.
+
+#### What `openscadalite` Provides
+
+- **Automatic WebSocket connection** to receive live updates from the backend.
+- **Reactive state management**: `items` always reflect the latest data.
+- **Unified command/REST interface**: `postJson()` sends commands or updates to the backend with proper headers.
+- **Flexible keying**: Define a unique key per item for state mapping.
+- **Security**: passes the necessary credentials to the backend
+
+#### Using `useLiveFeed`
+
+
+    const [items, setItems, postJson] = useLiveFeed(
+     endpoint,       // backend MSC module name
+     updateMsgType,  // WebSocket message type
+     getKey,         // function returning unique key for each item
+     postType?       // optional: REST message type for sending updates/commands
+    );
+
+    items: object containing live data from the backend
+
+    setItems: optionally update items locally
+
+    postJson(payload): send a command or data update to the backend
+
+Example: Alarms View
+
+    import React from "react";
+    import { useLiveFeed } from "../livefeed/useLiveFeed";
+
+    function alarmKey(a) { return a.alarm_occurrence_id; }
+
+    export default function AlarmsView() {
+      const [alarms] = useLiveFeed("alarm", "alarmupdatemsg", alarmKey);
+
+      return (
+        <div>
+          <h2>Active Alarms</h2>
+          <ul>
+            {Object.values(alarms).map(a => (
+              <li key={alarmKey(a)}>
+                {a.rule_id} — {a.datapoint_identifier}
+              </li>
+            ))}
+          </ul>
+        </div>
+      );
+    }
+
+    Automatically subscribes to "alarm_alarmupdatemsg" and updates in real time.
+
+### Sending Commands. 
+
+Some backend modules allow commands or control messages. Add a postType:
+
+    const [commands, , postJson] = useLiveFeed(
+      "command",
+      "commandfeedbackmsg",
+      cmd => cmd.datapoint_identifier,
+      "sendcommandmsg"
+    );
+
+    async function sendCommand(datapoint, value) {
+      await postJson({ datapoint_identifier: datapoint, value });
+    }
+
+This sends a POST request to:
+
+    /command_send_sendcommandmsg
+
+with all headers handled automatically.
+Template for a New View
+
+    import React from "react";
+    import { useLiveFeed } from "../livefeed/useLiveFeed";
+
+    function myKey(item) { return item.id; }
+
+    export default function MyNewView() {
+      const [data, setData, postJson] = useLiveFeed(
+        "myendpoint",
+        "myupdatemsg",
+        myKey,
+        "mycommandmsg"
+      );
+
+      return (
+        <div>
+          <h2>My Endpoint Data</h2>
+          <pre>{JSON.stringify(data, null, 2)}</pre>
+        </div>
+      );
+    }
+
+Every view in the SCADA frontend alarms, datapoints, commands, GIS markers, communications, tracking, and animations—uses the same useLiveFeed hook.
+
+Live Feed Data Flow
+
+         ┌────────────────────────┐
+         │   Backend MSC Module   │
+         │                        │
+         │  ┌───────────────┐     │
+         │  │ WebSocket feed│─────┼─────────────┐
+         │  └───────────────┘     │             │
+         │                        │             │
+         │  ┌───────────────┐     │             ▼
+         │  │ REST endpoint │─────► useLiveFeed
+         │  └───────────────┘     │             │
+         └────────────────────────┘             │
+                                                ▼
+                                       ┌─────────────────┐
+                                       │ React Component │
+                                       │  state (items) │
+                                       └─────────────────┘
+                                                  │
+                         User actions (button click / input)
+                                                  │
+                                                  ▼
+                                       ┌─────────────────┐
+                                       │ postJson() REST │
+                                       │  sends command  │
+                                       └─────────────────┘
+                                                  │
+                                                  ▼
+                                       Backend MSC handles command
+
+    🔹 New views can be added by defining endpoint, updateMsgType, getKey, and optionally postType. The live feed library handles WebSocket and REST automatically.
+
+---
 
 ---
 
