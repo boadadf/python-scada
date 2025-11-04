@@ -156,9 +156,9 @@ async def test_on_driver_connect_status_updates_model_and_notifies_controller(se
 def test_set_and_get_status():
     model = CommunicationModel()
     model.update(DriverConnectStatus("WaterTank", "connect"))
-    model.update(DriverConnectStatus("Server2", "disconnect"))
+    model.update(DriverConnectStatus("AuxServer", "disconnect"))
     # Compare the status values, not the DTO objects
-    assert {k: v.status for k, v in model.get_all().items()} == {"WaterTank": "connect", "Server2": "disconnect"}
+    assert {k: v.status for k, v in model.get_all().items()} == {"WaterTank": "connect", "AuxServer": "disconnect"}
     # Changing the returned dict does not affect the model
     all_status = model.get_all()
     all_status["WaterTank"].status = "disconnect"

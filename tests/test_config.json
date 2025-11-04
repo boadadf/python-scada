@@ -30,9 +30,9 @@
       ]
     },
     {
-      "name": "Server2",
+      "name": "AuxServer",
       "driver_class": "BoilerTestDriver",
-      "connection_info": { "server_name": "Server2" },
+      "connection_info": { "server_name": "AuxServer" },
       "datapoints": [
         { "name": "VALVE", "type": "STATUS" },
         { "name": "PRESSURE", "type": "PRESSURE" },
@@ -44,12 +44,12 @@
   "rules": [
     {
       "rule_id": "close_valve_if_high",
-      "on_condition": "Server2@PRESSURE > 100",
+      "on_condition": "AuxServer@PRESSURE > 100",
       "on_actions": [
-        "send_command('Server2@VALVE1_POS', 0)",
+        "send_command('AuxServer@VALVE1_POS', 0)",
         "raise_alarm()"
       ],
-      "off_condition": "Server2@PRESSURE < 80",
+      "off_condition": "AuxServer@PRESSURE < 80",
       "off_actions": [
         "lower_alarm()"
       ]
@@ -71,7 +71,7 @@
     },
     {
       "rule_id": "temperature_high_warning",
-      "on_condition": "Server2@TEMPERATURE > 80",
+      "on_condition": "AuxServer@TEMPERATURE > 80",
       "on_actions": [
         "raise_alarm()"
       ]

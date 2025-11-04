@@ -93,7 +93,7 @@ async def test_multiple_actions():
             rule_id="multi_action_rule",
             on_condition="WaterTank@pressure > 100",
             on_actions=[
-                "send_command('Server2@VALVE1_POS', 0)",
+                "send_command('AuxServer@VALVE1_POS', 0)",
                 "raise_alarm('WaterTank@pressure')"
             ]
         )
@@ -117,7 +117,7 @@ async def test_multiple_actions():
     await asyncio.sleep(0.01)
 
     assert len(commands) == 1
-    assert commands[0].datapoint_identifier == "Server2@VALVE1_POS"
+    assert commands[0].datapoint_identifier == "AuxServer@VALVE1_POS"
     assert commands[0].value == 0
     assert len(alarms) == 1
     assert alarms[0].datapoint_identifier == "WaterTank@pressure"

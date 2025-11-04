@@ -49,7 +49,7 @@ async def test_update_tag_quality_and_timestamp():
 async def test_get_tag_returns_none_for_missing_tag():
     bus = EventBus.get_instance()
     dp_engine = DatapointService(bus, DatapointModel(), None)
-    tag = dp_engine.model.get("Server2@NON_EXISTENT")
+    tag = dp_engine.model.get("AuxServer@NON_EXISTENT")
     assert tag is None
 
 @pytest.mark.asyncio

@@ -65,7 +65,7 @@ async def test_full_system_with_recursive_alarms_and_feedback():
     bus.subscribe(EventType.LOWER_ALARM, capture_alarm_inactive)
     bus.subscribe(EventType.COMMAND_FEEDBACK, capture_feedback)
 
-    driver: TestDriver = manager.driver_instances["Server2"]
+    driver: TestDriver = manager.driver_instances["AuxServer"]
 
     # --- Simulate driver updates ---
     # Trigger first alarm    
@@ -79,12 +79,12 @@ async def test_full_system_with_recursive_alarms_and_feedback():
     await asyncio.sleep(0.05)
 
     # Send a command through connector
-    await manager.send_command(SendCommandMsg(uuid.uuid4(), "Server2@VALVE1_POS", 0))
+    await manager.send_command(SendCommandMsg(uuid.uuid4(), "AuxServer@VALVE1_POS", 0))
     await asyncio.sleep(0.05)
 
     # Command feedback captured
     assert len(feedback) > 0
-    assert any(fb.datapoint_identifier == "Server2@VALVE1_POS" for fb in feedback)
+    assert any(fb.datapoint_identifier == "AuxServer@VALVE1_POS" for fb in feedback)
 
     # Alarms captured (recursive)
     # Expect at least 2 active occurrences
@@ -99,13 +99,13 @@ async def test_full_system_with_recursive_alarms_and_feedback():
     # Expect at least 2 active occurrences
     high_pressure_alarms = [
         a for a in alarms_active if hasattr(a, "datapoint_identifier") \
-        and a.datapoint_identifier == "Server2@PRESSURE" and a.track_id in ["125","123"]
+        and a.datapoint_identifier == "AuxServer@PRESSURE" and a.track_id in ["125","123"]
     ]
     assert len(high_pressure_alarms) == 2
 
     # --- Check inactive alarms ---
     inactive_occurrences = [
         a for a in alarms_inactive if hasattr(a, "datapoint_identifier") \
-        and a.datapoint_identifier == "Server2@PRESSURE" and a.track_id in ["124"]
+        and a.datapoint_identifier == "AuxServer@PRESSURE" and a.track_id in ["124"]
     ]
     assert len(inactive_occurrences) == 1

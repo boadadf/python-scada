@@ -92,7 +92,7 @@ async def test_command_live_feed_and_feedback():
 
 def test_command_model_initial_load(monkeypatch):
     # Mock Config.get_instance().get_allowed_command_identifiers()
-    allowed = ["WaterTank@CMD1", "Server2@CMD2"]
+    allowed = ["WaterTank@CMD1", "AuxServer@CMD2"]
     class DummyConfig:
         def get_allowed_command_identifiers(self):
             return allowed

@@ -366,7 +366,7 @@
         }
       ],
       "connection_info": {
-        "server_name": "Server2"
+        "server_name": "AuxServer"
       },
       "datapoints": [
         {
@@ -391,7 +391,7 @@
         }
       ],
       "driver_class": "BoilerTestDriver",
-      "name": "Server2"
+      "name": "AuxServer"
     },
     {
       "command_datapoints": [],

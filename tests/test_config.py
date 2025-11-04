@@ -38,7 +38,7 @@ def test_get_drivers(sample_config_file):
     drivers = config.get_drivers()
     assert isinstance(drivers, list)
     assert drivers[0]["name"] == "WaterTank"
-    assert drivers[1]["name"] == "Server2"
+    assert drivers[1]["name"] == "AuxServer"
     assert any(dp["name"] == "TANK" for dp in drivers[0]["datapoints"])
     assert any(dp["name"] == "TEMPERATURE" for dp in drivers[1]["datapoints"])
 
@@ -57,8 +57,8 @@ def test_get_allowed_tags(sample_config_file):
         "WaterTank@TANK",
         "WaterTank@PUMP",
         "WaterTank@DOOR",
-        "Server2@VALVE",
-        "Server2@PRESSURE",
-        "Server2@TEMPERATURE"
+        "AuxServer@VALVE",
+        "AuxServer@PRESSURE",
+        "AuxServer@TEMPERATURE"
     ]:
         assert tag in tags

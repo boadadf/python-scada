@@ -1,0 +1,5 @@
+This is the stress test
+Go to the communications and connect the stress test
+Press Test to start the test
+Every 5 seconds the all the datapoints are toggled between True/false
+Check the datapoint tab to see how the datapoints are changed

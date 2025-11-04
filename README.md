@@ -494,8 +494,8 @@ To add a new type of rule action, simply create a new class inheriting from `Act
     },
     {
       "name": "ShowClientAlert",
-      "on_condition": "Server2@VALVE == 'CLOSED' and Server2@PRESSURE > 100",
-      "on_actions": ["client_alert('Pressure high!', 'warning', 'Server2@VALVE', 'TOGGLE', 10)"]
+      "on_condition": "AuxServer@VALVE == 'CLOSED' and AuxServer@PRESSURE > 100",
+      "on_actions": ["client_alert('Pressure high!', 'warning', 'AuxServer@VALVE', 'TOGGLE', 10)"]
     }
   ]
 }
@@ -641,9 +641,9 @@ Supported types:
 <rect id="valve"
       x="180" y="360" width="40" height="20"
       fill="gray"
-      data-datapoint="Server2@VALVE"
+      data-datapoint="AuxServer@VALVE"
       data-animation="valve_toggle"
-      data-command="Server2@VALVE_CMD" />
+      data-command="AuxServer@VALVE_CMD" />
 ```
 
 **No frontend code changes required** — the `AnimationService` handles mapping and emits `AnimationUpdateMsg`.  
