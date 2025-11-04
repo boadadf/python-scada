@@ -9,7 +9,7 @@ import Table from './Table';
 //   (flat expressions joined by AND/OR) into the visual editor. It does not support parsing
 //   arbitrary parenthesized expressions; such conditions fall back to a single RAW condition row.
 // - When saving, the visual model is serialized back into the same string format currently used
-//   by your engine (e.g. "Server2@PRESSURE > 100").
+//   by your engine (e.g. "AuxServer@PRESSURE > 100").
 
 // Helper: shallow copy config for updates
 function cloneConfig(cfg) {
