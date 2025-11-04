@@ -73,7 +73,7 @@ async def test_command_live_feed_and_feedback():
     # Send a command
     test_command = SendCommandMsg(
         command_id="testcmd1",
-        datapoint_identifier="Server1@TANK",
+        datapoint_identifier="WaterTank@TANK",
         value=42,
     )
     response = requests.post(
@@ -85,14 +85,14 @@ async def test_command_live_feed_and_feedback():
     assert received_feedback, "No command feedback received after sending command"
     feedback = received_feedback[-1]
     assert feedback["command_id"] == "testcmd1"
-    assert feedback["datapoint_identifier"] == "Server1@TANK"
+    assert feedback["datapoint_identifier"] == "WaterTank@TANK"
     # Optionally check feedback['feedback'] or other fields
 
     sio.disconnect()
 
 def test_command_model_initial_load(monkeypatch):
     # Mock Config.get_instance().get_allowed_command_identifiers()
-    allowed = ["Server1@CMD1", "Server2@CMD2"]
+    allowed = ["WaterTank@CMD1", "Server2@CMD2"]
     class DummyConfig:
         def get_allowed_command_identifiers(self):
             return allowed
@@ -108,7 +108,7 @@ def test_command_model_initial_load(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_command_service_handle_bus_message(monkeypatch):
-    allowed = ["Server1@CMD1"]
+    allowed = ["WaterTank@CMD1"]
     class DummyConfig:
         def get_allowed_command_identifiers(self):
             return allowed
@@ -120,7 +120,7 @@ async def test_command_service_handle_bus_message(monkeypatch):
 
     msg = CommandFeedbackMsg(
         command_id="cmd123",
-        datapoint_identifier="Server1@CMD1",
+        datapoint_identifier="WaterTank@CMD1",
         value=42,
         feedback="OK",
         timestamp=None
@@ -128,7 +128,7 @@ async def test_command_service_handle_bus_message(monkeypatch):
 
     await service.handle_bus_message(msg)
 
-    stored = model._store.get("Server1@CMD1")
+    stored = model._store.get("WaterTank@CMD1")
     assert stored is not None
     assert stored.command_id == "cmd123"
     assert stored.value == 42

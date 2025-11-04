@@ -1,5 +1,5 @@
 # -----------------------------------------------------------------------------
-# Copyright 2025 Daniel Fernandez Boada
+# Copyright 2025 Daniel&Hector Fernandez
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -100,7 +100,7 @@ class Config:
 
     def get_default_value(self, datapoint_identifier: str):
         """
-        Returns the default value for a given datapoint_identifier, e.g. 'Server1@TANK'.
+        Returns the default value for a given datapoint_identifier, e.g. 'WaterTank@TANK'.
         """
         # Split into driver and datapoint name
         if "@" not in datapoint_identifier:

@@ -60,7 +60,7 @@ def test_handle_connect_driver_valid_status():
     # Set service to a MagicMock so you can assert calls
     controller.service = MagicMock()
     controller.service.handle_controller_message = AsyncMock(return_value=True)
-    data = DriverConnectCommand(driver_name="Server1", status="connect")
+    data = DriverConnectCommand(driver_name="WaterTank", status="connect")
 
     with app.test_client() as client, app.app_context():
         response = client.post(
@@ -84,7 +84,7 @@ def test_handle_connect_driver_invalid_status():
     controller = CommunicationController(MagicMock(), MagicMock(), flask_app=app)
     controller.service = MagicMock()
     controller.service.handle_controller_message = AsyncMock(return_value=True)
-    data = DriverConnectCommand(driver_name="Server1", status="bad_status")
+    data = DriverConnectCommand(driver_name="WaterTank", status="bad_status")
 
     with app.test_client() as client, app.app_context():
         response = client.post(
@@ -103,7 +103,7 @@ def test_handle_connect_driver_invalid_status():
 async def test_handle_subscribe_driver_status(controller):
     controller.socketio.emit = MagicMock()
     controller.socketio.join_room = MagicMock()
-    controller.model.get_all_status.return_value = {"Server1": "connect"}
+    controller.model.get_all_status.return_value = {"WaterTank": "connect"}
     sid = "sid123"
 
     handlers = {}
@@ -127,10 +127,10 @@ async def test_handle_subscribe_driver_status(controller):
 
 def test_publish_status(controller):
     controller.socketio.emit = MagicMock()
-    controller.publish(DriverConnectCommand(track_id="1234", driver_name="Server1", status="connect"))
+    controller.publish(DriverConnectCommand(track_id="1234", driver_name="WaterTank", status="connect"))
     controller.socketio.emit.assert_called_once_with(
         "communication_driverconnectstatus",
-        {"track_id": "1234", "driver_name": "Server1", "status": "connect"},
+        {"track_id": "1234", "driver_name": "WaterTank", "status": "connect"},
         room="communication_room"
     )
 
@@ -138,10 +138,10 @@ def test_publish_status(controller):
 async def test_send_connect_command_publishes_event(service):
     svc, event_bus, _ = service
     await svc.async_init()
-    await svc.handle_controller_message(DriverConnectCommand("Server1", "connect"))
+    await svc.handle_controller_message(DriverConnectCommand("WaterTank", "connect"))
     expected_call = call(
         EventType.DRIVER_CONNECT_STATUS,
-        DriverConnectStatus(track_id=ANY, driver_name="Server1", status="online")
+        DriverConnectStatus(track_id=ANY, driver_name="WaterTank", status="online")
     )
     assert expected_call in event_bus.publish.call_args_list
 
@@ -149,20 +149,20 @@ async def test_send_connect_command_publishes_event(service):
 async def test_on_driver_connect_status_updates_model_and_notifies_controller(service):
     svc, _, model = service
     svc.controller = MagicMock()
-    data = DriverConnectStatus(track_id="1234", driver_name="Server1", status="connect")
+    data = DriverConnectStatus(track_id="1234", driver_name="WaterTank", status="connect")
     with pytest.raises(TypeError, match="Expected SendCommandMsg or TagUpdateMsg"):
         await svc.handle_bus_message(data)
 
 def test_set_and_get_status():
     model = CommunicationModel()
-    model.update(DriverConnectStatus("Server1", "connect"))
+    model.update(DriverConnectStatus("WaterTank", "connect"))
     model.update(DriverConnectStatus("Server2", "disconnect"))
     # Compare the status values, not the DTO objects
-    assert {k: v.status for k, v in model.get_all().items()} == {"Server1": "connect", "Server2": "disconnect"}
+    assert {k: v.status for k, v in model.get_all().items()} == {"WaterTank": "connect", "Server2": "disconnect"}
     # Changing the returned dict does not affect the model
     all_status = model.get_all()
-    all_status["Server1"].status = "disconnect"
-    assert model.get_all()["Server1"].status == "connect"
+    all_status["WaterTank"].status = "disconnect"
+    assert model.get_all()["WaterTank"].status == "connect"
 
 def test_driver_initial_status_is_disconnected():
     """
@@ -172,7 +172,7 @@ def test_driver_initial_status_is_disconnected():
 
     model = CommunicationModel()
     # Simulate driver startup
-    driver_name = "Server1"
+    driver_name = "WaterTank"
     # On startup, the driver should set its status to 'disconnect'
     model.update(DriverConnectStatus(driver_name, "disconnect"))
     assert model.get_all()[driver_name].status == "disconnect"

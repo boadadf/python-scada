@@ -274,7 +274,7 @@ export default function RulesTab({ config, setConfig }) {
 
   // Actions serializer/deserializer — convert between array-of-objects and array-of-strings used in storage
   function actionsModelToStorage(actionsModel) {
-    // actionsModel: [{type:'send_command', target:'Server1@PUMP_CMD', value:'OPEN'} ...]
+    // actionsModel: [{type:'send_command', target:'WaterTank@PUMP_CMD', value:'OPEN'} ...]
     const out = actionsModel.map(a => {
       if (a.type === 'send_command') {
         const val = (typeof a.value === 'string' && !/^\d+$/.test(a.value)) ? `'${a.value}'` : String(a.value);

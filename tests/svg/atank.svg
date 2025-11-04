@@ -26,7 +26,7 @@
      width="200"
      height="0"
      fill="blue"
-     data-datapoint="Server1@TANK"
+     data-datapoint="WaterTank@TANK"
      data-animation="fill_level" />
   <!-- Tank level text -->
   <text
@@ -36,7 +36,7 @@
      font-size="24"
      text-anchor="middle"
      fill="black"
-     data-datapoint="Server1@TANK"
+     data-datapoint="WaterTank@TANK"
      data-animation="level_text">
      0.0
   </text>
@@ -48,9 +48,9 @@
      r="20"
      fill="gray"
      stroke="black"
-     data-datapoint="Server1@PUMP"
+     data-datapoint="WaterTank@PUMP"
      data-animation="toggle_opened_closed"
-     command-datapoint="Server1@PUMP_CMD"
+     command-datapoint="WaterTank@PUMP_CMD"
      command-value="TOGGLE" />
   <text
      x="70"
@@ -67,9 +67,9 @@
      height="40"
      fill="brown"
      stroke="black"
-     data-datapoint="Server1@DOOR"
+     data-datapoint="WaterTank@DOOR"
      data-animation="toggle_opened_closed"
-     command-datapoint="Server1@DOOR_CMD"
+     command-datapoint="WaterTank@DOOR_CMD"
      command-value="TOGGLE" />
   <text
      x="325"
@@ -92,9 +92,9 @@
      fill="#a52a2a"
      stroke="#000000"
      style="stroke-width:0.9144" 
-     data-datapoint="Server1@TEST"
+     data-datapoint="WaterTank@TEST"
      data-animation="toggle_start_stop"
-     command-datapoint="Server1@TEST_CMD"
+     command-datapoint="WaterTank@TEST_CMD"
      command-value="TOGGLE"/>
   <!-- Instructions and rules -->
   <text
@@ -104,7 +104,7 @@
      text-anchor="middle"
      fill="darkblue"
      id="svg_instructions">
-     1. Start the connection to Server1 in the Servers tab.
+     1. Start the connection to WaterTank in the Servers tab.
   </text>
   <text
      x="500"

@@ -22,7 +22,7 @@ export default function TopMenu() {
 
   function handleAbout() {
     setOpen(false);
-    alert("OSL (Open Scada Lite)\nVersion 0.1.0\n© 2025 Daniel Fernandez Boada");
+    alert("OSL (Open Scada Lite)\nVersion 0.1.0\n© 2025 Daniel&Hector Fernandez");
   }
 
   return (

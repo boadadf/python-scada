@@ -1,5 +1,5 @@
 # -----------------------------------------------------------------------------
-# Copyright 2025 Daniel Fernandez Boada
+# Copyright 2025 Daniel&Hector Fernandez
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -96,7 +96,6 @@ class AnimationService(BaseService[
         for handler in self.handlers:
             if handler.can_handle(msg):
                 return handler.handle(msg, self)
-        print(f"[AnimationService] No handler found for message {msg}")
         return []
 
     async def handle_controller_message(self, data: AnimationUpdateRequestMsg):

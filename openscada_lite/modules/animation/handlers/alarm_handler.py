@@ -1,5 +1,5 @@
 # -----------------------------------------------------------------------------
-# Copyright 2025 Daniel Fernandez Boada
+# Copyright 2025 Daniel&Hector Fernandez
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -50,11 +50,11 @@ class AlarmHandler:
                 continue
 
             agg_attr, agg_text, duration = {}, None, service.DURATION_DEFAULT
-
+            processed = False
             for entry in animation.entries:
                 if getattr(entry, "triggerType", "") != "alarm":
                     continue
-
+                processed = True
                 attr_changes, text_change, dur = service.process_single_entry(
                     entry, event_value, getattr(msg, "quality", None)
                 )
@@ -65,7 +65,8 @@ class AlarmHandler:
 
                 if getattr(entry, "revertAfter", 0):
                     asyncio.create_task(service.schedule_revert(svg_name, elem_id, anim_name, entry))
-
+            if not processed:
+                continue
             cfg = {"attr": agg_attr, "duration": duration}
             if agg_text:
                 cfg["text"] = agg_text

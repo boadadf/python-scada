@@ -64,8 +64,8 @@ async def test_send_command_routing():
     bus.subscribe(EventType.COMMAND_FEEDBACK, capture)
     
     command_id = uuid.uuid4()
-    # Send a command to Server1@TANK1_LEVEL
-    await connector_manager.send_command(SendCommandMsg(command_id, "Server1@TANK", 99))
+    # Send a command to WaterTank@TANK1_LEVEL
+    await connector_manager.send_command(SendCommandMsg(command_id, "WaterTank@TANK", 99))
 
     # Wait for feedback
     await asyncio.wait_for(event.wait(), timeout=2.0)

@@ -9,7 +9,7 @@ import pytest
 
 @pytest.mark.asyncio
 async def test_test_driver_value_callback():
-    driver = TankTestDriver("Server1")
+    driver = TankTestDriver("WaterTank")
     results = []
     event = asyncio.Event()
 
@@ -29,12 +29,12 @@ async def test_test_driver_value_callback():
     await driver.disconnect()
 
     assert len(results) > 0
-    assert results[0].datapoint_identifier == "Server1@TANK"
+    assert results[0].datapoint_identifier == "WaterTank@TANK"
 
 
 @pytest.mark.asyncio
 async def test_test_driver_command_feedback():
-    driver = TankTestDriver("Server1")
+    driver = TankTestDriver("WaterTank")
     # Create the datapoint and subscribe
     dp = Datapoint(name="TANK", type={"type": "float", "default": 0.0})
     driver.subscribe([dp])
@@ -48,9 +48,9 @@ async def test_test_driver_command_feedback():
 
     driver.register_command_feedback(cb)
     await driver.connect()
-    await driver.send_command(SendCommandMsg("cmd1", "Server1@TANK", 50 ))
+    await driver.send_command(SendCommandMsg("cmd1", "WaterTank@TANK", 50 ))
     await asyncio.wait_for(event.wait(), timeout=2.0)
     await driver.disconnect()
 
-    assert feedback[0].datapoint_identifier == "Server1@TANK"
+    assert feedback[0].datapoint_identifier == "WaterTank@TANK"
     assert feedback[0].feedback == "OK"

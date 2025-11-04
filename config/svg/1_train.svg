@@ -364,14 +364,14 @@
      transform="matrix(6.3129227e-4,0.04966097,-0.06060401,5.1730224e-4,420.69569,191.52233)"
      data-datapoint="TrainTestDriver@RIGHT_SWITCH_CONTROL"
      data-animation="SIGNAL_STRAIGHT" /><use
-     href="#alert"
+     href="#"
      x="205"
      y="295"
      id="alert-switch-right"
      transform="translate(41.22285,-480.96409)"
      data-datapoint="TrainTestDriver@RIGHT_SWITCH_CONTROL"
      data-animation="ALARM_SWITCHES" /><use
-     href="#alert"
+     href="#"
      x="105"
      y="295"
      id="alert-switch-left"

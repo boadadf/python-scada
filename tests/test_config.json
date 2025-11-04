@@ -20,9 +20,9 @@
   },
   "drivers": [
     {
-      "name": "Server1",
+      "name": "WaterTank",
       "driver_class": "TankTestDriver",
-      "connection_info": { "server_name": "Server1" },
+      "connection_info": { "server_name": "WaterTank" },
       "datapoints": [
         { "name": "TANK", "type": "LEVEL" },
         { "name": "PUMP", "type": "STATUS" },
@@ -56,15 +56,15 @@
     },
     {
       "rule_id": "pump_shutdown_if_low_level",
-      "on_condition": "Server1@TANK1_LEVEL < 10",
+      "on_condition": "WaterTank@TANK1_LEVEL < 10",
       "on_actions": [
-        "send_command('Server1@PUMP1_STATUS', 'OFF')",
+        "send_command('WaterTank@PUMP1_STATUS', 'OFF')",
         "raise_alarm()"
       ]
     },
     {
       "rule_id": "door_open_alarm",
-      "on_condition": "Server1@DOOR1_OPEN == True",
+      "on_condition": "WaterTank@DOOR1_OPEN == True",
       "on_actions": [
         "raise_alarm()"
       ]

@@ -13,6 +13,7 @@ export default function ImageView({ selectedSvgProp, onSvgChange }) {
   const [svgList, setSvgList] = useState([]);
   const [selectedSvg, setSelectedSvg] = useState(selectedSvgProp || null);
   const [svgContent, setSvgContent] = useState("");
+  const [svgExplanation, setSvgExplanation] = useState(""); // NEW
   const svgContainerRef = useRef(null);
 
   // Only one live feed for animation!
@@ -41,13 +42,23 @@ export default function ImageView({ selectedSvgProp, onSvgChange }) {
       .catch((err) => console.error("Failed to load SVG list:", err));
   }, []);
 
-  // Load selected SVG content
+  // Load selected SVG content and explanation
   useEffect(() => {
     if (!selectedSvg) return;
     fetch(`/svg/${selectedSvg}`)
       .then((r) => r.text())
       .then((svg) => setSvgContent(svg))
       .catch((err) => console.error("Failed to load SVG:", err));
+
+    // Load corresponding .txt file
+    const txtName = selectedSvg.replace(/\.svg$/i, ".txt");
+    fetch(`/svg/${txtName}`)
+      .then((r) => r.ok ? r.text() : "")
+      .then((txt) => setSvgExplanation(txt))
+      .catch((err) => {
+        setSvgExplanation("");
+        console.error("Failed to load SVG explanation:", err);
+      });
   }, [selectedSvg]);
 
   // Apply animation messages
@@ -133,18 +144,26 @@ export default function ImageView({ selectedSvgProp, onSvgChange }) {
         ))}
       </select>
 
-      <div
-        id="svgContainer"
-        ref={svgContainerRef}
-        dangerouslySetInnerHTML={{ __html: svgContent }}
-        style={{
-          minHeight: 300,
-          border: "1px solid #ccc",
-          background: "#fafafa",
-          borderRadius: 6,
-          padding: 8,
-        }}
-      />
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 24 }}>
+        <div
+          id="svgContainer"
+          ref={svgContainerRef}
+          dangerouslySetInnerHTML={{ __html: svgContent }}
+          style={{
+            minHeight: 300,
+            border: "1px solid #ccc",
+            background: "#fafafa",
+            borderRadius: 6,
+            padding: 8,
+          }}
+        />
+        <div style={{ minWidth: 250, maxWidth: 400 }}>
+          <h3>Explanation</h3>
+          <pre style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+            {svgExplanation || "No explanation available."}
+          </pre>
+        </div>
+      </div>
     </div>
   );
 }

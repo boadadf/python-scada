@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <svg
    id="tank"
-   width="640"
-   height="400"
+   width="226.17465"
+   height="238.88191"
    version="1.1"
    sodipodi:docname="2_tank.svg"
    inkscape:version="1.3.2 (091e20e, 2023-11-25, custom)"
@@ -21,8 +21,8 @@
      inkscape:deskcolor="#d1d1d1"
      showgrid="false"
      inkscape:zoom="2.0325"
-     inkscape:cx="320.0492"
-     inkscape:cy="200"
+     inkscape:cx="121.77122"
+     inkscape:cy="25.830258"
      inkscape:window-width="1920"
      inkscape:window-height="1009"
      inkscape:window-x="-8"
@@ -33,8 +33,8 @@
      id="defs2" />
   <!-- Tank outline -->
   <rect
-     x="139"
-     y="105"
+     x="41.323494"
+     y="57.881916"
      width="100"
      height="180"
      stroke="#000000"
@@ -44,22 +44,22 @@
   <!-- Tank fill (animated by LEVEL) -->
   <rect
      id="tank_fill"
-     x="139"
-     y="105"
+     x="41.323494"
+     y="57.881916"
      width="180"
      height="0"
-     fill="blue"
-     data-datapoint="Server1@TANK"
+     fill="#0000ff"
+     data-datapoint="WaterTank@TANK"
      data-animation="fill_level" />
   <!-- Tank level text -->
   <text
      id="tank_level_text"
-     x="188.68388"
-     y="78.868385"
+     x="91.007378"
+     y="31.750301"
      font-size="24px"
      text-anchor="middle"
      fill="#000000"
-     data-datapoint="Server1@TANK"
+     data-datapoint="WaterTank@TANK"
      data-animation="level_text">0.0</text>
   <!-- Pump (arrow pointing INTO the tank) -->
   <polygon
@@ -68,68 +68,68 @@
      fill="#808080"
      stroke="#000000"
      stroke-width="2"
-     data-datapoint="Server1@PUMP"
+     data-datapoint="WaterTank@PUMP"
      data-animation="toggle_opened_closed"
-     command-datapoint="Server1@PUMP_CMD"
+     command-datapoint="WaterTank@PUMP_CMD"
      command-value="TOGGLE"
-     transform="translate(22.440345,-3.4440345)" />
+     transform="translate(-59,-140.59902)" />
   <text
-     x="97.472328"
-     y="222.53998"
+     x="16.031981"
+     y="86.861008"
      font-size="10px"
      text-anchor="middle"
      id="text1">Pump</text>
   <!-- Door (arrow pointing OUT of the tank) -->
   <polygon
      id="door"
-     points="300,200 340,190 340,210 "
+     points="340,210 300,200 340,190 "
      fill="#a52a2a"
      stroke="#000000"
      stroke-width="2"
-     data-datapoint="Server1@DOOR"
+     data-datapoint="WaterTank@DOOR"
      data-animation="toggle_opened_closed"
-     command-datapoint="Server1@DOOR_CMD"
+     command-datapoint="WaterTank@DOOR_CMD"
      command-value="TOGGLE"
-     transform="rotate(179.7698,298.58292,198.7262)" />
+     transform="rotate(179.7698,241.10481,213.42814)" />
   <text
-     x="273.37146"
-     y="225.01599"
+     x="162.41083"
+     y="204.95818"
      font-size="10px"
      text-anchor="middle"
      id="text2"><tspan
        sodipodi:role="line"
        id="tspan1"
-       x="273.37146"
-       y="225.01599">Valve</tspan><tspan
+       x="162.41083"
+       y="204.95818">Valve</tspan><tspan
        sodipodi:role="line"
        id="tspan2"
-       x="273.37146"
-       y="237.51599" /></text>
+       x="162.41083"
+       y="217.45818" /></text>
   <!-- Test block -->
   <text
-     x="298.13077"
-     y="54.388592"
+     x="200.45425"
+     y="7.2705078"
      font-size="10px"
      text-anchor="middle"
      id="text2-5">Test</text>
   <rect
      id="test-status"
-     x="278.54822"
-     y="60.141087"
+     x="180.8717"
+     y="13.023003"
      width="44.845749"
      height="22.373423"
      fill="#a52a2a"
      stroke="#000000"
      style="stroke-width:0.9144"
-     data-datapoint="Server1@TEST"
+     data-datapoint="WaterTank@TEST"
      data-animation="toggle_start_stop"
-     command-datapoint="Server1@TEST_CMD"
+     command-datapoint="WaterTank@TEST_CMD"
      command-value="TOGGLE" />
   <ellipse
      style="fill:#ffffff;stroke:#000000"
      id="path1"
-     cx="188.4059"
-     cy="105.09717"
+     cx="90.729393"
+     cy="57.979084"
      rx="50.184502"
      ry="11.808118" />
 </svg>

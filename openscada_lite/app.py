@@ -1,5 +1,5 @@
 # -----------------------------------------------------------------------------
-# Copyright 2025 Daniel Fernandez Boada
+# Copyright 2025 Daniel&Hector Fernandez
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -38,8 +38,6 @@ if "SCADA_CONFIG_PATH" not in os.environ:
 
 print(f"[APP] Using SCADA_CONFIG_PATH: {os.environ['SCADA_CONFIG_PATH']}")
         
-print(f"[APP] Using SCADA_CONFIG_PATH: {os.environ['SCADA_CONFIG_PATH']}")
-
 from openscada_lite.modules.security.controller import SecurityController
 from openscada_lite.modules.security.model import SecurityModel
 from openscada_lite.modules.security.service import SecurityService
@@ -70,7 +68,8 @@ app.register_blueprint(security_bp)
 @app.route('/svg/<path:filename>')
 def serve_svg(filename):
     svg_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'config', 'svg'))
-    return send_from_directory(svg_dir, filename)
+    print("Requested file:", filename)  # Add this for debugging
+    return send_from_directory(svg_dir, filename, conditional=False)
 
 socketio = SocketIO(app, cors_allowed_origins="*")
 event_bus = EventBus.get_instance()
@@ -109,11 +108,8 @@ def initialize_modules(config: dict, socketio: SocketIO, event_bus: EventBus) ->
         print(f"Instantiating: {module_name}")
         # Instantiate
         model = model_cls()
-        print(f"Model: {model}")
         controller = controller_cls(model, socketio, module_name, app)
-        print(f"Controller: {controller}")
         service = service_cls(event_bus, model, controller)
-        print(f"Service: {service}")
         
         module_instances[module_name] = {
             "model": model,

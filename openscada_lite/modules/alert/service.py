@@ -1,5 +1,5 @@
 # -----------------------------------------------------------------------------
-# Copyright 2025 Daniel Fernandez Boada
+# Copyright 2025 Daniel&Hector Fernandez
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -42,7 +42,6 @@ class AlertService(BaseService[ClientAlertMsg, ClientAlertFeedbackMsg, ClientAle
             )
             self.controller.publish(hide_msg)
             if getattr(data, "feedback", None) == "confirm":
-                print(f"[ALERT SERVICE] Alert '{alert_id}' accepted by user.")
                 # If command info present, send command to bus
                 if getattr(alert_msg, "command_datapoint", None) and getattr(alert_msg, "command_value", None):
                     cmd_msg = SendCommandMsg(

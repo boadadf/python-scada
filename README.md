@@ -483,14 +483,14 @@ To add a new type of rule action, simply create a new class inheriting from `Act
   "rules": [
     {
       "name": "HighTankLevelAlarm",
-      "on_condition": "Server1@TANK > 80",
+      "on_condition": "WaterTank@TANK > 80",
       "on_actions": ["raise_alarm('Tank level high!')"],
       "off_actions": ["lower_alarm()"]
     },
     {
       "name": "AutoPumpStart",
-      "on_condition": "Server1@TANK > 60 and Server1@PUMP == 'CLOSED'",
-      "on_actions": ["send_command('Server1@PUMP', 'OPEN')"]
+      "on_condition": "WaterTank@TANK > 60 and WaterTank@PUMP == 'CLOSED'",
+      "on_actions": ["send_command('WaterTank@PUMP', 'OPEN')"]
     },
     {
       "name": "ShowClientAlert",
@@ -593,9 +593,9 @@ Each interactive or animated element must include `data-datapoint` and `data-ani
 <circle id="pump"
         cx="70" cy="200" r="20"
         fill="gray"
-        data-datapoint="Server1@PUMP"
+        data-datapoint="WaterTank@PUMP"
         data-animation="toggle_start_stop"
-        command-datapoint="Server1@PUMP_CMD"
+        command-datapoint="WaterTank@PUMP_CMD"
         command-value="TOGGLE" />
 ```
 

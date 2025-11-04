@@ -1,15 +1,23 @@
 {
   "gis_icons": [
     {
+      "id": "test",
+      "icon": "/static/icons/test.gif",
+      "latitude": 47.4233,
+      "longitude": 8.309, 
+      "label": "Stress Test",
+      "navigation": "image/3_stress_test.svg"
+    },
+    {
       "id": "pump",
       "icon": "/static/icons/pump.png",
       "latitude": 47.4233,
       "longitude": 8.307, 
-      "datapoint": "Server1@PUMP",
+      "datapoint": "WaterTank@PUMP",
       "label": "Pump Station",
       "navigation": "image/2_tank.svg",
       "states": {
-        "OPENED": "/static/icons/pump_open.png",
+        "OPENED": "/static/icons/pump_opened.png",
         "CLOSED": "/static/icons/pump_closed.png"
       }
     },
@@ -46,7 +54,9 @@
         "expression": {
           "ACTIVE": "#alert",
           "FINISHED": "#",
-          "INACTIVE": "#"
+          "INACTIVE": "#",
+          "ACK": "#",
+          "UNKNOWN": "#"
         },
         "quality": {
           "unknown": "#alert"
@@ -317,7 +327,7 @@
         }
       ],
       "connection_info": {
-        "server_name": "Server1"
+        "server_name": "WaterTank"
       },
       "datapoints": [
         {
@@ -338,7 +348,7 @@
         }
       ],
       "driver_class": "TankTestDriver",
-      "name": "Server1"
+      "name": "WaterTank"
     },
     {
       "command_datapoints": [
@@ -1492,18 +1502,18 @@
   "rules": [
     {
       "on_actions": [
-        "send_command('Server1@PUMP_CMD', 'OPEN')",
-        "send_command('Server1@DOOR_CMD', 'CLOSE')",
+        "send_command('WaterTank@PUMP_CMD', 'OPEN')",
+        "send_command('WaterTank@DOOR_CMD', 'CLOSE')",
         "raise_alarm()"
       ],
-      "on_condition": "float(Server1@TANK) < 10",
+      "on_condition": "float(WaterTank@TANK) < 10",
       "rule_id": "pump_start_if_low_level"
     },
     {
       "on_actions": [
         "raise_alarm()"
       ],
-      "on_condition": "Server1@DOOR == OPENED",
+      "on_condition": "WaterTank@DOOR == OPENED",
       "rule_id": "door_open_alarm"
     },
     {

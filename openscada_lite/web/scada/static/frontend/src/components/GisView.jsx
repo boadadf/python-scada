@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback } from "react";
+import React, { useEffect, useCallback, useRef } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -23,6 +23,8 @@ function MapRefresher({ active }) {
 }
 
 export default function GisView({ active, onMarkerClick }) {
+  const markerRefs = useRef({});
+
   // ✅ useCallback prevents socket reconnection loops
   const markerKey = useCallback(
     (m) => m.id + "_" + m.latitude + "_" + m.longitude,
@@ -57,6 +59,7 @@ export default function GisView({ active, onMarkerClick }) {
         <MapRefresher active={active} />
 
         {Object.values(markers).map((m) => {
+          const key = markerKey(m);
           const icon = m.icon
             ? new L.Icon({
                 iconUrl: m.icon,
@@ -67,9 +70,10 @@ export default function GisView({ active, onMarkerClick }) {
 
           return (
             <Marker
-              key={markerKey(m)}
+              key={key}
               position={[m.latitude, m.longitude]}
               icon={icon}
+              ref={(ref) => { markerRefs.current[key] = ref; }}
             >
               <Popup>
                 <div>
@@ -80,7 +84,14 @@ export default function GisView({ active, onMarkerClick }) {
                   {m.navigation && onMarkerClick && (
                     <button
                       style={{ marginTop: "4px" }}
-                      onClick={() => onMarkerClick(m.navigation)}
+                      onClick={() => {
+                        onMarkerClick(m.navigation);
+                        // Close the popup
+                        const marker = markerRefs.current[key];
+                        if (marker && marker._popup) {
+                          marker._popup._close();
+                        }
+                      }}
                     >
                       Go to {m.navigation.split("/").pop()}
                     </button>

@@ -28,7 +28,7 @@ async def test_driver_to_datapoint_integration():
     
     # Use namespaced IDs from config
     config = Config.get_instance()
-    driver_name = config.get_drivers()[0]["name"]  # e.g., "Server1"
+    driver_name = config.get_drivers()[0]["name"]  # e.g., "WaterTank"
     tag_id = f"{driver_name}@TANK"
 
     received = []

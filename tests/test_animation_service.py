@@ -36,8 +36,8 @@ def dummy_config(monkeypatch, tmp_path):
     svg_dir.mkdir()
     (svg_dir / "tank.svg").write_text("""
     <svg>
-      <rect id="tank_fill" data-datapoint="Server1@TANK" data-animation="fill_level"/>
-      <text id="tank_level_text" data-datapoint="Server1@TANK" data-animation="level_text">0.0</text>
+      <rect id="tank_fill" data-datapoint="WaterTank@TANK" data-animation="fill_level"/>
+      <text id="tank_level_text" data-datapoint="WaterTank@TANK" data-animation="level_text">0.0</text>
     </svg>
     """)
 
@@ -86,7 +86,7 @@ def dummy_config(monkeypatch, tmp_path):
     monkeypatch.setattr(Config, "_get_svg_folder", lambda self: str(svg_dir))
     monkeypatch.setattr(Config, "get_animations", lambda self: dummy_animations)
     monkeypatch.setattr(Config, "get_animation_datapoint_map", lambda self: {
-        "Server1@TANK": [
+        "WaterTank@TANK": [
             ("tank.svg", "tank_fill", "fill_level"),
             ("tank.svg", "tank_level_text", "level_text")
         ]
@@ -99,7 +99,7 @@ async def test_tag_update_triggers_animation(dummy_config):
     controller = DummyController()
     service = AnimationService(DummyEventBus(), model=DummyModel(), controller=controller)
 
-    msg = TagUpdateMsg(datapoint_identifier="Server1@TANK", value=50, quality="good")
+    msg = TagUpdateMsg(datapoint_identifier="WaterTank@TANK", value=50, quality="good")
     updates = service.process_msg(msg)
 
     # Validate that we produced animation updates
@@ -136,10 +136,10 @@ async def test_alarm_update_triggers_alarm_animation(dummy_config):
         ]
     )
     # Add mapping for alarm animation
-    service.datapoint_map["Server1@ALARM_DP"] = [("train.svg", "alert-switch", "ALARM_TEST")]
+    service.datapoint_map["WaterTank@ALARM_DP"] = [("train.svg", "alert-switch", "ALARM_TEST")]
 
     msg = AlarmUpdateMsg(
-        datapoint_identifier="Server1@ALARM_DP",
+        datapoint_identifier="WaterTank@ALARM_DP",
         activation_time=datetime(2025, 10, 11, 10, 0, 0),
         acknowledge_time=None,
         deactivation_time=None,
