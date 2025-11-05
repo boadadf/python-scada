@@ -11,13 +11,10 @@ function animationKey(msg) {
 
 export default function ImageView({ selectedSvgProp, onSvgChange }) {
   const [svgList, setSvgList] = useState([]);
-  const [selectedSvg, setSelectedSvg] = useState(selectedSvgProp || null);
+  const [selectedSvg, setSelectedSvg] = useState(selectedSvgProp || "");
   const [svgContent, setSvgContent] = useState("");
-  const [svgExplanation, setSvgExplanation] = useState(""); // NEW
+  const [svgExplanation, setSvgExplanation] = useState("");
   const svgContainerRef = useRef(null);
-
-  // Only one live feed for animation!
-  const [animations] = useLiveFeed("animation", "animationupdatemsg", animationKey);
 
   // Sync external prop
   useEffect(() => {
@@ -50,16 +47,18 @@ export default function ImageView({ selectedSvgProp, onSvgChange }) {
       .then((svg) => setSvgContent(svg))
       .catch((err) => console.error("Failed to load SVG:", err));
 
-    // Load corresponding .txt file
     const txtName = selectedSvg.replace(/\.svg$/i, ".txt");
     fetch(`/svg/${txtName}`)
-      .then((r) => r.ok ? r.text() : "")
-      .then((txt) => setSvgExplanation(txt))
+      .then((r) => r.ok ? r.text() : Promise.reject("No explanation file"))
+      .then((txt) => setSvgExplanation(txt.trim() || "No explanation available."))
       .catch((err) => {
-        setSvgExplanation("");
+        setSvgExplanation("No explanation available.");
         console.error("Failed to load SVG explanation:", err);
       });
   }, [selectedSvg]);
+
+  // Only one live feed for animation!
+  const [animations] = useLiveFeed("animation", "animationupdatemsg", animationKey);
 
   // Apply animation messages
   useEffect(() => {

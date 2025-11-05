@@ -1,12 +1,12 @@
 {
   "gis_icons": [
     {
-      "id": "test",
+      "id": "stress",
       "icon": "/static/icons/test.gif",
       "latitude": 47.4233,
       "longitude": 8.309, 
       "label": "Stress Test",
-      "navigation": "image/3_stress_test.svg"
+      "navigation": "image/3_stress_test"
     },
     {
       "id": "pump",
@@ -15,7 +15,7 @@
       "longitude": 8.307, 
       "datapoint": "WaterTank@PUMP",
       "label": "Pump Station",
-      "navigation": "image/2_tank.svg",
+      "navigation": "image/2_tank",
       "states": {
         "OPENED": "/static/icons/pump_opened.png",
         "CLOSED": "/static/icons/pump_closed.png"
@@ -28,19 +28,7 @@
       "longitude": 8.3055,
       "rule_id": "switch_error_straight",
       "label": "Train Station",
-      "navigation": "image/1_train.svg",
-      "alarm": {
-        "ACTIVE": "/static/icons/train_alarm.png"
-      }
-    },
-    {
-      "id": "train",
-      "icon": "/static/icons/train.png",
-      "latitude": 47.4233,
-      "longitude": 8.3055,
-      "rule_id": "switch_error_turn",
-      "label": "Train Station",
-      "navigation": "image/1_train.svg",
+      "navigation": "image/1_train",
       "alarm": {
         "ACTIVE": "/static/icons/train_alarm.png"
       }
@@ -168,9 +156,9 @@
     "fill_level": [
       {
         "attribute": "y",
-        "expression": "390 - ((value/100) * 340)",
+        "expression": "290 - ((value/100) * 340)",
         "quality": {
-          "unknown": 390
+          "unknown": 290
         }
       },
       {

@@ -25,7 +25,6 @@ function MapRefresher({ active }) {
 export default function GisView({ active, onMarkerClick }) {
   const markerRefs = useRef({});
 
-  // ✅ useCallback prevents socket reconnection loops
   const markerKey = useCallback(
     (m) => m.id + "_" + m.latitude + "_" + m.longitude,
     []
@@ -35,6 +34,17 @@ export default function GisView({ active, onMarkerClick }) {
 
   const baseUrl =
     "https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.pixelkarte-farbe/default/current/3857/{z}/{x}/{y}.jpeg";
+
+  // Automatically navigate to the first marker with navigation
+  useEffect(() => {
+    if (onMarkerClick && markers && Object.values(markers).length > 0) {
+      const firstNavMarker = Object.values(markers).find((m) => m.navigation);
+      if (firstNavMarker) {
+        onMarkerClick(firstNavMarker.navigation);
+      }
+    }
+    // Only run when markers change
+  }, [markers, onMarkerClick]);
 
   return (
     <div
@@ -73,7 +83,9 @@ export default function GisView({ active, onMarkerClick }) {
               key={key}
               position={[m.latitude, m.longitude]}
               icon={icon}
-              ref={(ref) => { markerRefs.current[key] = ref; }}
+              ref={(ref) => {
+                markerRefs.current[key] = ref;
+              }}
             >
               <Popup>
                 <div>
@@ -88,8 +100,8 @@ export default function GisView({ active, onMarkerClick }) {
                         onMarkerClick(m.navigation);
                         // Close the popup
                         const marker = markerRefs.current[key];
-                        if (marker && marker._popup) {
-                          marker._popup._close();
+                        if (marker && marker.closePopup) {
+                          marker.closePopup();
                         }
                       }}
                     >

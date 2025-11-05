@@ -392,3 +392,14 @@ input[type="text"] {
   width: 100% !important;
   border-radius: 8px;
 }
+
+.main-view {
+  display: grid;
+  grid-template-rows: 50% 50%;
+  height: calc(100vh - 100px);
+}
+
+.map-section, .image-section {
+  border: 1px solid #ccc;
+  overflow: hidden;
+}

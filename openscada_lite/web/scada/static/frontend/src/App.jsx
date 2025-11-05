@@ -11,13 +11,14 @@ import CommandsView from "./components/CommandsView";
 import TrackingView from "./components/TrackingView";
 import { AlertProvider } from "./contexts/AlertContext";
 import AlertPopup from "./components/AlertPopup";
+import MainView from "./components/MainView";
 import "leaflet/dist/leaflet.css";
 
 // ---------------------------------------------
 // Tab definitions
 // ---------------------------------------------
 const TABS = [
-  { key: "gis", label: "GIS", Component: GisView },
+  { key: "main", label: "Main", Component: MainView },
   { key: "image", label: "Image", Component: ImageView },
   { key: "datapoints", label: "Datapoints", Component: DatapointsView },
   { key: "communications", label: "Communications", Component: CommunicationsView },
@@ -30,7 +31,7 @@ const TABS = [
 // Main private app (after login)
 // ---------------------------------------------
 function PrivateApp() {
-  const [activeTab, setActiveTab] = useState("gis");
+  const [activeTab, setActiveTab] = useState("main");
   const [alarmActive, setAlarmActive] = useState(false);
   const [selectedSvg, setSelectedSvg] = useState(null); // for ImageView dropdown
   const alarmBtnRef = useRef();
@@ -52,7 +53,7 @@ function PrivateApp() {
       svgName = svgName.split("/").pop();
     }
     setSelectedSvg(svgName); // tell ImageView which SVG to select
-    setActiveTab("image");   // switch to Image tab
+    setActiveTab("main");   // switch to Image tab
   };
 
   return (
