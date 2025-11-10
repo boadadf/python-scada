@@ -1,12 +1,63 @@
 {
+  "streams": [
+    {
+    "id": "feed1",
+    "server": "www.openscadalite.com",
+    "port": "8444",
+    "protocol": "https",
+    "path": "feed1/feed1.m3u8",
+    "description": "Feed 1 - 1080p"
+    },
+    {
+      "id": "feed2",
+      "server": "www.openscadalite.com",
+      "port": "8444",
+      "protocol": "https",
+      "path": "feed2/feed2.m3u8",
+      "description": "Feed 2 - 4K"
+    },
+    {
+      "id": "feed3",
+      "server": "www.openscadalite.com",
+      "port": "8444",
+      "protocol": "https",
+      "path": "feed3/feed3.m3u8",
+      "description": "Feed 3 - 4K"
+    }
+  ],
   "gis_icons": [
+    {
+      "id": "camera1",
+      "icon": "/static/icons/camera.png",
+      "latitude": 47.4233,
+      "longitude": 8.3011, 
+      "label": "Camera 1",
+      "navigation": "stream/feed1"
+    },
+    {
+      "id": "camera2",
+      "icon": "/static/icons/camera.png",
+      "latitude": 47.4233,
+      "longitude": 8.3013, 
+      "label": "Camera 2",
+      "navigation": "stream/feed2",
+      "type": "popup"
+    },
+    {
+      "id": "camera3",
+      "icon": "/static/icons/camera.png",
+      "latitude": 47.4233,
+      "longitude": 8.3015, 
+      "label": "Camera 3",
+      "navigation": "stream/feed3"
+    },
     {
       "id": "stress",
       "icon": "/static/icons/test.gif",
       "latitude": 47.4233,
       "longitude": 8.309, 
       "label": "Stress Test",
-      "navigation": "image/3_stress_test"
+      "navigation": "image/3_stress_test.svg"
     },
     {
       "id": "pump",
@@ -15,7 +66,7 @@
       "longitude": 8.307, 
       "datapoint": "WaterTank@PUMP",
       "label": "Pump Station",
-      "navigation": "image/2_tank",
+      "navigation": "image/2_tank.svg",
       "states": {
         "OPENED": "/static/icons/pump_opened.png",
         "CLOSED": "/static/icons/pump_closed.png"
@@ -28,7 +79,7 @@
       "longitude": 8.3055,
       "rule_id": "switch_error_straight",
       "label": "Train Station",
-      "navigation": "image/1_train",
+      "navigation": "image/1_train.svg",
       "alarm": {
         "ACTIVE": "/static/icons/train_alarm.png"
       }
@@ -1485,6 +1536,9 @@
     },
     {
       "name": "rule"
+    },
+    {
+      "name": "stream"
     }
   ],
   "rules": [

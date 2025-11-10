@@ -11,6 +11,7 @@ import CommandsView from "./components/CommandsView";
 import TrackingView from "./components/TrackingView";
 import { AlertProvider } from "./contexts/AlertContext";
 import AlertPopup from "./components/AlertPopup";
+import StreamView from "./components/StreamView";
 import MainView from "./components/MainView";
 import "leaflet/dist/leaflet.css";
 
@@ -25,6 +26,7 @@ const TABS = [
   { key: "alarms", label: "Alarms", Component: AlarmsView },
   { key: "commands", label: "Commands", Component: CommandsView },
   { key: "tracking", label: "Tracking", Component: TrackingView },
+  { key: "streams", label: "Streams", Component: StreamView }
 ];
 
 // ---------------------------------------------

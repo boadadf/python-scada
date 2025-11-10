@@ -19,7 +19,7 @@ import datetime
 from openscada_lite.modules.communication.drivers.test.test_driver import TestDriver
 
 class StressTestDriver(TestDriver):
-    async def _simulate_values(self):
+    def _simulate_values(self):
         """
         Sequentially toggle all datapoints TRUE/FALSE with a delay.
         """

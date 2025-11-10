@@ -13,7 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # -----------------------------------------------------------------------------
-
+import eventlet
+eventlet.monkey_patch()
 import importlib
 import os
 import sys

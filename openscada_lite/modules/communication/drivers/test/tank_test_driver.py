@@ -19,7 +19,7 @@ import datetime
 from openscada_lite.modules.communication.drivers.test.test_driver import TestDriver
 
 class TankTestDriver(TestDriver):
-    async def _simulate_values(self):
+    def _simulate_values(self):
         now = datetime.datetime.now()
 
         # current states

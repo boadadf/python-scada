@@ -178,6 +178,12 @@ class Config:
             for name, entries in animations_dict.items()
         } 
 
+    def get_streams(self):
+        """
+        Returns the list of streams from the configuration.
+        """
+        return self._config.get("streams", [])
+
     def _get_svg_folder(self) -> str:
         """
         Internal: Returns the SVG folder path from config or defaults to './svg'.

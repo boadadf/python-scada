@@ -15,10 +15,11 @@ export default function MainView() {
       setSubViewProp(null);
       return;
     }
+
     // Example: "image/2_tank.svg" or "datapoint" or "communication"
     const [type, ...rest] = path.split("/");
-    setSubView(type);
-    setSubViewProp(rest.length ? rest.join("/") : null);
+    setSubView(type); // Set the subview type (e.g., "image", "datapoint", etc.)
+    setSubViewProp(rest.length ? rest.join("/") : null); // Pass the remaining path as a prop
   };
 
   return (

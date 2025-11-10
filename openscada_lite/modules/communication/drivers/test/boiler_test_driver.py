@@ -20,7 +20,7 @@ from openscada_lite.modules.communication.drivers.test.test_driver import TestDr
 
 
 class BoilerTestDriver(TestDriver):
-    async def _simulate_values(self):
+    def _simulate_values(self):
         now = datetime.datetime.now()
 
         # Get tags safely

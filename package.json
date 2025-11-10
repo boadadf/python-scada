@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "eventlet": "^0.1.0"
+  }
+}
