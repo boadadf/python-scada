@@ -30,26 +30,50 @@
       "id": "camera1",
       "icon": "/static/icons/camera.png",
       "latitude": 47.4233,
-      "longitude": 8.3011, 
+      "longitude": 8.311, 
       "label": "Camera 1",
-      "navigation": "stream/feed1"
+      "navigation": "stream/feed1",
+      "datapoint": "CameraDriver@CAMERA_1_POSITION",
+      "states": {
+        "RIGHT": "/static/icons/camera_right.png",
+        "LEFT": "/static/icons/camera_left.png"
+      },
+      "alarm": {
+        "ACTIVE": "/static/icons/camera_ko.png"
+      }
     },
     {
       "id": "camera2",
       "icon": "/static/icons/camera.png",
       "latitude": 47.4233,
-      "longitude": 8.3013, 
+      "longitude": 8.313, 
       "label": "Camera 2",
       "navigation": "stream/feed2",
-      "type": "popup"
+      "type": "popup",
+      "datapoint": "CameraDriver@CAMERA_2_POSITION",
+      "states": {
+        "RIGHT": "/static/icons/camera_right.png",
+        "LEFT": "/static/icons/camera_left.png"
+      },
+      "alarm": {
+        "ACTIVE": "/static/icons/camera_ko.png"
+      }
     },
     {
       "id": "camera3",
       "icon": "/static/icons/camera.png",
       "latitude": 47.4233,
-      "longitude": 8.3015, 
+      "longitude": 8.315, 
       "label": "Camera 3",
-      "navigation": "stream/feed3"
+      "navigation": "stream/feed3",
+      "datapoint": "CameraDriver@CAMERA_3_POSITION",
+       "states": {
+        "RIGHT": "/static/icons/camera_right.png",
+        "LEFT": "/static/icons/camera_left.png"
+      },
+      "alarm": {
+        "ACTIVE": "/static/icons/camera_ko.png"
+      }
     },
     {
       "id": "stress",
@@ -57,7 +81,8 @@
       "latitude": 47.4233,
       "longitude": 8.309, 
       "label": "Stress Test",
-      "navigation": "image/3_stress_test.svg"
+      "navigation": "image/3_stress_test.svg",
+      "default": true
     },
     {
       "id": "pump",
@@ -267,6 +292,14 @@
     ]
   },
   "dp_types": {
+    "CAMERA_POSITION": {
+      "default": "RIGHT",
+      "type": "enum",
+      "values": [
+        "LEFT",
+        "RIGHT"
+      ]
+    },
     "BOOL": {
       "default": "FALSE",
       "type": "enum",
@@ -1510,6 +1543,52 @@
       ],
       "driver_class": "TrainTestDriver",
       "name": "TrainTestDriver"
+    },
+    {"command_datapoints": [
+        {
+          "name": "CAMERA_1_POSITION_CMD",
+          "type": "CAMERA_POSITION"
+        },
+        {
+          "name": "CAMERA_2_POSITION_CMD",
+          "type": "CAMERA_POSITION"
+        },
+        {
+          "name": "CAMERA_3_POSITION_CMD",
+          "type": "CAMERA_POSITION"
+        }
+      ],
+      "connection_info": {
+        "server_name": "CameraDriver"
+      },
+      "datapoints": [
+        {
+          "name": "CAMERA_1_POSITION",
+          "type": "CAMERA_POSITION"
+        },
+        {
+          "name": "CAMERA_2_POSITION",
+          "type": "CAMERA_POSITION"
+        },
+        {
+          "name": "CAMERA_3_POSITION",
+          "type": "CAMERA_POSITION"
+        },
+        {
+          "name": "CAMERA_1_ALARM",
+          "type": "BOOL"
+        },
+        {
+          "name": "CAMERA_2_ALARM",
+          "type": "BOOL"
+        },
+        {
+          "name": "CAMERA_3_ALARM",
+          "type": "BOOL"
+        }
+      ],
+      "driver_class": "CameraDriver",
+      "name": "CameraDriver"
     }
   ],
   "modules": [

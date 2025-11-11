@@ -15,6 +15,7 @@
 # -----------------------------------------------------------------------------
 
 # Example in connector_manager.py
+from openscada_lite.modules.communication.drivers.test.test_camera import CameraDriver
 from openscada_lite.modules.communication.drivers.test.stress_test_driver import StressTestDriver
 from openscada_lite.modules.communication.drivers.test.marklin_driver import TrainTestDriver
 from openscada_lite.modules.communication.drivers.opc_ua_server_driver import OPCUAServerDriver
@@ -26,5 +27,6 @@ DRIVER_REGISTRY = {
     "BoilerTestDriver": BoilerTestDriver,
     "TrainTestDriver": TrainTestDriver,
     "OPCUAServerDriver": OPCUAServerDriver,
-    "StressTestDriver": StressTestDriver
+    "StressTestDriver": StressTestDriver,
+    "CameraDriver": CameraDriver
 }

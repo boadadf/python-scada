@@ -16,19 +16,19 @@ export default function ImageView({ selectedSvgProp, onSvgChange }) {
   const [svgExplanation, setSvgExplanation] = useState("");
   const svgContainerRef = useRef(null);
 
-  // Sync external prop
+  // Sync external prop (from GIS or MainView)
   useEffect(() => {
     if (selectedSvgProp && selectedSvgProp !== selectedSvg) {
       setSelectedSvg(selectedSvgProp);
     }
   }, [selectedSvgProp]);
 
-  // Notify parent when SVG changes
+  // Notify parent if SVG changes
   useEffect(() => {
     if (onSvgChange) onSvgChange(selectedSvg);
   }, [selectedSvg, onSvgChange]);
 
-  // Load available SVGs
+  // Load list of available SVGs
   useEffect(() => {
     fetch("/animation_svgs")
       .then((r) => r.json())
@@ -42,6 +42,7 @@ export default function ImageView({ selectedSvgProp, onSvgChange }) {
   // Load selected SVG content and explanation
   useEffect(() => {
     if (!selectedSvg) return;
+
     fetch(`/svg/${selectedSvg}`)
       .then((r) => r.text())
       .then((svg) => setSvgContent(svg))
@@ -57,10 +58,9 @@ export default function ImageView({ selectedSvgProp, onSvgChange }) {
       });
   }, [selectedSvg]);
 
-  // Only one live feed for animation!
+  // Live feed animations
   const [animations] = useLiveFeed("animation", "animationupdatemsg", animationKey);
 
-  // Apply animation messages
   useEffect(() => {
     if (!svgContent) return;
     const svgElem = svgContainerRef.current;
@@ -84,7 +84,7 @@ export default function ImageView({ selectedSvgProp, onSvgChange }) {
     });
   }, [animations, svgContent, selectedSvg]);
 
-  // Handle clickable SVG commands
+  // Handle SVG clicks for commands
   useEffect(() => {
     const svgElem = svgContainerRef.current;
     if (!svgElem) return;
@@ -143,7 +143,7 @@ export default function ImageView({ selectedSvgProp, onSvgChange }) {
         ))}
       </select>
 
-      <div style={{ display: "flex", alignItems: "flex-start", gap: 24 }}>
+      <div style={{ display: "flex", gap: 24 }}>
         <div
           id="svgContainer"
           ref={svgContainerRef}
@@ -154,6 +154,7 @@ export default function ImageView({ selectedSvgProp, onSvgChange }) {
             background: "#fafafa",
             borderRadius: 6,
             padding: 8,
+            flex: 1,
           }}
         />
         <div style={{ minWidth: 250, maxWidth: 400 }}>

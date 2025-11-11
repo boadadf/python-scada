@@ -4,7 +4,7 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { useLiveFeed } from "../livefeed/openscadalite";
 
-// 🧩 Fix Leaflet default icons path issue
+// Fix Leaflet default icons path
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl:
@@ -13,7 +13,7 @@ L.Icon.Default.mergeOptions({
   shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
 });
 
-// ✅ Helper to refresh map size when the tab becomes visible
+// Refresh map size when tab becomes visible
 function MapRefresher({ active }) {
   const map = useMap();
   useEffect(() => {
@@ -35,29 +35,10 @@ export default function GisView({ active, onMarkerClick }) {
   const baseUrl =
     "https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.pixelkarte-farbe/default/current/3857/{z}/{x}/{y}.jpeg";
 
-  // Automatically navigate to the first marker with navigation
-  useEffect(() => {
-    if (onMarkerClick && markers && Object.values(markers).length > 0) {
-      const firstNavMarker = Object.values(markers).find((m) => m.navigation);
-      if (firstNavMarker) {
-        onMarkerClick(firstNavMarker.navigation);
-      }
-    }
-    // Only run when markers change
-  }, [markers, onMarkerClick]);
-
   return (
-    <div
-      style={{
-        height: "calc(100vh - 120px)",
-        width: "100%",
-        background: "#f0f0f0",
-        borderRadius: "8px",
-        overflow: "hidden",
-      }}
-    >
+    <div style={{ height: "100%", width: "100%" }}>
       <MapContainer
-        center={[47.4233, 8.3064]} // Niederrohrdorf
+        center={[47.4233, 8.3064]}
         zoom={16}
         style={{ height: "100%", width: "100%" }}
       >
@@ -98,11 +79,8 @@ export default function GisView({ active, onMarkerClick }) {
                       style={{ marginTop: "4px" }}
                       onClick={() => {
                         onMarkerClick(m.navigation);
-                        // Close the popup
                         const marker = markerRefs.current[key];
-                        if (marker && marker.closePopup) {
-                          marker.closePopup();
-                        }
+                        if (marker && marker.closePopup) marker.closePopup();
                       }}
                     >
                       Go to {m.navigation.split("/").pop()}
