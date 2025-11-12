@@ -78,7 +78,22 @@ export default function App() {
       });
       if (!res.ok) throw new Error(await res.text());
       alert('Saved. The application will now restart.');
-      await fetch('/config-editor/api/restart', { method: 'POST' });
+
+      // Trigger the restart and handle the expected NetworkError
+      try {
+        await fetch('/config-editor/api/restart', { method: 'POST' });
+      } catch (err) {
+        if (err.message.includes('NetworkError')) {
+          console.warn('Restart triggered successfully, ignoring NetworkError.');
+        } else {
+          throw err; // Re-throw unexpected errors
+        }
+      }
+
+      // Delay before reloading the page
+      setTimeout(() => {
+        window.location.reload();
+      }, 3000); // 3-second delay
     } catch (err) {
       alert('Failed to save: ' + err.message);
     }
