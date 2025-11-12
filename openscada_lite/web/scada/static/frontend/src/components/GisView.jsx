@@ -35,6 +35,7 @@ export default function GisView({ active, onMarkerClick }) {
   const baseUrl =
     "https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.pixelkarte-farbe/default/current/3857/{z}/{x}/{y}.jpeg";
 
+
   return (
     <div style={{ height: "100%", width: "100%" }}>
       <MapContainer
@@ -78,7 +79,8 @@ export default function GisView({ active, onMarkerClick }) {
                     <button
                       style={{ marginTop: "4px" }}
                       onClick={() => {
-                        onMarkerClick(m.navigation);
+                        console.log("Navigating to:", m);
+                        onMarkerClick(m.navigation, m.navigation_type || "default");
                         const marker = markerRefs.current[key];
                         if (marker && marker.closePopup) marker.closePopup();
                       }}

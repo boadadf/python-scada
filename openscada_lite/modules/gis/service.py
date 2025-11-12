@@ -21,6 +21,7 @@ class GisService(BaseService[Union[TagUpdateMsg, AlarmUpdateMsg], None, GisUpdat
                 icon=icon_cfg['icon'],
                 label=icon_cfg.get('label'),
                 navigation=icon_cfg.get('navigation'),
+                navigation_type=icon_cfg.get('navigation_type'),
                 extra={"value": None}
             )
             print(f"Initializing GIS icon: {gis_msg}")
@@ -41,6 +42,7 @@ class GisService(BaseService[Union[TagUpdateMsg, AlarmUpdateMsg], None, GisUpdat
                     icon=icon_url,
                     label=icon_cfg.get('label'),
                     navigation=icon_cfg.get('navigation'),
+                    navigation_type=icon_cfg.get('navigation_type'),
                     extra={"value": msg.value}
                 )
                 return gis_msg
@@ -69,6 +71,7 @@ class GisService(BaseService[Union[TagUpdateMsg, AlarmUpdateMsg], None, GisUpdat
                     icon=icon_url,
                     label=icon_cfg.get('label'),
                     navigation=icon_cfg.get('navigation'),
+                    navigation_type=icon_cfg.get('navigation_type'),
                     extra={"alarm_state": alarm_state}
                 )
                 return gis_msg

@@ -49,7 +49,7 @@
       "longitude": 8.313, 
       "label": "Camera 2",
       "navigation": "stream/feed2",
-      "type": "popup",
+      "navigation_type": "popup",
       "datapoint": "CameraDriver@CAMERA_2_POSITION",
       "states": {
         "RIGHT": "/static/icons/camera_right.png",

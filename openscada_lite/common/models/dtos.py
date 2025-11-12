@@ -484,6 +484,8 @@ class GisUpdateMsg(DTO):
     icon: str
     label: str | None = None
     navigation: str | None = None
+    navigation_type: str | None = None  # e.g., "popup"
+    states: dict = field(default_factory=dict)
     extra: dict = field(default_factory=dict)
 
     @classmethod
