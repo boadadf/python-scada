@@ -11,6 +11,7 @@ class GisService(BaseService[Union[TagUpdateMsg, AlarmUpdateMsg], None, GisUpdat
             None, GisUpdateMsg
         )
         self.gis_icons_config = Config.get_instance().get_gis_icons()
+        self.model = model
 
         # Initialize model with default icons
         for icon_cfg in self.gis_icons_config:
@@ -22,7 +23,7 @@ class GisService(BaseService[Union[TagUpdateMsg, AlarmUpdateMsg], None, GisUpdat
                 label=icon_cfg.get('label'),
                 navigation=icon_cfg.get('navigation'),
                 navigation_type=icon_cfg.get('navigation_type'),
-                extra={"value": None}
+                extra={"datapoint-value": None}
             )
             print(f"Initializing GIS icon: {gis_msg}")
             self.model.update(gis_msg)
@@ -43,12 +44,13 @@ class GisService(BaseService[Union[TagUpdateMsg, AlarmUpdateMsg], None, GisUpdat
                     label=icon_cfg.get('label'),
                     navigation=icon_cfg.get('navigation'),
                     navigation_type=icon_cfg.get('navigation_type'),
-                    extra={"value": msg.value}
+                    extra={"datapoint-value": icon_url}
                 )
                 return gis_msg
 
             # Handle AlarmUpdateMsg (alarm-based icon state, match by rule_id)
             if isinstance(msg, AlarmUpdateMsg) and icon_cfg.get('rule_id') == getattr(msg, "rule_id", None):
+
                 # Determine alarm state
                 if msg.deactivation_time and msg.acknowledge_time and msg.activation_time:
                     alarm_state = "FINISHED"
@@ -61,19 +63,15 @@ class GisService(BaseService[Union[TagUpdateMsg, AlarmUpdateMsg], None, GisUpdat
                 else:
                     alarm_state = "UNKNOWN"
 
+                gis_msg = self.model.get(icon_cfg['id'])
+                 
                 icon_url = icon_cfg['icon']
                 if 'alarm' in icon_cfg and alarm_state in icon_cfg['alarm']:
                     icon_url = icon_cfg['alarm'][alarm_state]
-                gis_msg = GisUpdateMsg(
-                    id=icon_cfg['id'],
-                    latitude=icon_cfg['latitude'],
-                    longitude=icon_cfg['longitude'],
-                    icon=icon_url,
-                    label=icon_cfg.get('label'),
-                    navigation=icon_cfg.get('navigation'),
-                    navigation_type=icon_cfg.get('navigation_type'),
-                    extra={"alarm_state": alarm_state}
-                )
+                    gis_msg.icon = icon_url                 
+                else:
+                    gis_msg.icon = gis_msg.extra.get("datapoint-value", gis_msg.icon)
+                
                 return gis_msg
         return None
 

@@ -3,6 +3,7 @@
 
 OpenSCADA Lite is a modular, extensible, and modern SCADA (Supervisory Control and Data Acquisition) + GIS platform written in Python.  
 Following the principle of keeping things simple, it is designed for rapid prototyping, research, and small-to-medium automation projects, with a focus on clarity, testability, and real-time feedback via WebSockets.
+OpenSCADA Lite is offered free for testing purposes and licensed for commercial use. Open is referred to its capability to be extended by anyone with Python knowledge.
 
 ---
 
@@ -1174,41 +1175,6 @@ pytest -v tests/
 
 You can run specific tests or integration suites as needed.
 
----
 
-## Contributing
-
-- Fork the repo and submit pull requests.
-- Please add or update tests for any new features or bugfixes.
-- For questions or suggestions, open an issue.
-
----
-
-## Roadmap
-
-See the `TODO` file for upcoming features and ideas, including:
-- Alarm and rule modules
-- SVG/Canvas animations
-- Feedback reasons and tracking IDs
-- Logging service
-- Raw-to-non-raw conversion
-- Railway deployment
-
----
-
-## License
-
-This project is licensed under the [Apache License 2.0](LICENSE).
-
----
-
-## Support the Project
-
-Keeping the demo server and OPC UA instance online has some running costs.  
-If you find **OpenSCADA Lite** useful and would like to support development or hosting, you can contribute here:
-
-[Buy Me a Coffee](https://buymeacoffee.com/boadadf)  
-[GitHub Sponsors](https://github.com/sponsors/boadadf)  
-[PayPal](https://paypal.me/boadadf)
-
-Your help keeps the demo server running and allows me to keep improving the project. Thank you!
+## Copyright
+All rights reserved to DFB Services LTD.

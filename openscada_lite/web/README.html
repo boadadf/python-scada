@@ -1,0 +1,1123 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenSCADA Lite</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 20px;
+            padding: 20px;
+            background-color: #f9f9f9;
+            color: #333;
+        }
+        h1, h2, h3 {
+            color: #0056b3;
+        }
+        pre {
+            background: #f4f4f4;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        code {
+            background: #f4f4f4;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+        a {
+            color: #0056b3;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <h1>OpenSCADA Lite</h1>
+<p>OpenSCADA Lite is a modular, extensible, and modern SCADA (Supervisory Control and Data Acquisition) + GIS platform written in Python.<br />
+Following the principle of keeping things simple, it is designed for rapid prototyping, research, and small-to-medium automation projects, with a focus on clarity, testability, and real-time feedback via WebSockets.
+OpenSCADA Lite is offered free for testing purposes and licensed for commercial use. Open is referred to its capability to be extended by anyone with Python knowledge.</p>
+<hr />
+<h2>Features</h2>
+<ul>
+<li><strong>Backend Modular architecture</strong>: Easily add new modules by extending the base module classes</li>
+<li><strong>Driver abstraction</strong>: Plug in new drivers for different protocols or simulated devices.</li>
+<li><strong>Real-time updates</strong>: Uses Flask-SocketIO for live data feeds to the frontend.</li>
+<li><strong>React front end</strong>: Use the openscadalite.js to easily generate views for the backend modules.</li>
+<li><strong>Event bus</strong>: Decoupled communication between modules.</li>
+<li><strong>Type-safe DTOs</strong>: All messages use dataclasses for clarity and validation.</li>
+<li><strong>Secure</strong>: All endpoints are secured automatically</li>
+<li><strong>Configurable</strong>: All system structure is defined in JSON config files.</li>
+<li><strong>Testable</strong>: Extensive unit and integration tests.</li>
+</ul>
+<hr />
+<h2>Project Structure</h2>
+<p><code>text
+openscada_lite/
+  app.py                  # Main Flask app and SocketIO server
+  common/                 # Common folder of shared resources by all modules
+    config/               # Configuration loader and validator
+    models/               # DTOs, entities, and event types
+    bus/                  # Event bus implementation
+    tracking/             # Dataflow tracability utilities     
+  modules/                # Modules folder
+    alarm/                # In charge of alarm life cycle                
+    alert/                # In charge of alerting with popups the front end
+    animation/            # In charge of generating animations on SVGs
+    base/                 # Base cimplementation for all modules following the MSC (Model, Service, Controller) architecture
+    command/              # In charge of handling the command life cycle, including feedback
+    communication/        # In charge of starting/stopping communications through drivers
+      drivers/            # Driver implementations (simulated, real, etc.)
+      manager/            # Manages driver instances and routing  
+    datapoint/            # In charge of ensuring datapoint integrity
+    rule/                 # Automatic actions based in datapoint values (alarms, alerts, commands,...)
+    security/             # In charge of login and security of endpoints
+    tracking/             # In charge of tracking of data flow inside of the SCADA system
+  web/                    # Folder for the frontend application
+    config_editor/        # System configuration editor
+    login/                # Common login view
+    scada/                # SCADA application views
+    security_editor/      # Security configuration editor
+config/                   # Folder for the configuration files
+    svg/                  # Folder for the SVG files
+    system_config.json    # Defines datapoint types, ranges, enums, systems, rules...
+    security_config.json  # Defines the users and user groups
+tests/                    # Folder for unit and integration tests</code></p>
+<hr />
+<h2>Getting Started</h2>
+<h2>1. Install dependencies</h2>
+<p><code>bash
+pip install -r requirements.txt</code></p>
+<h2>2. Run the server</h2>
+<p><code>bash
+python -m openscada_lite.app</code></p>
+<p>The server will start on <code>http://localhost:5443</code>.</p>
+<hr />
+<h2>3. Configure your system</h2>
+<h3>3.1 Configuring Security with the Security Editor</h3>
+<p>The <strong>Security Editor</strong> is a react web-based application that lets you manage users, groups, and permissions for your SCADA system through a simple web interface.</p>
+<h4>How to Use</h4>
+<p>3.1.1. <strong>Open the Security Editor in your browser</strong><br />
+   Navigate to:
+   <code>http://localhost:5443/security_editor</code>
+   (or the URL provided by your deployment)</p>
+<p>3.1.2. <strong>View and Edit Users &amp; Groups</strong><br />
+   - The editor loads the current <code>security_config.json</code>.
+   - You’ll see a list of users and groups.
+   - Click a user or group to view or edit their permissions.</p>
+<p>3.1.3. <strong>Add or Remove Users/Groups</strong><br />
+   - Use the “Add User” or “Add Group” buttons to create new entries.
+   - Fill in usernames, passwords (hashed or plain, depending on your setup), and assign groups.</p>
+<p>3.1.4. <strong>Assign Permissions</strong><br />
+   - For each group, select which permissions (e.g., <code>VIEW</code>, <code>CONTROL</code>, <code>ADMIN</code>) they should have.
+   - Assign users to groups for role-based access.</p>
+<p>3.1.5. <strong>Save Changes</strong><br />
+   - Click “Save” to write your changes to <code>config/security_config.json</code>.
+   - The backend will reload the config and apply new permissions immediately.</p>
+<p>3.1.6. <strong>Test Access</strong><br />
+   - Log in with a user account to verify permissions.
+   - Try accessing datapoints, commands, or views to confirm restrictions.</p>
+<hr />
+<h4>Example Workflow</h4>
+<ul>
+<li>Add a new operator user and assign them to the “operators” group.</li>
+<li>Give the “operators” group permission to view and control datapoints, but not to edit system configuration.</li>
+<li>Save and verify that the new user can log in and only see/control what you allowed.</li>
+</ul>
+<h3>3.2 Configuring Your System with the Config Editor</h3>
+<p>The <strong>Config Editor</strong> is a react web-based tool for managing your SCADA system’s configuration files, such as <code>system_config.json</code> and SVG layouts.<br />
+It provides a user-friendly interface for editing datapoints, drivers, rules, and other system settings, making it easy to customize and extend your automation project.</p>
+<hr />
+<h4>How to Use</h4>
+<p>3.2.1. <strong>Open the Config Editor in your browser</strong>
+   <code>http://localhost:5443/config_editor</code>
+   (or your deployed Railway/production URL)</p>
+<p>3.2.2. <strong>View and Edit Configuration</strong>
+   - The editor loads the current <code>system_config.json</code>.
+   - You can browse and edit datapoints, drivers, enums, rules, and SVG mappings.
+   - Use the UI to add, remove, or modify entries.</p>
+<p>3.2.3. <strong>SVG Layout Management</strong>
+   - Upload or edit SVG files for your system’s visual layout.
+   - Assign datapoints and animation types to SVG elements.</p>
+<p>3.2.4. <strong>Save Changes</strong>
+   - Click “Save” to write your changes to <code>config/system_config.json</code> and/or SVG files.
+   - The backend will reload the config and apply changes immediately.</p>
+<p>3.2.5. <strong>Test and Validate</strong>
+   - Use the live preview to check your configuration.
+   - The editor validates your changes and highlights errors before saving.</p>
+<hr />
+<h3>Example Workflow</h3>
+<ul>
+<li>Add a new driver and define its connection info.</li>
+<li>Create new datapoints and assign them to the driver.</li>
+<li>Set up rules for automatic actions or alarms.</li>
+<li>Upload an SVG layout and map datapoints to visual elements.</li>
+<li>Save and verify that your changes are reflected in the running SCADA system.</li>
+</ul>
+<h3>3.3 SCADA Frontend</h3>
+<p>The <strong>SCADA Frontend</strong> is the main web interface for OpenSCADA Lite.<br />
+It provides real-time visualization, control, and monitoring of your automation system using modern React components and SVG graphics.</p>
+<hr />
+<h3>Features</h3>
+<ul>
+<li><strong>Live Data Visualization:</strong> See real-time values for all datapoints, alarms, and system status.</li>
+<li><strong>Interactive Controls:</strong> Send commands to devices and drivers directly from the UI.</li>
+<li><strong>SVG-based Graphics:</strong> Visualize tanks, pumps, valves, and other equipment with dynamic animations.</li>
+<li><strong>Alarm &amp; Alert Display:</strong> View active alarms and receive pop-up alerts for critical events.</li>
+<li><strong>User Authentication:</strong> Secure login and role-based access to views and controls.</li>
+<li><strong>Responsive Design:</strong> Works on desktop and tablet browsers.</li>
+</ul>
+<hr />
+<h3>Main Views</h3>
+<ul>
+<li>
+<p><strong>Dashboard:</strong><br />
+  Overview of system status, key metrics, and recent alarms.<br />
+  Quick access to important controls and summary charts.</p>
+</li>
+<li>
+<p><strong>Process Graphics:</strong><br />
+  Interactive SVG-based visualizations of your plant or process.<br />
+  Clickable elements allow direct control (e.g., start/stop pumps, open/close valves).</p>
+</li>
+<li>
+<p><strong>Alarms &amp; Alerts:</strong><br />
+  List of active alarms and historical events.<br />
+  Pop-up notifications for new or critical alarms.</p>
+</li>
+<li>
+<p><strong>Datapoint Table:</strong><br />
+  Tabular view of all datapoints, showing live values, quality, and status.<br />
+  Useful for diagnostics and detailed monitoring.</p>
+</li>
+<li>
+<p><strong>Command Panel:</strong><br />
+  Interface for sending manual commands to devices or drivers.<br />
+  Shows feedback and command status.</p>
+</li>
+<li>
+<p><strong>Login:</strong><br />
+  Secure authentication for users.<br />
+  Access to views and controls is based on user roles and permissions.</p>
+</li>
+</ul>
+<hr />
+<h3>How to Use</h3>
+<p>3.3.1. <strong>Open the SCADA frontend in your browser</strong>
+   <code>http://localhost:5443/scada</code>
+   (or your deployed Railway/production URL)</p>
+<p>3.3.2. <strong>Log in</strong>
+   - Enter your username and password.
+   - Access is controlled by the security configuration.</p>
+<p>3.3.3. <strong>Monitor and Control</strong>
+   - View live process graphics and dashboards.
+   - Click on interactive elements to send commands (e.g., start/stop pumps).
+   - Watch for alarms and alerts in the notification area.</p>
+<hr />
+<h3>Example Workflow</h3>
+<ul>
+<li>Log in as an operator.</li>
+<li>Monitor tank levels and pump status in real time.</li>
+<li>Click a valve to open/close it.</li>
+<li>Receive an alarm pop-up if a threshold is exceeded.</li>
+<li>Use the dashboard to track system performance.</li>
+</ul>
+<hr />
+<h2>4 Architecture</h2>
+<h3>4.1 Module Architecture: Model-Service-Controller (MSC)</h3>
+<p>OpenSCADA Lite uses a modular architecture based on the <strong>MSC pattern</strong> (Model, Service, Controller).<br />
+This design makes it easy to add new features, maintain code, and ensure clear separation of concerns.</p>
+<hr />
+<h4>4.1.1 Base MSC Classes</h4>
+<ul>
+<li>
+<p><strong>BaseModel</strong><br />
+  Stores and manages the state of messages or entities (e.g., datapoints, alarms).<br />
+  Provides methods for updating, retrieving, and listing stored objects.</p>
+</li>
+<li>
+<p><strong>BaseService</strong><br />
+  Handles business logic, event bus communication, and message processing.<br />
+  Receives messages from the event bus and controller, processes them, updates the model, and notifies the controller.</p>
+</li>
+<li>
+<p><strong>BaseController</strong><br />
+  Manages frontend-backend communication via WebSocket and HTTP.<br />
+  Publishes updates to clients, handles incoming requests, and validates data.</p>
+</li>
+</ul>
+<hr />
+<h4>4.1.2 How Modules Extend MSC</h4>
+<p>Each functional module (e.g., <strong>datapoint</strong>, <strong>alarm</strong>, <strong>command</strong>, <strong>security</strong>) extends the base MSC classes:</p>
+<ul>
+<li>
+<p><strong>Model:</strong><br />
+  Inherit from <code>BaseModel</code> and specify the type of message/entity it stores.</p>
+</li>
+<li>
+<p><strong>Service:</strong><br />
+  Inherit from <code>BaseService</code> and implement logic for handling messages, updating the model, and interacting with other modules.</p>
+</li>
+<li>
+<p><strong>Controller:</strong><br />
+  Inherit from <code>BaseController</code> and define endpoints, validation, and publish logic for the frontend.</p>
+</li>
+</ul>
+<p><strong>Example: Datapoint Module</strong></p>
+<p>```python</p>
+<h1>Model</h1>
+<p>class DatapointModel(BaseModel[DatapointMsg]):
+    pass</p>
+<h1>Service</h1>
+<p>class DatapointService(BaseService[TagUpdateMsg, DatapointCommand, DatapointMsg]):
+    def should_accept_update(self, msg: TagUpdateMsg) -&gt; bool:
+        # Custom acceptance logic
+        return True</p>
+<h1>Controller</h1>
+<p>class DatapointController(BaseController[DatapointMsg, DatapointCommand]):
+    def validate_request_data(self, data: DatapointCommand):
+        # Validate incoming command
+        return data      <br />
+```
+You can see with almost no code your datapoint service is ready!</p>
+<hr />
+<h3>4.1.3 Adding a New Module</h3>
+<ol>
+<li><strong>Create Model, Service, and Controller classes</strong> in your module folder, inheriting from the base MSC classes.</li>
+<li><strong>Define your DTOs</strong> (data transfer objects) for messages, commands, and events.</li>
+<li><strong>Register your module</strong> in <code>app.py</code> by instantiating its controller and passing the model, service, and socketio as needed.</li>
+<li><strong>Implement custom logic</strong> in your service and controller as required.</li>
+</ol>
+<hr />
+<h3>4.1.4 Benefits</h3>
+<ul>
+<li><strong>Consistency:</strong> All modules follow the same structure.</li>
+<li><strong>Extensibility:</strong> Easily add new modules by extending the base classes.</li>
+<li><strong>Testability:</strong> Each part (model, service, controller) can be tested independently.</li>
+<li><strong>Separation of Concerns:</strong> Business logic, state management, and frontend communication are clearly separated.</li>
+</ul>
+<hr />
+<h2>5 Modules</h2>
+<p>Like we saw in the previous section, the server is composed of modules binded by the event bus. Each module has a specific purpose and is composed always of controller.py, model.py and service.py</p>
+<p>Next we will describe the properties of the main modules</p>
+<h3>5.1 Communication Module</h3>
+<p>The <strong>communication module</strong> in OpenSCADA Lite manages all driver interactions, enabling connectivity to real or simulated devices.<br />
+It uses a flexible driver protocol, making it easy to add support for new hardware or protocols.</p>
+<hr />
+<h4>5.1.1 How Drivers Work</h4>
+<ul>
+<li>Each driver implements the <code>DriverProtocol</code> interface (see <code>driver_protocol.py</code>).</li>
+<li>Drivers are managed by the <code>ConnectorManager</code>, which handles driver lifecycle, subscriptions, and event routing.</li>
+<li>Drivers publish tag updates, command feedback, and connection status via async callbacks.</li>
+</ul>
+<hr />
+<h4>5.1.2 Adding a New Driver</h4>
+<p>5.1.2.1. <strong>Create a Driver Class</strong></p>
+<ul>
+<li>Inherit from <code>DriverProtocol</code> (see <code>driver_protocol.py</code>).</li>
+<li>Implement required methods:  <ul>
+<li><code>connect</code>, <code>disconnect</code>, <code>subscribe</code>, <code>register_value_listener</code>, <code>register_communication_status_listener</code>, <code>register_command_feedback</code>, <code>send_command</code>.</li>
+</ul>
+</li>
+<li>Implement the simulation or hardware logic in your driver.</li>
+</ul>
+<p><strong>Example:</strong>
+   ```python
+   # my_new_driver.py
+   from openscada_lite.modules.communication.drivers.driver_protocol import DriverProtocol</p>
+<p>class MyNewDriver(DriverProtocol):
+       async def connect(self): ...
+       async def disconnect(self): ...
+       def subscribe(self, datapoints): ...
+       def register_value_listener(self, callback): ...
+       async def register_communication_status_listener(self, callback): ...
+       def register_command_feedback(self, callback): ...
+       async def send_command(self, data): ...
+       @property
+       def server_name(self): ...
+       @property
+       def is_connected(self): ...
+   ```</p>
+<p>5.1.2.2. <strong>Register Your Driver</strong></p>
+<ul>
+<li>Add your driver class to the <code>DRIVER_REGISTRY</code> dictionary in the communication module.</li>
+<li>Example:
+     <code>python
+     DRIVER_REGISTRY = {
+         "TankTestDriver": TankTestDriver,
+         "BoilerTestDriver": BoilerTestDriver,
+         "TrainTestDriver": TrainTestDriver,
+         "MyNewDriver": MyNewDriver,  # &lt;-- Add your driver here
+     }</code></li>
+</ul>
+<p>5.1.2.3. <strong>Configure Your Driver in the System Config</strong></p>
+<ul>
+<li>Add a new entry to the <code>"drivers"</code> section of your <code>system_config.json</code>:
+     <code>json
+     {
+       "name": "MyDevice",
+       "driver_class": "MyNewDriver",
+       "connection_info": {
+         "ip": "192.168.1.100",
+         "port": 502
+       },
+       "datapoints": [
+         { "name": "TEMPERATURE", "type": "float" },
+         { "name": "PRESSURE", "type": "float" }
+       ]
+     }</code></li>
+</ul>
+<p>5.1.2.4. <strong>Implement Simulation or Hardware Logic</strong></p>
+<ul>
+<li>For simulated drivers, implement the <code>_simulate_values</code> method to periodically update datapoint values.</li>
+<li>For real hardware, implement communication logic in <code>send_command</code>, <code>connect</code>, etc.</li>
+</ul>
+<p>5.1.2.5. <strong>Test Your Driver</strong></p>
+<ul>
+<li>Start the backend and verify your driver connects, publishes updates, and responds to commands.</li>
+<li>Use the SCADA frontend and Config Editor to monitor and control your new device.</li>
+</ul>
+<hr />
+<h4>5.1.3 Example Drivers</h4>
+<ul>
+<li><strong>TankTestDriver:</strong> Simulates a tank with level, pump, and door.</li>
+<li><strong>BoilerTestDriver:</strong> Simulates a boiler with valve, pressure, temperature, and heater.</li>
+<li><strong>TrainTestDriver:</strong> Simulates a train controller (extend as needed).</li>
+</ul>
+<p>See the <code>drivers/test/</code> folder for reference implementations.</p>
+<hr />
+<h4>5.1.4 Tips</h4>
+<ul>
+<li>Use async methods for all I/O and event publishing.</li>
+<li>Always register your driver in <code>DRIVER_REGISTRY</code> and the config file.</li>
+<li>Use the provided DTOs (<code>RawTagUpdateMsg</code>, <code>CommandFeedbackMsg</code>, <code>DriverConnectStatus</code>) for communication.</li>
+<li>Test with both simulated and real hardware for reliability.</li>
+</ul>
+<hr />
+<h3>5.2 Rule Module</h3>
+<p>The <strong>Rule Module</strong> in OpenSCADA Lite enables automatic actions and logic based on datapoint values, alarms, and system events.<br />
+It allows you to define rules for triggering commands, alarms, alerts, or other actions—including direct action commands—when specific conditions are met.</p>
+<hr />
+<h4>5.2.1 Features</h4>
+<ul>
+<li><strong>Flexible Rule Engine:</strong> Define rules using expressions based on datapoint values.</li>
+<li><strong>Automatic Actions:</strong> Trigger commands, alarms, alerts, or other actions when rule conditions are satisfied.</li>
+<li><strong>Action Commands:</strong> Rules can directly send commands to devices or drivers, automating control logic.</li>
+<li><strong>Modular Actions:</strong> Each action is implemented as a class and registered in the <code>ACTION_MAP</code>, making it easy to add new types of rule actions.</li>
+<li><strong>Datapoint Monitoring:</strong> Rules can react to any datapoint update in the system.</li>
+<li><strong>Extensible:</strong> Add new rule types or actions as needed.</li>
+</ul>
+<hr />
+<h4>5.2.2 How Rules Work</h4>
+<ul>
+<li>Rules are defined in the <code>system_config.json</code> file under the <code>"rules"</code> section.</li>
+<li>Each rule specifies:</li>
+<li><strong>Conditions:</strong> Expressions evaluated against current datapoint values.</li>
+<li><strong>Actions:</strong> What to do when the condition is met (e.g., send a command, raise an alarm, trigger an alert).</li>
+<li>The rule engine monitors all relevant datapoints and evaluates rule conditions in real time.</li>
+</ul>
+<hr />
+<h4>5.2.3 Modular Action Commands</h4>
+<p>A unique feature of the Rule Module is its <strong>modular action system</strong>.<br />
+Each action (such as sending a command, raising an alarm, or alerting a client) is implemented as a class derived from the abstract <code>Action</code> base class.<br />
+Actions are registered in the <code>ACTION_MAP</code> dictionary, allowing the rule engine to dynamically execute them by name.</p>
+<p><strong>Example: <code>ACTION_MAP</code> registration</strong></p>
+<p><code>python
+ACTION_MAP = {
+    "send_command": SendCommandAction(),
+    "raise_alarm": RaiseAlarmAction(),
+    "lower_alarm": LowerAlarmAction(),
+    "client_alert": ClientAlertAction()
+}</code></p>
+<p><strong>Adding a new action:</strong><br />
+To add a new type of rule action, simply create a new class inheriting from <code>Action</code>, implement the <code>get_event_data</code> method, and register it in <code>ACTION_MAP</code>.</p>
+<hr />
+<h4>5.2.4 Example Rule Definition (with Action Commands)</h4>
+<p><code>json
+{
+  "rules": [
+    {
+      "name": "HighTankLevelAlarm",
+      "on_condition": "WaterTank@TANK &gt; 80",
+      "on_actions": ["raise_alarm('Tank level high!')"],
+      "off_actions": ["lower_alarm()"]
+    },
+    {
+      "name": "AutoPumpStart",
+      "on_condition": "WaterTank@TANK &gt; 60 and WaterTank@PUMP == 'CLOSED'",
+      "on_actions": ["send_command('WaterTank@PUMP', 'OPEN')"]
+    },
+    {
+      "name": "ShowClientAlert",
+      "on_condition": "AuxServer@VALVE == 'CLOSED' and AuxServer@PRESSURE &gt; 100",
+      "on_actions": ["client_alert('Pressure high!', 'warning', 'AuxServer@VALVE', 'TOGGLE', 10)"]
+    }
+  ]
+}</code></p>
+<ul>
+<li>The <code>"send_command"</code> action will send a command to the specified target datapoint with the given value when the condition is met.</li>
+<li>The <code>"raise_alarm"</code> and <code>"lower_alarm"</code> actions manage alarm lifecycle.</li>
+<li>The <code>"client_alert"</code> action sends a notification to the frontend, optionally with a command button.</li>
+</ul>
+<hr />
+<h4>5.2.5 How to Add or Edit Rules</h4>
+<ol>
+<li>
+<p><strong>Open <code>system_config.json</code></strong><br />
+   Locate the <code>"rules"</code> section.</p>
+</li>
+<li>
+<p><strong>Define a new rule</strong>  </p>
+</li>
+<li>Set a unique <code>name</code>.</li>
+<li>Write an <code>on_condition</code> expression using datapoint identifiers.</li>
+<li>
+<p>Specify the <code>on_actions</code> and/or <code>off_actions</code> as a list of action strings.</p>
+</li>
+<li>
+<p><strong>Save and reload</strong>  </p>
+</li>
+<li>Save your changes.</li>
+<li>The backend will reload the config and apply new rules automatically.</li>
+</ol>
+<hr />
+<h4>5.2.6 Extending the Rule Module</h4>
+<ul>
+<li>Add new action types by creating a new class in <code>modules/rule/actioncommands/</code>, inheriting from <code>Action</code>, and registering it in <code>ACTION_MAP</code>.</li>
+<li>Rules can be made more complex by combining multiple conditions or chaining actions.</li>
+</ul>
+<hr />
+<h4>5.2.7 Tips</h4>
+<ul>
+<li>Use clear, descriptive rule names.</li>
+<li>Test rule conditions and action commands to avoid unintended triggers.</li>
+<li>Use the Config Editor for a user-friendly way to manage rules.</li>
+</ul>
+<hr />
+<h3>5.3 Animation Module</h3>
+<p>The <strong>Animation Module</strong> enables dynamic, real-time updates of SVG elements in the SCADA web interface. It supports animations triggered by datapoint changes, alarm events, and communication status, providing rich and informative visual feedback.</p>
+<hr />
+<h4>5.3.1 How It Works</h4>
+<ul>
+<li>
+<p><strong>SVG Mapping:</strong><br />
+  SVG elements are annotated with attributes such as <code>data-datapoint</code>, <code>data-animation</code>, and optionally <code>command-datapoint</code> for interactive controls.</p>
+</li>
+<li>
+<p><strong>Animation Configuration:</strong><br />
+  Animation types and behaviors are defined in <code>animation_config.json</code>, mapping triggers to attribute changes, text updates, and durations.</p>
+</li>
+<li>
+<p><strong>Handlers:</strong><br />
+  Specialized handlers process different types of backend messages:</p>
+</li>
+<li><code>TagHandler</code>: Handles datapoint value changes.</li>
+<li><code>AlarmHandler</code>: Handles alarm lifecycle events.</li>
+<li>
+<p><code>ConnectionHandler</code>: Handles driver communication status.</p>
+</li>
+<li>
+<p><strong>Live Updates:</strong><br />
+  When a relevant event occurs, the backend uses the appropriate handler to process the message and generate an <code>AnimationUpdateMsg</code>.<br />
+  This message contains the animation configuration (attributes, text, duration) and is sent to subscribed clients.</p>
+</li>
+</ul>
+<hr />
+<h4>5.3.2 Client Notification and GSAP Rendering</h4>
+<ul>
+<li>The backend listens for <code>TagUpdateMsg</code> (and other relevant messages) on the internal bus.</li>
+<li>When an update arrives:</li>
+<li>The backend uses <code>animation_config.json</code> to compute the GSAP config (attributes, text, duration).</li>
+<li>It sends an <code>AnimationUpdateMsg</code> to subscribed clients.</li>
+<li>The HTML page loads the selected SVG and subscribes to <code>AnimationUpdateMsg</code>.</li>
+<li><strong>GSAP</strong> applies animations to target elements:</li>
+</ul>
+<p><code>js
+gsap.to(elem, {
+  duration: msg.config.duration,
+  attr: msg.config.attr,   // optional
+  text: msg.config.text    // optional, requires TextPlugin
+});</code></p>
+<ul>
+<li>Command-capable elements (<code>command-datapoint</code>) can send control messages back to the server when clicked.</li>
+</ul>
+<hr />
+<h4>5.3.3 Configuring Animations</h4>
+<p><strong>Define SVG Elements:</strong><br />
+Each interactive or animated element must include <code>data-datapoint</code> and <code>data-animation</code>.</p>
+<p><code>xml
+&lt;circle id="pump"
+        cx="70" cy="200" r="20"
+        fill="gray"
+        data-datapoint="WaterTank@PUMP"
+        data-animation="toggle_start_stop"
+        command-datapoint="WaterTank@PUMP_CMD"
+        command-value="TOGGLE" /&gt;</code></p>
+<p><strong>Define Animation Types:</strong><br />
+Animation behaviors are defined in <strong><code>animation_config.json</code></strong>.</p>
+<p>Supported types:
+- <strong>height_y</strong> → animates height and y attributes (e.g., tank level)
+- <strong>fill_color</strong> → animates fill color based on numeric values (e.g., temperature)
+- <strong>fill_toggle</strong> → changes color based on enum/string/boolean values (e.g., STARTED/STOPPED)
+- <strong>text</strong> → animates text content</p>
+<p><strong>Example toggle mapping:</strong>
+<code>json
+"toggle_start_stop": {
+  "type": "fill_toggle",
+  "map": {
+    "STARTED": "green",
+    "STOPPED": "gray"
+  },
+  "duration": 0.3
+}</code></p>
+<hr />
+<h4>5.3.4 Adding a New Animation</h4>
+<ol>
+<li>
+<p><strong>Update <code>animation_config.json</code>:</strong>
+<code>json
+"valve_toggle": {
+  "type": "fill_toggle",
+  "map": {
+    "OPENED": "green",
+    "CLOSED": "red"
+  },
+  "duration": 0.3
+}</code></p>
+</li>
+<li>
+<p><strong>Update SVG:</strong>
+<code>xml
+&lt;rect id="valve"
+      x="180" y="360" width="40" height="20"
+      fill="gray"
+      data-datapoint="AuxServer@VALVE"
+      data-animation="valve_toggle"
+      data-command="AuxServer@VALVE_CMD" /&gt;</code></p>
+</li>
+</ol>
+<p><strong>No frontend code changes required</strong> — the <code>AnimationService</code> handles mapping and emits <code>AnimationUpdateMsg</code>.<br />
+The GSAP client automatically renders the animation.</p>
+<hr />
+<h4>5.3.5 Handler Architecture and Extensibility</h4>
+<p>Handlers are responsible for processing messages and updating SVG elements:</p>
+<ul>
+<li><strong>TagHandler:</strong><br />
+  Triggers on datapoint updates. Applies attribute or text changes based on value and quality.</li>
+<li><strong>AlarmHandler:</strong><br />
+  Triggers on alarm events. Determines alarm state (<code>ACTIVE</code>, <code>ACK</code>, <code>INACTIVE</code>, <code>FINISHED</code>) and updates mapped SVG elements.</li>
+<li><strong>ConnectionHandler:</strong><br />
+  Triggers on driver connection status. Updates SVG elements to reflect communication health.</li>
+</ul>
+<p>Each handler uses the shared animation configuration and can schedule automatic reverts using the <code>revertAfter</code> property.</p>
+<p><strong>To add a new handler:</strong></p>
+<ol>
+<li><strong>Create a Handler Class:</strong><br />
+   Inherit from a base handler or follow the pattern in <code>handlers/</code>. Implement <code>can_handle(msg)</code> and <code>handle(msg, service)</code> methods.</li>
+</ol>
+<p>```python
+   class CustomHandler:
+       def can_handle(self, msg) -&gt; bool:
+           return isinstance(msg, CustomMsgType)</p>
+<pre><code>   def handle(self, msg, service):
+       # Process message and return list of AnimationUpdateMsg
+       ...
+</code></pre>
+<p>```</p>
+<ol>
+<li><strong>Register the Handler:</strong><br />
+   Add your handler to the <code>handlers</code> list in <code>AnimationService</code>.</li>
+</ol>
+<p><code>python
+   self.handlers = [
+       TagHandler(),
+       AlarmHandler(),
+       ConnectionHandler(),
+       CustomHandler(),  # &lt;-- Add your new handler here
+   ]</code></p>
+<ol>
+<li><strong>Update Animation Config:</strong><br />
+   Define new animation types or triggers in <code>animation_config.json</code> as needed.</li>
+</ol>
+<hr />
+<h4>5.3.6 Summary</h4>
+<ul>
+<li>SVG elements declare datapoints and animation types.</li>
+<li>Handlers process backend events and broadcast <code>AnimationUpdateMsg</code> to clients.</li>
+<li>Frontend applies animations using GSAP.</li>
+<li>Architecture is scalable, flexible, and easily extensible for new event types and handlers.</li>
+</ul>
+<hr />
+<h3>5.4 Alarm Module</h3>
+<p>The <strong>Alarm Module</strong> manages the lifecycle of alarms within the SCADA system, including raising, acknowledging, and lowering alarms. It ensures that alarm states are tracked, validated, and broadcast to other modules and the frontend.</p>
+<hr />
+<h4>5.4.1 Components</h4>
+<ul>
+<li>
+<p><strong>AlarmModel:</strong><br />
+  Stores and updates alarm messages. Automatically removes finished alarms (deactivated and acknowledged) from the store.</p>
+</li>
+<li>
+<p><strong>AlarmController:</strong><br />
+  Handles incoming requests to acknowledge alarms. Validates requests to ensure the alarm exists, is not finished, and has not already been acknowledged.</p>
+</li>
+<li>
+<p><strong>AlarmService:</strong><br />
+  Processes messages to raise or lower alarms, updates the model, and publishes alarm updates to the event bus. Handles controller messages for acknowledgments and ensures proper state transitions.</p>
+</li>
+<li>
+<p><strong>Utils:</strong><br />
+  Provides helper functions, such as retrieving the latest alarm for a given rule.</p>
+</li>
+</ul>
+<hr />
+<h4>5.4.2 Alarm Lifecycle</h4>
+<ul>
+<li>
+<p><strong>Raise Alarm:</strong><br />
+  Creates a new alarm or resets deactivation and acknowledgment times for an existing alarm.</p>
+</li>
+<li>
+<p><strong>Acknowledge Alarm:</strong><br />
+  Marks the alarm as acknowledged if it is active and not already acknowledged.</p>
+</li>
+<li>
+<p><strong>Lower Alarm:</strong><br />
+  Sets the deactivation time for the alarm.</p>
+</li>
+<li>
+<p><strong>Finish Alarm:</strong><br />
+  An alarm is considered finished when both deactivation and acknowledgment times are set. Finished alarms are removed from the store.</p>
+</li>
+</ul>
+<hr />
+<h4>5.4.3 Extending the Alarm Module</h4>
+<p>To add new alarm behaviors or integrate with other modules:</p>
+<ol>
+<li>
+<p><strong>Extend the Model:</strong><br />
+   Add new fields or methods to <code>AlarmModel</code> as needed.</p>
+</li>
+<li>
+<p><strong>Customize the Controller:</strong><br />
+   Override validation or request handling logic in <code>AlarmController</code>.</p>
+</li>
+<li>
+<p><strong>Enhance the Service:</strong><br />
+   Implement new message types or processing logic in <code>AlarmService</code>.<br />
+   Use the event bus to broadcast custom alarm events.</p>
+</li>
+<li>
+<p><strong>Add Utilities:</strong><br />
+   Place reusable logic in <code>Utils</code> for easier maintenance.</p>
+</li>
+</ol>
+<hr />
+<h4>5.4.4 Summary</h4>
+<ul>
+<li>Centralized alarm management with clear lifecycle handling.</li>
+<li>Validation and state transitions are enforced by the controller and service.</li>
+<li>Extensible architecture for custom alarm logic and integrations.</li>
+<li>Alarm updates are published to the event bus for system-wide visibility.</li>
+</ul>
+<hr />
+<h3>5.5 Command Module</h3>
+<p>The <strong>Command Module</strong> manages the sending and feedback of control commands within the SCADA system. It provides a secure and structured way for clients to issue commands to devices and receive execution feedback.</p>
+<hr />
+<h4>5.5.1 Components</h4>
+<ul>
+<li>
+<p><strong>CommandModel:</strong><br />
+  Maintains the set of allowed commands and stores feedback for each command. Initializes feedback entries for all permitted command identifiers.</p>
+</li>
+<li>
+<p><strong>CommandController:</strong><br />
+  Handles incoming command requests from clients. Validates request data and forwards commands to the backend for execution.</p>
+</li>
+<li>
+<p><strong>CommandService:</strong><br />
+  Processes command messages, updates the model with feedback, and publishes command feedback to the event bus. Accepts all feedback updates from command executors by default.</p>
+</li>
+</ul>
+<hr />
+<h4>5.5.2 Command Workflow</h4>
+<ul>
+<li>
+<p><strong>Send Command:</strong><br />
+  Clients send a <code>SendCommandMsg</code> specifying the target datapoint and desired value.</p>
+</li>
+<li>
+<p><strong>Validate and Forward:</strong><br />
+  The controller validates the request and forwards it to the backend.</p>
+</li>
+<li>
+<p><strong>Execute and Feedback:</strong><br />
+  The backend executes the command and generates a <code>CommandFeedbackMsg</code> containing the result and any feedback.</p>
+</li>
+<li>
+<p><strong>Notify Clients:</strong><br />
+  The service updates the model and notifies subscribed clients with the feedback message.</p>
+</li>
+</ul>
+<hr />
+<h4>5.5.3 Extending the Command Module</h4>
+<p>To add new command types or customize command handling:</p>
+<ol>
+<li>
+<p><strong>Extend the Model:</strong><br />
+   Add new fields or logic to <code>CommandModel</code> for custom feedback or command tracking.</p>
+</li>
+<li>
+<p><strong>Customize the Controller:</strong><br />
+   Override <code>validate_request_data</code> in <code>CommandController</code> to enforce additional validation rules.</p>
+</li>
+<li>
+<p><strong>Enhance the Service:</strong><br />
+   Implement custom acceptance logic in <code>should_accept_update</code> or add new processing steps in <code>CommandService</code>.</p>
+</li>
+</ol>
+<hr />
+<h4>5.5.4 Summary</h4>
+<ul>
+<li>Centralized command management and feedback.</li>
+<li>Secure validation and execution workflow.</li>
+<li>Extensible architecture for custom command logic and integrations.</li>
+<li>Feedback is published to the event bus for system-wide visibility.</li>
+</ul>
+<hr />
+<h3>5.6 Datapoint Module</h3>
+<p>The <strong>Datapoint Module</strong> manages the acquisition, validation, and distribution of real-time process values (tags) within the SCADA system. It ensures that only valid and up-to-date datapoint updates are accepted and broadcast to other modules and clients.</p>
+<hr />
+<h4>5.6.1 Components</h4>
+<ul>
+<li>
+<p><strong>DatapointModel:</strong><br />
+  Stores the current state of all allowed datapoints as <code>TagUpdateMsg</code> objects. Initializes all tags with default values and tracks updates.</p>
+</li>
+<li>
+<p><strong>DatapointController:</strong><br />
+  Handles incoming requests to update datapoints. Validates request data for required fields and correct format before passing to the model.</p>
+</li>
+<li>
+<p><strong>DatapointService:</strong><br />
+  Processes raw tag update messages, validates them using <code>Utils.is_valid</code>, and publishes accepted updates to the event bus. Converts raw messages to structured <code>TagUpdateMsg</code> objects.</p>
+</li>
+<li>
+<p><strong>Utils:</strong><br />
+  Provides helper functions for validation, such as checking allowed tags and timestamp ordering to prevent outdated updates.</p>
+</li>
+</ul>
+<hr />
+<h4>5.6.2 Datapoint Workflow</h4>
+<ul>
+<li>
+<p><strong>Receive Update:</strong><br />
+  The backend receives a <code>RawTagUpdateMsg</code> from a driver or client.</p>
+</li>
+<li>
+<p><strong>Validate:</strong><br />
+  The controller checks for required fields and correct format.<br />
+  The service uses <code>Utils.is_valid</code> to ensure the tag is allowed and the timestamp is not older than the current value.</p>
+</li>
+<li>
+<p><strong>Process and Broadcast:</strong><br />
+  Valid updates are converted to <code>TagUpdateMsg</code> and published to the event bus for system-wide visibility.</p>
+</li>
+</ul>
+<hr />
+<h4>5.6.3 Extending the Datapoint Module</h4>
+<p>To add new datapoint behaviors or customize validation:</p>
+<ol>
+<li>
+<p><strong>Extend the Model:</strong><br />
+   Add new fields or logic to <code>DatapointModel</code> for custom tracking or initialization.</p>
+</li>
+<li>
+<p><strong>Customize the Controller:</strong><br />
+   Override <code>validate_request_data</code> in <code>DatapointController</code> to enforce additional validation rules.</p>
+</li>
+<li>
+<p><strong>Enhance the Service:</strong><br />
+   Implement custom acceptance logic in <code>should_accept_update</code> or add new processing steps in <code>DatapointService</code>.</p>
+</li>
+<li>
+<p><strong>Add Utilities:</strong><br />
+   Place reusable validation or processing logic in <code>Utils</code> for easier maintenance.</p>
+</li>
+</ol>
+<hr />
+<h4>5.6.4 Summary</h4>
+<ul>
+<li>Centralized management and validation of process values.</li>
+<li>Ensures only valid and up-to-date datapoint updates are accepted.</li>
+<li>Extensible architecture for custom datapoint logic and integrations.</li>
+<li>Updates are published to the event bus for system-wide visibility.</li>
+</ul>
+<hr />
+<h3>5.7 Security Module</h3>
+<p>The <strong>Security Module</strong> provides authentication and authorization for the SCADA system. It manages user credentials, group permissions, and access control for API endpoints using JWT-based authentication.</p>
+<hr />
+<h4>5.7.1 Components</h4>
+<ul>
+<li>
+<p><strong>SecurityModel:</strong><br />
+  Stores users and groups loaded from the configuration file. Maintains an in-memory copy and provides access to endpoint and permission data.</p>
+</li>
+<li>
+<p><strong>SecurityController:</strong><br />
+  Exposes REST API endpoints for login, configuration management, and endpoint listing. Handles JWT token issuance and validation.</p>
+</li>
+<li>
+<p><strong>SecurityService:</strong><br />
+  Implements user authentication, password hashing, and permission checks. Issues JWT tokens for authenticated users and verifies access rights for endpoints.</p>
+</li>
+<li>
+<p><strong>Utils:</strong><br />
+  Provides helper functions for password hashing and JWT creation/verification.</p>
+</li>
+</ul>
+<hr />
+<h4>5.7.2 Workflow</h4>
+<ul>
+<li>
+<p><strong>Login:</strong><br />
+  Clients send credentials to <code>/security/login</code>. If valid, a JWT token is returned for session authentication.</p>
+</li>
+<li>
+<p><strong>Authorization:</strong><br />
+  Protected endpoints require a valid JWT token. The controller verifies the token and checks user permissions before granting access.</p>
+</li>
+<li>
+<p><strong>Configuration Management:</strong><br />
+  Security configuration (users, groups, permissions) can be retrieved and updated via the <code>/security-editor/api/config</code> endpoints.</p>
+</li>
+</ul>
+<hr />
+<h4>5.7.3 Architectural Note</h4>
+<p>Unlike other modules, the Security Module does <strong>not</strong> listen to the internal event bus or publish messages.<br />
+It operates independently, providing synchronous REST API endpoints for authentication and authorization.<br />
+This design ensures that security logic is isolated and does not follow the base event-driven pattern used by datapoint, alarm, and command modules.</p>
+<hr />
+<h4>5.7.4 Summary</h4>
+<ul>
+<li>Centralized authentication and authorization using JWT.</li>
+<li>REST API endpoints for login and configuration management.</li>
+<li>No event bus integration; operates independently from the base module pattern.</li>
+<li>Extensible for custom authentication logic and permission models.</li>
+</ul>
+<hr />
+<h3>5.8 Tracking Module</h3>
+<p>The <strong>Tracking Module</strong> provides automatic tracking of data flow events throughout the SCADA system. It records the status and movement of DTOs (data transfer objects) for auditing, debugging, and monitoring purposes.</p>
+<hr />
+<h4>5.8.1 Components</h4>
+<ul>
+<li>
+<p><strong>TrackingModel:</strong><br />
+  Stores the most recent data flow events (up to a configurable limit) using an ordered dictionary for efficient rotation.</p>
+</li>
+<li>
+<p><strong>TrackingController:</strong><br />
+  Exposes a read-only API for retrieving tracking events. Does not accept incoming requests for updates.</p>
+</li>
+<li>
+<p><strong>TrackingService:</strong><br />
+  Accepts all incoming tracking events and updates the model. Publishes events to the event bus for system-wide visibility.</p>
+</li>
+<li>
+<p><strong>TrackingPublisher:</strong><br />
+  Handles publishing of tracking events. Uses a background worker thread to enqueue and process events, publishing to the event bus and optionally writing to a log file.</p>
+</li>
+</ul>
+<hr />
+<h4>5.8.2 Workflow</h4>
+<ul>
+<li>
+<p><strong>Event Generation:</strong><br />
+  Tracking events are generated whenever a decorated function is called or a DTO is processed.<br />
+  Events include metadata such as source, status, timestamp, and payload.</p>
+</li>
+<li>
+<p><strong>Event Publishing:</strong><br />
+  The publisher enqueues events for background processing.<br />
+  Events are published to the event bus and optionally logged to a file.</p>
+</li>
+<li>
+<p><strong>Event Retrieval:</strong><br />
+  Clients can query the tracking API to retrieve recent data flow events for auditing or debugging.</p>
+</li>
+</ul>
+<hr />
+<h4>5.8.3 Automatic Tracking with Decorators</h4>
+<p>To automatically generate tracking information, use the provided decorators in <code>common/tracking/decorators.py</code>.<br />
+These decorators can be applied to methods to publish tracking events based on arguments or return values.</p>
+<p><strong>Examples:</strong></p>
+<ul>
+<li><strong>Async function, DTO as first argument:</strong>
+  ```python
+  from openscada_lite.common.tracking.decorators import publish_data_flow_from_arg_async
+  from openscada_lite.common.tracking.tracking_types import DataFlowStatus</li>
+</ul>
+<p>@publish_data_flow_from_arg_async(DataFlowStatus.RECEIVED)
+  async def process_dto(self, dto):
+      ...
+  ```</p>
+<ul>
+<li><strong>Sync function, DTO as return value:</strong>
+  ```python
+  from openscada_lite.common.tracking.decorators import publish_data_flow_from_return_sync
+  from openscada_lite.common.tracking.tracking_types import DataFlowStatus</li>
+</ul>
+<p>@publish_data_flow_from_return_sync(DataFlowStatus.SUCCESS)
+  def handle_result(self, ...):
+      ...
+  ```</p>
+<ul>
+<li><strong>Decorator options:</strong>  </li>
+<li><code>publish_data_flow_from_arg_async</code> / <code>publish_data_flow_from_arg_sync</code></li>
+<li><code>publish_data_flow_from_return_async</code> / <code>publish_data_flow_from_return_sync</code></li>
+<li>Specify <code>status</code> and optionally <code>source</code> for each event.</li>
+</ul>
+<p>These decorators ensure that tracking events are published automatically whenever the decorated function is called, reducing manual tracking code and improving consistency.</p>
+<hr />
+<h4>5.8.4 Summary</h4>
+<ul>
+<li>Centralized tracking of data flow events for auditing and debugging.</li>
+<li>Automatic event generation using decorators for async and sync functions.</li>
+<li>Efficient background publishing and optional file logging.</li>
+<li>Read-only API for retrieving recent tracking events.</li>
+</ul>
+<h2>6 Creating Views with openscadalite.js</h2>
+<p>All SCADA frontend views leverage a <strong>common live feed library</strong>, <code>useLiveFeed</code>, which unifies real-time updates and command handling.<br />
+This makes adding new views for any backend MSC module <strong>fast, consistent, and minimal code</strong>.</p>
+<h4>What <code>openscadalite</code> Provides</h4>
+<ul>
+<li><strong>Automatic WebSocket connection</strong> to receive live updates from the backend.</li>
+<li><strong>Reactive state management</strong>: <code>items</code> always reflect the latest data.</li>
+<li><strong>Unified command/REST interface</strong>: <code>postJson()</code> sends commands or updates to the backend with proper headers.</li>
+<li><strong>Flexible keying</strong>: Define a unique key per item for state mapping.</li>
+<li><strong>Security</strong>: passes the necessary credentials to the backend</li>
+</ul>
+<h4>Using <code>useLiveFeed</code></h4>
+<pre><code>const [items, setItems, postJson] = useLiveFeed(
+ endpoint,       // backend MSC module name
+ updateMsgType,  // WebSocket message type
+ getKey,         // function returning unique key for each item
+ postType?       // optional: REST message type for sending updates/commands
+);
+
+items: object containing live data from the backend
+
+setItems: optionally update items locally
+
+postJson(payload): send a command or data update to the backend
+</code></pre>
+<p>Example: Alarms View</p>
+<pre><code>import React from "react";
+import { useLiveFeed } from "../livefeed/useLiveFeed";
+
+function alarmKey(a) { return a.alarm_occurrence_id; }
+
+export default function AlarmsView() {
+  const [alarms] = useLiveFeed("alarm", "alarmupdatemsg", alarmKey);
+
+  return (
+    &lt;div&gt;
+      &lt;h2&gt;Active Alarms&lt;/h2&gt;
+      &lt;ul&gt;
+        {Object.values(alarms).map(a =&gt; (
+          &lt;li key={alarmKey(a)}&gt;
+            {a.rule_id} — {a.datapoint_identifier}
+          &lt;/li&gt;
+        ))}
+      &lt;/ul&gt;
+    &lt;/div&gt;
+  );
+}
+
+Automatically subscribes to "alarm_alarmupdatemsg" and updates in real time.
+</code></pre>
+<h3>Sending Commands.</h3>
+<p>Some backend modules allow commands or control messages. Add a postType:</p>
+<pre><code>const [commands, , postJson] = useLiveFeed(
+  "command",
+  "commandfeedbackmsg",
+  cmd =&gt; cmd.datapoint_identifier,
+  "sendcommandmsg"
+);
+
+async function sendCommand(datapoint, value) {
+  await postJson({ datapoint_identifier: datapoint, value });
+}
+</code></pre>
+<p>This sends a POST request to:</p>
+<pre><code>/command_send_sendcommandmsg
+</code></pre>
+<p>with all headers handled automatically.
+Template for a New View</p>
+<pre><code>import React from "react";
+import { useLiveFeed } from "../livefeed/useLiveFeed";
+
+function myKey(item) { return item.id; }
+
+export default function MyNewView() {
+  const [data, setData, postJson] = useLiveFeed(
+    "myendpoint",
+    "myupdatemsg",
+    myKey,
+    "mycommandmsg"
+  );
+
+  return (
+    &lt;div&gt;
+      &lt;h2&gt;My Endpoint Data&lt;/h2&gt;
+      &lt;pre&gt;{JSON.stringify(data, null, 2)}&lt;/pre&gt;
+    &lt;/div&gt;
+  );
+}
+</code></pre>
+<p>Every view in the SCADA frontend alarms, datapoints, commands, GIS markers, communications, tracking, and animations—uses the same useLiveFeed hook.</p>
+<p>Live Feed Data Flow</p>
+<pre><code>     ┌────────────────────────┐
+     │   Backend MSC Module   │
+     │                        │
+     │  ┌───────────────┐     │
+     │  │ WebSocket feed│─────┼─────────────┐
+     │  └───────────────┘     │             │
+     │                        │             │
+     │  ┌───────────────┐     │             ▼
+     │  │ REST endpoint │─────► useLiveFeed
+     │  └───────────────┘     │             │
+     └────────────────────────┘             │
+                                            ▼
+                                   ┌─────────────────┐
+                                   │ React Component │
+                                   │  state (items) │
+                                   └─────────────────┘
+                                              │
+                     User actions (button click / input)
+                                              │
+                                              ▼
+                                   ┌─────────────────┐
+                                   │ postJson() REST │
+                                   │  sends command  │
+                                   └─────────────────┘
+                                              │
+                                              ▼
+                                   Backend MSC handles command
+
+🔹 New views can be added by defining endpoint, updateMsgType, getKey, and optionally postType. The live feed library handles WebSocket and REST automatically.
+</code></pre>
+<hr />
+<hr />
+<h2>Testing</h2>
+<p>Run all tests with:</p>
+<p><code>bash
+pytest -v tests/</code></p>
+<p>You can run specific tests or integration suites as needed.</p>
+</body>
+</html>

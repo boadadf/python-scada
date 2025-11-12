@@ -20,9 +20,10 @@ export default function TopMenu() {
     window.location.href = "/scada/login";
   }
 
+
   function handleAbout() {
     setOpen(false);
-    alert("OSL (Open Scada Lite)\nVersion 0.1.0\n© 2025 Daniel&Hector Fernandez");
+    window.open("/static/README.html", "_blank"); // Open README.html in a new tab
   }
 
   return (
