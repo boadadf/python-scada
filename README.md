@@ -1,4 +1,4 @@
-# OpenSCADA Lite 
+# OpenSCADA Lite
 
 OpenSCADA Lite is a modular, extensible, and modern SCADA (Supervisory Control and Data Acquisition) + GIS platform written in Python.  
 Following the principle of keeping things simple, it is designed for rapid prototyping, research, and small-to-medium automation projects, with a focus on clarity, testability, and real-time feedback via WebSockets.
