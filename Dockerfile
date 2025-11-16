@@ -62,7 +62,7 @@ COPY --from=frontend /app/openscada_lite/web/config_editor/static/frontend/dist 
 COPY --from=frontend /app/openscada_lite/web/security_editor/static/frontend/dist ./openscada_lite/web/security_editor/static/frontend/dist
 
 # Expose port (optional, Render uses $PORT)
-EXPOSE 5001
+EXPOSE 5443
 
 # Start Flask via Gunicorn using Render $PORT
-CMD ["gunicorn", "-b", "0.0.0.0:5001", "openscada_lite.app:app"]
+CMD ["gunicorn", "-b", "0.0.0.0:5443", "openscada_lite.app:app"]
