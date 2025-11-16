@@ -14,7 +14,7 @@
 # limitations under the License.
 # -----------------------------------------------------------------------------
 
-from typing import Union, override
+from typing import Union
 from openscada_lite.common.config.config import Config
 from openscada_lite.modules.base.base_controller import BaseController
 from openscada_lite.common.models.dtos import AlarmUpdateMsg, AnimationUpdateRequestMsg, StatusDTO, AnimationUpdateMsg, TagUpdateMsg
@@ -30,7 +30,5 @@ class AnimationController(BaseController[AnimationUpdateMsg, AnimationUpdateRequ
         def list_svgs():
             from flask import jsonify
             return jsonify(self.svg_files)
-
-    @override
     def validate_request_data(self, data:AnimationUpdateRequestMsg) -> AnimationUpdateRequestMsg | StatusDTO:
         return data
