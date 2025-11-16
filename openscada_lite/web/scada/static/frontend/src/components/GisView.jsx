@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback, useRef } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -23,6 +23,7 @@ function MapRefresher({ active }) {
 }
 
 export default function GisView({ active, onMarkerClick }) {
+  const [gisConfig, setGisConfig] = useState(null);
   const markerRefs = useRef({});
 
   const markerKey = useCallback(
@@ -32,21 +33,28 @@ export default function GisView({ active, onMarkerClick }) {
 
   const [markers] = useLiveFeed("gis", "gisupdatemsg", markerKey);
 
-  const baseUrl =
-    "https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.pixelkarte-farbe/default/current/3857/{z}/{x}/{y}.jpeg";
+  useEffect(() => {
+    // Fetch GIS configuration from the backend
+    fetch("/api/gis/config")
+      .then((response) => response.json())
+      .then((data) => setGisConfig(data))
+      .catch((error) => console.error("Failed to fetch GIS config:", error));
+  }, []);
 
+  if (!gisConfig) {
+    return <div>Loading GIS configuration...</div>;
+  }
+
+  const { baseurl, attribution, center_x, center_y, zoom } = gisConfig;
 
   return (
     <div style={{ height: "100%", width: "100%" }}>
       <MapContainer
-        center={[47.4233, 8.3064]}
-        zoom={16}
+        center={[parseFloat(center_x), parseFloat(center_y)]}
+        zoom={zoom}
         style={{ height: "100%", width: "100%" }}
       >
-        <TileLayer
-          attribution='&copy; <a href="https://www.swisstopo.admin.ch/">swisstopo</a> & OpenStreetMap'
-          url={baseUrl}
-        />
+        <TileLayer attribution={attribution} url={baseurl} />
 
         <MapRefresher active={active} />
 

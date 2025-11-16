@@ -70,7 +70,7 @@ def serve_svg(filename):
     print("Requested file:", filename)  # Add this for debugging
     return send_from_directory(svg_dir, filename, conditional=False)
 
-socketio = SocketIO(app, cors_allowed_origins="*")
+socketio = SocketIO(app, async_mode="threading", cors_allowed_origins="*")
 event_bus = EventBus.get_instance()
 
 system_config = Config.get_instance().load_system_config()
@@ -128,8 +128,13 @@ async def async_init_all(module_instances):
         if hasattr(service, "async_init"):
             await service.async_init()
 
-asyncio.run(async_init_all(module_instances))
-
+# Schedule async initialization on the running loop
+try:
+    loop = asyncio.get_running_loop()
+    loop.create_task(async_init_all(module_instances))
+except RuntimeError:
+    # no running loop, start one manually
+    asyncio.run(async_init_all(module_instances))
 #Security modules are not part of the dynamic modules
 print(f"[APP] Initializing Security Module {(app)}")
 security_model = SecurityModel(app)

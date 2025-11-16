@@ -73,9 +73,10 @@ class OPCUAServerDriver(ServerProtocol):
         self.server.set_endpoint(self.endpoint)
         self.server.set_server_name(self._server_name)
 
-        loop = asyncio.get_event_loop()
-        await loop.run_in_executor(None, self.server.start)
 
+
+        await self.server.init()
+        await self.server.start()
         # Patch server’s write handler to detect all client writes
         self._patch_write_handler()
 
@@ -92,7 +93,7 @@ class OPCUAServerDriver(ServerProtocol):
             self._original_write_attribute = None
 
         try:
-            await asyncio.get_event_loop().run_in_executor(None, self.server.stop)
+            await self.server.stop()
         except Exception as e:
             print(f"[WARN] Error stopping server: {e}")
 

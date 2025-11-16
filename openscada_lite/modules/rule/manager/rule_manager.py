@@ -67,6 +67,8 @@ class RuleEngine:
         """
         self.event_bus = event_bus if event_bus is not None else EventBus.get_instance()
         self.asteval = Interpreter()
+        self.asteval.symtable["TRUE"] = True
+        self.asteval.symtable["FALSE"] = False
         self.rules = []
         self.datapoint_state = {}
         self.tag_to_rules = {}  # tag_id -> [rules]
@@ -119,26 +121,25 @@ class RuleEngine:
     async def on_tag_update(self, msg: TagUpdateMsg):
         """
         Callback for tag update events. Evaluates rules impacted by the tag and executes actions.
-
-        - If a rule has no off_condition, its on_actions are always executed when on_condition is true.
-        - If a rule has an off_condition, on_actions are only executed on transition from inactive to active, and off_actions on transition from active to inactive.
-
-        Args:
-            data (dict): The tag update event data, must include 'tag_id' and 'value'.
         """
         tag_id = msg.datapoint_identifier
         value = msg.value
         self.datapoint_state[tag_id] = value
 
         safe_key = self._safe_key(tag_id)
-        self.asteval.symtable[safe_key] = value
+        # Normalize value to boolean where applicable
+        self.asteval.symtable[safe_key] = value if isinstance(value, (int, float, bool)) else str(value).upper() == "TRUE"
 
         impacted_rules = self.tag_to_rules.get(tag_id, [])
+        print(f"[RuleEngine] Received tag update: {tag_id} = {value}")
+        print(f"[RuleEngine] Updated asteval symbol table: {safe_key} = {self.asteval.symtable[safe_key]}")
+        print(f"[RuleEngine] Impacted rules: {impacted_rules}")
         for rule in impacted_rules:
             rule_id = rule.rule_id
             on_active = self.rule_states.get(rule_id, False)
             try:
                 on_result = self.asteval(rule.on_condition.replace("@", "__"))
+                print(f"[RuleEngine] Evaluated on_condition for rule {rule_id}: {on_result}")
                 if self.asteval.error:
                     print("asteval errors:", self.asteval.error)
                 off_cond = getattr(rule, "off_condition", None)

@@ -15,7 +15,7 @@
 # -----------------------------------------------------------------------------
 
 # communications_service.py
-from typing import Union, override
+from typing import Union
 from openscada_lite.common.tracking.decorators import publish_data_flow_from_arg_async
 from openscada_lite.common.tracking.tracking_types import DataFlowStatus
 from openscada_lite.common.bus.event_types import EventType
@@ -33,8 +33,6 @@ class CommunicationService(BaseService[Union[SendCommandMsg, TagUpdateMsg], Driv
         self.connection_manager = ConnectorManager.get_instance()
         self.connection_manager.register_listener(self)
         self.connection_manager.set_command_listener(self)  # Register as command listener
-
-    @override
     async def async_init(self):
         await self.connection_manager.init_drivers()
 

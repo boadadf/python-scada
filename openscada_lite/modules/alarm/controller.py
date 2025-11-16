@@ -14,7 +14,7 @@
 # limitations under the License.
 # -----------------------------------------------------------------------------
 
-from typing import Union, override
+from typing import Union
 from openscada_lite.modules.alarm.model import AlarmModel
 from openscada_lite.modules.base.base_controller import BaseController
 from openscada_lite.common.models.dtos import AckAlarmMsg, AlarmUpdateMsg, StatusDTO
@@ -23,8 +23,6 @@ class AlarmController(BaseController[AlarmUpdateMsg, AckAlarmMsg]):
     def __init__(self, model: AlarmModel, socketio, base_event: str, flask_app=None):
         super().__init__(model, socketio, AlarmUpdateMsg, AckAlarmMsg, base_event=base_event, flask_app=flask_app)
         self.model: AlarmModel = model
-
-    @override
     def validate_request_data(self, data: AckAlarmMsg) -> Union[AckAlarmMsg, StatusDTO]:
         # Validation: alarm must exist, not finished, not already acknowledged
         alarm = self.model.get(data.alarm_occurrence_id)
