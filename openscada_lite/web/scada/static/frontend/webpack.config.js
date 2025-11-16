@@ -6,11 +6,6 @@ module.exports = {
     path: path.resolve(__dirname, 'dist'),
     filename: 'main.js',
   },
-  optimization: {
-    splitChunks: {
-      chunks: "all",
-    },
-  },
   module: {
     rules: [
       {
