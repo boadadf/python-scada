@@ -136,16 +136,16 @@ class BaseController(ABC, Generic[T, U]):
         endpoint_name = f"{self.base_event}_send_{self.U_cls.__name__.lower()}"
         route_path = f"/{endpoint_name}"
         @flask_app.route(route_path, methods=["POST"], endpoint=endpoint_name)
-        def _incoming_handler():
+        async def _incoming_handler():
             data = request.get_json() or {}
             username = request.headers.get("X-User", "")  # Injected by login/session
 
             if not self.is_allowed(username, endpoint_name):
                 return jsonify(StatusDTO(status="error", reason="Unauthorized").to_dict()), 403
 
-            return self.handle_request(data)
+            return await self.handle_request(data)
 
-    def handle_request(self, data):
+    async def handle_request(self, data):
         """Validate and forward incoming request to the service."""
         obj_data = self.U_cls(**data) if isinstance(data, dict) else data
         result = self.validate_request_data(obj_data)
@@ -154,7 +154,7 @@ class BaseController(ABC, Generic[T, U]):
             return jsonify(result.to_dict()), 400
 
         if self.service:
-            asyncio.run(self.service.handle_controller_message(result))
+            await self.service.handle_controller_message(result)
 
         return jsonify(StatusDTO(status="ok", reason="Request accepted.").to_dict()), 200
 
