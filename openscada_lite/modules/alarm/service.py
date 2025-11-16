@@ -15,7 +15,7 @@
 # -----------------------------------------------------------------------------
 
 import copy
-from typing import Union, override
+from typing import Union
 from openscada_lite.common.tracking.tracking_types import DataFlowStatus
 from openscada_lite.common.tracking.decorators import publish_data_flow_from_return_sync
 from openscada_lite.modules.alarm.controller import AlarmController
@@ -30,8 +30,6 @@ class AlarmService(BaseService[Union[RaiseAlarmMsg, LowerAlarmMsg], AckAlarmMsg,
         super().__init__(event_bus, model, controller, [RaiseAlarmMsg, LowerAlarmMsg], AckAlarmMsg, AlarmUpdateMsg)
         self.model = model
         self.event_bus = event_bus
-        
-    @override
     def should_accept_update(self, msg) -> bool:
         if isinstance(msg, LowerAlarmMsg):
             msg_lower: LowerAlarmMsg = msg
@@ -48,7 +46,6 @@ class AlarmService(BaseService[Union[RaiseAlarmMsg, LowerAlarmMsg], AckAlarmMsg,
         return False
 
     @publish_data_flow_from_return_sync(status=DataFlowStatus.CREATED)
-    @override
     def process_msg(self, msg) -> AlarmUpdateMsg:
         #Raise can one mean reset deactivation and acknowledge to None
         if isinstance(msg, RaiseAlarmMsg):
@@ -68,8 +65,6 @@ class AlarmService(BaseService[Union[RaiseAlarmMsg, LowerAlarmMsg], AckAlarmMsg,
                 existing_alarm.deactivation_time = msg_lower.timestamp
                 return existing_alarm
         raise ValueError("Unsupported message type for processing")
-    
-    @override
     async def handle_controller_message(self, data: AckAlarmMsg):
         alarm = self.model.get(data.alarm_occurrence_id)
         alarm.acknowledge_time = data.timestamp
@@ -79,7 +74,6 @@ class AlarmService(BaseService[Union[RaiseAlarmMsg, LowerAlarmMsg], AckAlarmMsg,
             self.controller.publish(alarm)
 
     #Publish alarm updates to the bus in case another service wants to listen
-    @override
     async def on_model_accepted_bus_update(self, msg: AlarmUpdateMsg):
         updated = copy.deepcopy(msg)
         await self.event_bus.publish(EventType.ALARM_UPDATE, updated)

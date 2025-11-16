@@ -16,15 +16,13 @@
 
 # communications_controller.py
 import datetime
-from typing import Union, override
+from typing import Union
 from openscada_lite.modules.base.base_controller import BaseController
 from openscada_lite.common.models.dtos import StatusDTO, TagUpdateMsg, RawTagUpdateMsg
 
 class DatapointController(BaseController[TagUpdateMsg, RawTagUpdateMsg]):
     def __init__(self, model, socketio, base_event="datapoint", flask_app=None):
         super().__init__(model, socketio, TagUpdateMsg, RawTagUpdateMsg, base_event=base_event, flask_app=flask_app)
-
-    @override
     def validate_request_data(self, data: RawTagUpdateMsg) -> Union[TagUpdateMsg, StatusDTO]:
         try:
             datapoint_identifier = data.datapoint_identifier
