@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # -----------------------------------------------------------------------------
-import eventlet
 import asyncio
 import datetime
 import inspect
@@ -210,7 +209,7 @@ class TestDriver(DriverProtocol, ABC):
                 for tag in self._tags.values():
                     await self._publish_value(tag)
                 print(f"[TEST] Published all tag values for {self._server_name}")
-                eventlet.sleep(5)
+                await asyncio.sleep(5)
                 print(f"[TEST] Simulation loop iteration complete for {self._server_name}")
         except asyncio.CancelledError:
             print(f"[DEBUG] Simulation loop canceled for {self._server_name}")
