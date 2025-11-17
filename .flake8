@@ -1,8 +1,8 @@
 [flake8]
 max-line-length = 100
 extend-ignore = 
-    E203,  # whitespace before ':', compatible with Black
-    W503   # line break before binary operator, compatible with Black
+    E203,
+    W503
 exclude = 
     .git,
     __pycache__,
