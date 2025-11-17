@@ -20,6 +20,7 @@ from typing import runtime_checkable
 from openscada_lite.common.models.dtos import SendCommandMsg
 from openscada_lite.common.models.entities import Datapoint
 
+
 @runtime_checkable
 class DriverProtocol(Protocol):
     async def connect(self) -> None: ...

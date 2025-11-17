@@ -18,6 +18,7 @@
 import datetime
 from openscada_lite.modules.communication.drivers.test.test_driver import TestDriver
 
+
 class TankTestDriver(TestDriver):
     def _simulate_values(self):
         now = datetime.datetime.now()
@@ -28,11 +29,14 @@ class TankTestDriver(TestDriver):
         door_tag = self._tags.get("DOOR")
 
         if not (level_tag and pump_tag and door_tag):
-            print("[SIM] Missing tag(s):", {
-                "TANK": bool(level_tag),
-                "PUMP": bool(pump_tag),
-                "DOOR": bool(door_tag)
-            })
+            print(
+                "[SIM] Missing tag(s):",
+                {
+                    "TANK": bool(level_tag),
+                    "PUMP": bool(pump_tag),
+                    "DOOR": bool(door_tag),
+                },
+            )
             return
 
         try:

@@ -1,11 +1,14 @@
 import asyncio
 import pytest
-from openscada_lite.modules.communication.drivers.test.tank_test_driver import TankTestDriver
+from openscada_lite.modules.communication.drivers.test.tank_test_driver import (
+    TankTestDriver,
+)
 from openscada_lite.common.models.dtos import SendCommandMsg, TagUpdateMsg
 from openscada_lite.common.models.entities import Datapoint
 
 import asyncio
 import pytest
+
 
 @pytest.mark.asyncio
 async def test_test_driver_value_callback():
@@ -16,13 +19,18 @@ async def test_test_driver_value_callback():
     def cb(msg: TagUpdateMsg):
         results.append(msg)
         event.set()  # signal that we got something
-    
+
     driver.register_value_listener(cb)
-    driver.subscribe([Datapoint(name="TANK", type={"default": 0}),Datapoint(name="PUMP", type={"default": "CLOSED"}),Datapoint(name="DOOR", type={"default": "CLOSED"})])
+    driver.subscribe(
+        [
+            Datapoint(name="TANK", type={"default": 0}),
+            Datapoint(name="PUMP", type={"default": "CLOSED"}),
+            Datapoint(name="DOOR", type={"default": "CLOSED"}),
+        ]
+    )
 
     await driver.connect()
-    
-    
+
     # Wait until callback fires (instead of blind sleep)
     await asyncio.sleep(2)
 
@@ -48,7 +56,7 @@ async def test_test_driver_command_feedback():
 
     driver.register_command_feedback(cb)
     await driver.connect()
-    await driver.send_command(SendCommandMsg("cmd1", "WaterTank@TANK", 50 ))
+    await driver.send_command(SendCommandMsg("cmd1", "WaterTank@TANK", 50))
     await asyncio.wait_for(event.wait(), timeout=2.0)
     await driver.disconnect()
 

@@ -12,6 +12,7 @@ from openscada_lite.modules.tracking.service import TrackingService
 from openscada_lite.common.models.dtos import DataFlowEventMsg, DataFlowStatus
 from openscada_lite.common.bus.event_types import EventType
 
+
 @pytest.fixture
 def sample_event():
     return DataFlowEventMsg(
@@ -20,17 +21,20 @@ def sample_event():
         source="UnitTest",
         status=DataFlowStatus.SUCCESS,
         timestamp=datetime.fromisoformat("2025-09-24T12:00:00"),
-        payload={"foo": "bar"}
+        payload={"foo": "bar"},
     )
+
 
 @pytest.fixture
 def model():
     return TrackingModel()
 
+
 @pytest.fixture
 def controller(model):
     socketio = MagicMock()
     return TrackingController(model, socketio)
+
 
 @pytest.mark.asyncio
 async def test_service_bus_mode_adds_event(model, controller, sample_event):
@@ -38,13 +42,15 @@ async def test_service_bus_mode_adds_event(model, controller, sample_event):
     class DummyBus:
         def __init__(self):
             self.subscribed = {}
+
         def subscribe(self, event_type, callback):
             self.subscribed[event_type] = callback
+
         def publish(self, event_type, event):
             if event_type in self.subscribed:
                 asyncio.create_task(self.subscribed[event_type](event))
 
-    event_bus = DummyBus()    
+    event_bus = DummyBus()
     config = Config.get_instance("tests/test_config.json")
     config.get_module_config("tracking")["mode"] = "bus"
     service = TrackingService(event_bus, model, controller)
@@ -59,6 +65,7 @@ async def test_service_bus_mode_adds_event(model, controller, sample_event):
     assert stored.timestamp == sample_event.timestamp
     assert stored.payload == sample_event.payload
 
+
 def test_controller_publish_live_feed(model):
     socketio = MagicMock()
     controller = TrackingController(model, socketio)
@@ -68,13 +75,14 @@ def test_controller_publish_live_feed(model):
         source="UnitTest",
         status=DataFlowStatus.SUCCESS,
         timestamp="2025-09-24T12:00:00",
-        payload={"foo": "bar"}
+        payload={"foo": "bar"},
     )
     controller.publish(event)
     socketio.emit.assert_called_once()
     args, kwargs = socketio.emit.call_args
     assert args[0] == "tracking_datafloweventmsg"
     assert args[1]["track_id"] == "abc123"
+
 
 def test_model_add_and_get_events(model: TrackingModel, sample_event):
     model.update(sample_event)

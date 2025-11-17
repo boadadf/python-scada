@@ -19,18 +19,18 @@ from openscada_lite.app import app, socketio as flask_socketio
 
 SERVER_URL = "http://localhost:5000"
 
+
 @pytest.fixture(autouse=True)
 def reset_event_bus(monkeypatch):
     # Reset the singleton before each test
     monkeypatch.setattr(EventBus, "_instance", None)
 
+
 @pytest.fixture(scope="module", autouse=True)
 def run_server():
     # Start the Flask app in a background thread
     thread = threading.Thread(
-        target=lambda: flask_socketio.run(
-            app, port=5000, allow_unsafe_werkzeug=True
-        ),
+        target=lambda: flask_socketio.run(app, port=5000, allow_unsafe_werkzeug=True),
         daemon=True,
     )
     flask_socketio.start_background_task = immediate_call
@@ -77,8 +77,7 @@ async def test_command_live_feed_and_feedback():
         value=42,
     )
     response = requests.post(
-        f"{SERVER_URL}/command_send_sendcommandmsg",
-        json=test_command.to_dict()
+        f"{SERVER_URL}/command_send_sendcommandmsg", json=test_command.to_dict()
     )
     assert response.status_code == 200
 
@@ -90,12 +89,15 @@ async def test_command_live_feed_and_feedback():
 
     sio.disconnect()
 
+
 def test_command_model_initial_load(monkeypatch):
     # Mock Config.get_instance().get_allowed_command_identifiers()
     allowed = ["WaterTank@CMD1", "AuxServer@CMD2"]
+
     class DummyConfig:
         def get_allowed_command_identifiers(self):
             return allowed
+
     monkeypatch.setattr(Config, "get_instance", lambda: DummyConfig())
 
     model = CommandModel()
@@ -104,14 +106,17 @@ def test_command_model_initial_load(monkeypatch):
         assert cmd_id in model._store
         feedback = model._store[cmd_id]
         assert feedback.datapoint_identifier == cmd_id
-        assert feedback.feedback is None    
+        assert feedback.feedback is None
+
 
 @pytest.mark.asyncio
 async def test_command_service_handle_bus_message(monkeypatch):
     allowed = ["WaterTank@CMD1"]
+
     class DummyConfig:
         def get_allowed_command_identifiers(self):
             return allowed
+
     monkeypatch.setattr(Config, "get_instance", lambda: DummyConfig())
 
     bus = EventBus.get_instance()
@@ -123,7 +128,7 @@ async def test_command_service_handle_bus_message(monkeypatch):
         datapoint_identifier="WaterTank@CMD1",
         value=42,
         feedback="OK",
-        timestamp=None
+        timestamp=None,
     )
 
     await service.handle_bus_message(msg)

@@ -20,7 +20,8 @@ from abc import ABC
 
 from openscada_lite.common.models.dtos import DTO
 
-T = TypeVar('T', bound=DTO)
+T = TypeVar("T", bound=DTO)
+
 
 class BaseModel(ABC, Generic[T]):
     """
@@ -34,7 +35,7 @@ class BaseModel(ABC, Generic[T]):
         """
         Store or update a message.
         """
-        self._store[msg.get_id()] = msg        
+        self._store[msg.get_id()] = msg
 
     def get(self, msg_id: str) -> Optional[T]:
         """

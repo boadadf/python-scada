@@ -33,6 +33,7 @@ from openscada_lite.common.bus.event_bus import EventBus
 from openscada_lite.common.models.dtos import TagUpdateMsg
 from openscada_lite.modules.rule.actioncommands.command_map import ACTION_MAP
 
+
 class RuleEngine:
     """
     RuleEngine evaluates rules on tag updates and executes actions accordingly.
@@ -40,11 +41,14 @@ class RuleEngine:
     - If a rule has both on_condition and off_condition, it follows an on/off lifecycle (actions are only triggered on state transitions).
     - If a rule has no off_condition, its on_actions are executed every time the on_condition is true (no latching).
     """
+
     _instance = None
 
     def __new__(cls, *args, **kwargs):
         if cls._instance is not None:
-            raise RuntimeError("Use RuleManager.get_instance() instead of direct instantiation.")
+            raise RuntimeError(
+                "Use RuleManager.get_instance() instead of direct instantiation."
+            )
         cls._instance = super().__new__(cls)
         return cls._instance
 
@@ -72,10 +76,10 @@ class RuleEngine:
         self.rules = []
         self.datapoint_state = {}
         self.tag_to_rules = {}  # tag_id -> [rules]
-        self.rule_states = {}   # rule_id -> bool (True=active, False=inactive)
+        self.rule_states = {}  # rule_id -> bool (True=active, False=inactive)
         self.load_rules()
         self.build_tag_to_rules_index()
-        self.subscribe_to_eventbus()    
+        self.subscribe_to_eventbus()
 
     def _safe_key(self, tag_id):
         """Convert tag_id to a safe variable name for asteval."""
@@ -128,18 +132,26 @@ class RuleEngine:
 
         safe_key = self._safe_key(tag_id)
         # Normalize value to boolean where applicable
-        self.asteval.symtable[safe_key] = value if isinstance(value, (int, float, bool)) else str(value).upper() == "TRUE"
+        self.asteval.symtable[safe_key] = (
+            value
+            if isinstance(value, (int, float, bool))
+            else str(value).upper() == "TRUE"
+        )
 
         impacted_rules = self.tag_to_rules.get(tag_id, [])
         print(f"[RuleEngine] Received tag update: {tag_id} = {value}")
-        print(f"[RuleEngine] Updated asteval symbol table: {safe_key} = {self.asteval.symtable[safe_key]}")
+        print(
+            f"[RuleEngine] Updated asteval symbol table: {safe_key} = {self.asteval.symtable[safe_key]}"
+        )
         print(f"[RuleEngine] Impacted rules: {impacted_rules}")
         for rule in impacted_rules:
             rule_id = rule.rule_id
             on_active = self.rule_states.get(rule_id, False)
             try:
                 on_result = self.asteval(rule.on_condition.replace("@", "__"))
-                print(f"[RuleEngine] Evaluated on_condition for rule {rule_id}: {on_result}")
+                print(
+                    f"[RuleEngine] Evaluated on_condition for rule {rule_id}: {on_result}"
+                )
                 if self.asteval.error:
                     print("asteval errors:", self.asteval.error)
                 off_cond = getattr(rule, "off_condition", None)
@@ -155,25 +167,40 @@ class RuleEngine:
                 if not on_active and on_result:
                     self.rule_states[rule_id] = True
                     for action in getattr(rule, "on_actions", []):
-                        await self.execute_action(action, tag_id, msg.track_id, active=True, rule_id=rule_id)
+                        await self.execute_action(
+                            action, tag_id, msg.track_id, active=True, rule_id=rule_id
+                        )
                 # OFF transition: only if currently active
                 elif on_active and off_result:
                     self.rule_states[rule_id] = False
                     for action in getattr(rule, "off_actions", []):
-                        await self.execute_action(action, tag_id, msg.track_id, active=False, rule_id=rule_id)
+                        await self.execute_action(
+                            action, tag_id, msg.track_id, active=False, rule_id=rule_id
+                        )
             else:
                 # Only trigger on rising edge (transition from false to true)
                 prev_active = self.rule_states.get(rule_id, False)
                 if not prev_active and on_result:
                     self.rule_states[rule_id] = True
                     for action in getattr(rule, "on_actions", []):
-                        await self.execute_action(action, tag_id, msg.track_id, active=True, rule_id=rule_id)
+                        await self.execute_action(
+                            action, tag_id, msg.track_id, active=True, rule_id=rule_id
+                        )
                 elif prev_active and not on_result:
                     # Reset state so next true will trigger again
                     self.rule_states[rule_id] = False
                     # If raise_alarm is in on_actions, trigger lower_alarm automatically
-                    if any("raise_alarm" in action for action in getattr(rule, "on_actions", [])):
-                        await self.execute_action("lower_alarm()", tag_id, msg.track_id, active=False, rule_id=rule_id)
+                    if any(
+                        "raise_alarm" in action
+                        for action in getattr(rule, "on_actions", [])
+                    ):
+                        await self.execute_action(
+                            "lower_alarm()",
+                            tag_id,
+                            msg.track_id,
+                            active=False,
+                            rule_id=rule_id,
+                        )
 
     def parse_action(self, action_str):
         """
@@ -192,7 +219,9 @@ class RuleEngine:
         params = eval(f"({params_str},)") if params_str else ()
         return action_name, params
 
-    async def execute_action(self, action_str, identifier, track_id, active=True, rule_id=None):
+    async def execute_action(
+        self, action_str, identifier, track_id, active=True, rule_id=None
+    ):
         """
         Execute an action by looking up its handler and calling it.
 

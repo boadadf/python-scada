@@ -21,7 +21,6 @@ from flask import Flask, redirect, send_from_directory
 from flask_socketio import SocketIO
 
 
-
 # Set SCADA_CONFIG_PATH from command-line argument or default
 if "SCADA_CONFIG_PATH" not in os.environ:
     # Look for a non-flag argument (for local use)
@@ -32,11 +31,13 @@ if "SCADA_CONFIG_PATH" not in os.environ:
     else:
         # Default to ./config/system_config.json
         os.environ["SCADA_CONFIG_PATH"] = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), "..", "config", "system_config.json")
+            os.path.join(
+                os.path.dirname(__file__), "..", "config", "system_config.json"
+            )
         )
 
 print(f"[APP] Using SCADA_CONFIG_PATH: {os.environ['SCADA_CONFIG_PATH']}")
-        
+
 from openscada_lite.modules.security.controller import SecurityController
 from openscada_lite.modules.security.model import SecurityModel
 from openscada_lite.modules.security.service import SecurityService
@@ -49,11 +50,7 @@ from openscada_lite.web.scada.routes import scada_bp
 # ---------------------------------------------------------------------
 # Flask & SocketIO setup
 # ---------------------------------------------------------------------
-app = Flask(
-    __name__,
-    static_folder="web",
-    static_url_path="/static"
-)
+app = Flask(__name__, static_folder="web", static_url_path="/static")
 
 # Register security blueprint
 app.register_blueprint(scada_bp)
@@ -64,11 +61,15 @@ app.register_blueprint(config_bp)
 # Register security editor blueprint
 app.register_blueprint(security_bp)
 
-@app.route('/svg/<path:filename>')
+
+@app.route("/svg/<path:filename>")
 def serve_svg(filename):
-    svg_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'config', 'svg'))
+    svg_dir = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "..", "config", "svg")
+    )
     print("Requested file:", filename)  # Add this for debugging
     return send_from_directory(svg_dir, filename, conditional=False)
+
 
 socketio = SocketIO(app, async_mode="threading", cors_allowed_origins="*")
 event_bus = EventBus.get_instance()
@@ -100,16 +101,23 @@ def initialize_modules(config: dict, socketio: SocketIO, event_bus: EventBus) ->
         print(f"[INIT] Loading module: {module_name}")
 
         # Import classes dynamically
-        model_cls = getattr(importlib.import_module(f"{base_path}.model"), f"{class_prefix}Model")
-        controller_cls = getattr(importlib.import_module(f"{base_path}.controller"), f"{class_prefix}Controller")
-        service_cls = getattr(importlib.import_module(f"{base_path}.service"), f"{class_prefix}Service")
+        model_cls = getattr(
+            importlib.import_module(f"{base_path}.model"), f"{class_prefix}Model"
+        )
+        controller_cls = getattr(
+            importlib.import_module(f"{base_path}.controller"),
+            f"{class_prefix}Controller",
+        )
+        service_cls = getattr(
+            importlib.import_module(f"{base_path}.service"), f"{class_prefix}Service"
+        )
 
         print(f"Instantiating: {module_name}")
         # Instantiate
         model = model_cls()
         controller = controller_cls(model, socketio, module_name, app)
         service = service_cls(event_bus, model, controller)
-        
+
         module_instances[module_name] = {
             "model": model,
             "controller": controller,
@@ -122,11 +130,13 @@ def initialize_modules(config: dict, socketio: SocketIO, event_bus: EventBus) ->
 
 module_instances = initialize_modules(system_config, socketio, event_bus)
 
+
 async def async_init_all(module_instances):
     for mod in module_instances.values():
         service = mod.get("service")
         if hasattr(service, "async_init"):
             await service.async_init()
+
 
 # Schedule async initialization on the running loop
 try:
@@ -135,16 +145,18 @@ try:
 except RuntimeError:
     # no running loop, start one manually
     asyncio.run(async_init_all(module_instances))
-#Security modules are not part of the dynamic modules
+# Security modules are not part of the dynamic modules
 print(f"[APP] Initializing Security Module {(app)}")
 security_model = SecurityModel(app)
 security_service = SecurityService(event_bus, security_model)
 security_controller = SecurityController(security_model, security_service)
 security_controller.register_routes(app)
 
+
 @app.route("/")
 def home():
     return redirect("/scada")
+
 
 # ---------------------------------------------------------------------
 # Entrypoint
@@ -156,4 +168,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

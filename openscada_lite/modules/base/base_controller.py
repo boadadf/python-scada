@@ -73,7 +73,6 @@ class BaseController(ABC, Generic[T, U]):
         self._batch_thread = threading.Thread(target=self._batch_worker, daemon=True)
         self._batch_thread.start()
 
-
         # Register websocket and HTTP handlers
         self.register_socketio()
         if flask_app is not None:
@@ -129,19 +128,23 @@ class BaseController(ABC, Generic[T, U]):
     # ---------------------------------------------------------------------
     # HTTP (for send_* endpoints)
     # ---------------------------------------------------------------------
-    def register_http(self, flask_app):        
+    def register_http(self, flask_app):
         if self.U_cls is None:
             return
 
         endpoint_name = f"{self.base_event}_send_{self.U_cls.__name__.lower()}"
         route_path = f"/{endpoint_name}"
+
         @flask_app.route(route_path, methods=["POST"], endpoint=endpoint_name)
         async def _incoming_handler():
             data = request.get_json() or {}
             username = request.headers.get("X-User", "")  # Injected by login/session
 
             if not self.is_allowed(username, endpoint_name):
-                return jsonify(StatusDTO(status="error", reason="Unauthorized").to_dict()), 403
+                return (
+                    jsonify(StatusDTO(status="error", reason="Unauthorized").to_dict()),
+                    403,
+                )
 
             return await self.handle_request(data)
 
@@ -156,7 +159,10 @@ class BaseController(ABC, Generic[T, U]):
         if self.service:
             await self.service.handle_controller_message(result)
 
-        return jsonify(StatusDTO(status="ok", reason="Request accepted.").to_dict()), 200
+        return (
+            jsonify(StatusDTO(status="ok", reason="Request accepted.").to_dict()),
+            200,
+        )
 
     # ---------------------------------------------------------------------
     # Validation

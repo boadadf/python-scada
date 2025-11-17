@@ -14,7 +14,7 @@ from openscada_lite.modules.alarm.service import AlarmService
 @pytest.fixture(autouse=True)
 def clear_singletons(monkeypatch):
     # Ensure clean environment for each test
-   # monkeypatch.setattr(EventBus, "_instance", None)
+    # monkeypatch.setattr(EventBus, "_instance", None)
     RuleEngine.reset_instance()
 
 
@@ -28,7 +28,7 @@ async def test_integration_switch_rules_alarm_lifecycle():
     """
 
     # --- Setup core components ---
-    bus = EventBus.get_instance()    
+    bus = EventBus.get_instance()
     bus.clear_subscribers()
     model = AlarmModel()
     AlarmService(bus, model, controller=None)
@@ -41,15 +41,15 @@ async def test_integration_switch_rules_alarm_lifecycle():
             on_condition="TrainTestDriver@RIGHT_SWITCH_CONTROL == 'STRAIGHT' and TrainTestDriver@LEFT_SWITCH_CONTROL == 'TURN'",
             on_actions=["raise_alarm()"],
             off_condition="not (TrainTestDriver@RIGHT_SWITCH_CONTROL == 'STRAIGHT' and TrainTestDriver@LEFT_SWITCH_CONTROL == 'TURN')",
-            off_actions=["lower_alarm()"]
+            off_actions=["lower_alarm()"],
         ),
         Rule(
             rule_id="switch_error_turn",
             on_condition="TrainTestDriver@RIGHT_SWITCH_CONTROL == 'TURN' and TrainTestDriver@LEFT_SWITCH_CONTROL == 'STRAIGHT'",
             on_actions=["raise_alarm()"],
             off_condition="not (TrainTestDriver@RIGHT_SWITCH_CONTROL == 'TURN' and TrainTestDriver@LEFT_SWITCH_CONTROL == 'STRAIGHT')",
-            off_actions=["lower_alarm()"]
-        )
+            off_actions=["lower_alarm()"],
+        ),
     ]
     engine.build_tag_to_rules_index()
 
@@ -62,19 +62,43 @@ async def test_integration_switch_rules_alarm_lifecycle():
     bus.subscribe(EventType.ALARM_UPDATE, capture)
 
     # --- Simulate condition for switch_error_turn ---
-    await bus.publish(EventType.TAG_UPDATE, TagUpdateMsg(datapoint_identifier="TrainTestDriver@RIGHT_SWITCH_CONTROL", value="TURN"))
-    await bus.publish(EventType.TAG_UPDATE, TagUpdateMsg(datapoint_identifier="TrainTestDriver@LEFT_SWITCH_CONTROL", value="STRAIGHT"))
+    await bus.publish(
+        EventType.TAG_UPDATE,
+        TagUpdateMsg(
+            datapoint_identifier="TrainTestDriver@RIGHT_SWITCH_CONTROL", value="TURN"
+        ),
+    )
+    await bus.publish(
+        EventType.TAG_UPDATE,
+        TagUpdateMsg(
+            datapoint_identifier="TrainTestDriver@LEFT_SWITCH_CONTROL", value="STRAIGHT"
+        ),
+    )
     await asyncio.sleep(0.05)
 
     assert len(updates) >= 1
     first = updates[-1]
-    assert first.datapoint_identifier in ("TrainTestDriver@RIGHT_SWITCH_CONTROL", "TrainTestDriver@LEFT_SWITCH_CONTROL")
+    assert first.datapoint_identifier in (
+        "TrainTestDriver@RIGHT_SWITCH_CONTROL",
+        "TrainTestDriver@LEFT_SWITCH_CONTROL",
+    )
     assert first.activation_time is not None
     assert first.deactivation_time is None
 
     # --- Now simulate transition that should deactivate the first rule and activate the second ---
-    await bus.publish(EventType.TAG_UPDATE, TagUpdateMsg(datapoint_identifier="TrainTestDriver@RIGHT_SWITCH_CONTROL", value="STRAIGHT"))
-    await bus.publish(EventType.TAG_UPDATE, TagUpdateMsg(datapoint_identifier="TrainTestDriver@LEFT_SWITCH_CONTROL", value="TURN"))
+    await bus.publish(
+        EventType.TAG_UPDATE,
+        TagUpdateMsg(
+            datapoint_identifier="TrainTestDriver@RIGHT_SWITCH_CONTROL",
+            value="STRAIGHT",
+        ),
+    )
+    await bus.publish(
+        EventType.TAG_UPDATE,
+        TagUpdateMsg(
+            datapoint_identifier="TrainTestDriver@LEFT_SWITCH_CONTROL", value="TURN"
+        ),
+    )
     await asyncio.sleep(0.05)
 
     # We should now have an update showing a deactivation, followed by a new activation
@@ -87,8 +111,19 @@ async def test_integration_switch_rules_alarm_lifecycle():
     assert activation_2.activation_time is not None
 
     # --- Finally, clear both conditions (no error state) ---
-    await bus.publish(EventType.TAG_UPDATE, TagUpdateMsg(datapoint_identifier="TrainTestDriver@RIGHT_SWITCH_CONTROL", value="STRAIGHT"))
-    await bus.publish(EventType.TAG_UPDATE, TagUpdateMsg(datapoint_identifier="TrainTestDriver@LEFT_SWITCH_CONTROL", value="STRAIGHT"))
+    await bus.publish(
+        EventType.TAG_UPDATE,
+        TagUpdateMsg(
+            datapoint_identifier="TrainTestDriver@RIGHT_SWITCH_CONTROL",
+            value="STRAIGHT",
+        ),
+    )
+    await bus.publish(
+        EventType.TAG_UPDATE,
+        TagUpdateMsg(
+            datapoint_identifier="TrainTestDriver@LEFT_SWITCH_CONTROL", value="STRAIGHT"
+        ),
+    )
     await asyncio.sleep(0.05)
 
     # The last update should have both activation and deactivation time
@@ -114,7 +149,7 @@ async def test_reactivation_creates_new_occurrence():
             on_condition="X@pos == 'A'",
             on_actions=["raise_alarm()"],
             off_condition="X@pos != 'A'",
-            off_actions=["lower_alarm()"]
+            off_actions=["lower_alarm()"],
         )
     ]
     engine.build_tag_to_rules_index()
@@ -127,13 +162,19 @@ async def test_reactivation_creates_new_occurrence():
     bus.subscribe(EventType.ALARM_UPDATE, capture)
 
     # Activate once
-    await bus.publish(EventType.TAG_UPDATE, TagUpdateMsg(datapoint_identifier="X@pos", value="A"))
+    await bus.publish(
+        EventType.TAG_UPDATE, TagUpdateMsg(datapoint_identifier="X@pos", value="A")
+    )
     await asyncio.sleep(0.01)
     # Deactivate
-    await bus.publish(EventType.TAG_UPDATE, TagUpdateMsg(datapoint_identifier="X@pos", value="B"))
+    await bus.publish(
+        EventType.TAG_UPDATE, TagUpdateMsg(datapoint_identifier="X@pos", value="B")
+    )
     await asyncio.sleep(0.01)
     # Reactivate
-    await bus.publish(EventType.TAG_UPDATE, TagUpdateMsg(datapoint_identifier="X@pos", value="A"))
+    await bus.publish(
+        EventType.TAG_UPDATE, TagUpdateMsg(datapoint_identifier="X@pos", value="A")
+    )
     await asyncio.sleep(0.01)
 
     assert len(updates) >= 3

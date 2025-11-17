@@ -20,6 +20,7 @@ from datetime import timezone as UTC
 from dataclasses import dataclass, field
 from typing import List, Optional, Any, Dict
 
+
 @dataclass
 class Rule:
     rule_id: str
@@ -27,6 +28,7 @@ class Rule:
     on_actions: List[str] = field(default_factory=list)
     off_condition: Optional[str] = None
     off_actions: List[str] = field(default_factory=list)
+
 
 @dataclass
 class DatapointType:
@@ -37,21 +39,24 @@ class DatapointType:
     values: Optional[List[Any]] = None  # For enum types
     default: Optional[Any] = None
 
+
 @dataclass
 class Datapoint:
     name: str
     type: DatapointType
+
 
 @dataclass
 class AnimationEntry:
     attribute: str
     quality: Dict[str, Any] = field(default_factory=dict)
     expression: Any = None  # str, dict, or alarm mapping {ACTIVE: ..., INACTIVE: ...}
-    triggerType: str = "datapoint"           # 'datapoint' or 'alarm'
-    alarmEvent: Optional[str] = None         # e.g., 'onAlarmActive', 'onAlarmAck', etc.
-    default: Any = None                       # value to revert to
-    revertAfter: float = 0                    # seconds after which to revert
-    duration: float = 0.5                     # default animation duration in seconds
+    triggerType: str = "datapoint"  # 'datapoint' or 'alarm'
+    alarmEvent: Optional[str] = None  # e.g., 'onAlarmActive', 'onAlarmAck', etc.
+    default: Any = None  # value to revert to
+    revertAfter: float = 0  # seconds after which to revert
+    duration: float = 0.5  # default animation duration in seconds
+
 
 @dataclass
 class Animation:

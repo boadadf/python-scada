@@ -16,6 +16,7 @@
 
 from openscada_lite.common.models.dtos import DriverConnectStatus, AnimationUpdateMsg
 
+
 class ConnectionHandler:
     def can_handle(self, msg) -> bool:
         return isinstance(msg, DriverConnectStatus)
@@ -52,13 +53,15 @@ class ConnectionHandler:
             if agg_text:
                 cfg["text"] = agg_text
 
-            updates.append(AnimationUpdateMsg(
-                svg_name=svg_name,
-                element_id=elem_id,
-                animation_type=anim_name,
-                value=None,
-                config=cfg,
-                test=False
-            ))
+            updates.append(
+                AnimationUpdateMsg(
+                    svg_name=svg_name,
+                    element_id=elem_id,
+                    animation_type=anim_name,
+                    value=None,
+                    config=cfg,
+                    test=False,
+                )
+            )
 
         return updates

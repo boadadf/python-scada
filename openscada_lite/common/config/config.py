@@ -19,12 +19,15 @@ import json
 import xml.etree.ElementTree as ET
 from openscada_lite.common.models.entities import Animation, AnimationEntry, Rule
 
+
 class Config:
     _instance = None
 
     def __new__(cls, *args, **kwargs):
         if cls._instance is not None:
-            raise RuntimeError("Use Config.get_instance() instead of direct instantiation.")
+            raise RuntimeError(
+                "Use Config.get_instance() instead of direct instantiation."
+            )
         return super().__new__(cls)
 
     def __init__(self, config_path: str):
@@ -64,7 +67,7 @@ class Config:
     def get_rules(self):
         rules = self._config.get("rules", [])
         return [Rule(**r) for r in rules]
-    
+
     def get_datapoint_types_for_driver(self, driver_name: str, types: dict) -> dict:
         """
         Returns a dict {tag_name: dp_type_dict} for the given driver.
@@ -76,7 +79,7 @@ class Config:
                     for dp in drv.get("datapoints", [])
                 }
         return {}
-    
+
     def get_allowed_datapoint_identifiers(self):
         """Return fully qualified tag_ids: driver_name@datapoint_identifier"""
         datapoint_identifiers = []
@@ -86,7 +89,9 @@ class Config:
                 # Check if the datapoint_identifier is already fully qualified
                 # Fully qualified dps are handled by its own driver
                 if "@" not in datapoint_identifier["name"]:
-                    datapoint_identifiers.append(f"{driver_name}@{datapoint_identifier['name']}")
+                    datapoint_identifiers.append(
+                        f"{driver_name}@{datapoint_identifier['name']}"
+                    )
         return datapoint_identifiers
 
     def get_allowed_command_identifiers(self):
@@ -95,7 +100,9 @@ class Config:
         for driver in self.get_drivers():
             driver_name = driver["name"]
             for datapoint_identifier in driver.get("command_datapoints", []):
-                datapoint_identifiers.append(f"{driver_name}@{datapoint_identifier['name']}")
+                datapoint_identifiers.append(
+                    f"{driver_name}@{datapoint_identifier['name']}"
+                )
         return datapoint_identifiers
 
     def get_default_value(self, datapoint_identifier: str):
@@ -129,10 +136,12 @@ class Config:
         Validate if the value is valid for the given datapoint_identifier.
         Supports enum and float types as defined in dp_types.
         """
-        # Find the driver and datapoint type        
+        # Find the driver and datapoint type
         for driver in self.get_drivers():
             driver_name = driver["name"]
-            for dp in driver.get("datapoints", []) + driver.get("command_datapoints", []):
+            for dp in driver.get("datapoints", []) + driver.get(
+                "command_datapoints", []
+            ):
                 if f"{driver_name}@{dp['name']}" == datapoint_identifier:
                     dp_type_name = dp.get("type")
                     dp_types = self.get_types()
@@ -172,11 +181,10 @@ class Config:
         animations_dict = self._config.get("animations", {})
         return {
             name: Animation(
-                name=name,
-                entries=[AnimationEntry(**entry) for entry in entries]
+                name=name, entries=[AnimationEntry(**entry) for entry in entries]
             )
             for name, entries in animations_dict.items()
-        } 
+        }
 
     def get_streams(self):
         """
@@ -188,7 +196,11 @@ class Config:
         """
         Internal: Returns the SVG folder path from config or defaults to './svg'.
         """
-        config_dir = os.path.dirname(self._config_path) if hasattr(self, "_config_path") else os.getcwd()
+        config_dir = (
+            os.path.dirname(self._config_path)
+            if hasattr(self, "_config_path")
+            else os.getcwd()
+        )
         svg_folder = self._config.get("svg_folder", None)
         if svg_folder:
             return os.path.join(config_dir, svg_folder)
@@ -226,12 +238,16 @@ class Config:
                         (fname, elem.attrib.get("id"), anim)
                     )
         return datapoint_map
-    
+
     def get_security_config_path(self) -> str:
         """
         Returns the absolute path to security_config.json in the config folder.
         """
-        config_dir = os.path.dirname(self._config_path) if hasattr(self, "_config_path") else os.getcwd()
+        config_dir = (
+            os.path.dirname(self._config_path)
+            if hasattr(self, "_config_path")
+            else os.getcwd()
+        )
         return os.path.join(config_dir, "security_config.json")
 
     def get_gis_icons(self) -> list:

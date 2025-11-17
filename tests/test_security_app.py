@@ -2,6 +2,7 @@ import pytest
 from flask import Flask
 import json
 
+
 @pytest.fixture
 def app(tmp_path):
     from openscada_lite.modules.security.model import SecurityModel
@@ -10,10 +11,7 @@ def app(tmp_path):
 
     flask_app = Flask(__name__)
     config_path = tmp_path / "security_config.json"
-    config_path.write_text(json.dumps({
-        "users": [],
-        "groups": []
-    }))
+    config_path.write_text(json.dumps({"users": [], "groups": []}))
     model = SecurityModel(flask_app)
     service = SecurityService(None, model)
     controller = SecurityController(model, service)
@@ -21,9 +19,11 @@ def app(tmp_path):
     flask_app.config["TESTING"] = True
     return flask_app
 
+
 @pytest.fixture
 def client(app):
     return app.test_client()
+
 
 def test_full_config_roundtrip(client):
     # Prepare full config JSON
@@ -40,24 +40,18 @@ def test_full_config_roundtrip(client):
                     "datapoint_send_rawtagupdatemsg",
                     "security_bp.reload_security",
                     "security_bp.save_config",
-                    "animation_send_animationupdaterequestmsg"
-                ]
+                    "animation_send_animationupdaterequestmsg",
+                ],
             }
         ],
         "users": [
             {
-                "allowed_apps": [
-                    "security_editor",
-                    "config_editor",
-                    "scada"
-                ],
-                "groups": [
-                    "all_group"
-                ],
+                "allowed_apps": ["security_editor", "config_editor", "scada"],
+                "groups": ["all_group"],
                 "password_hash": "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918",  # hash for 'admin'
-                "username": "admin"
+                "username": "admin",
             }
-        ]
+        ],
     }
 
     # Save config
@@ -75,70 +69,90 @@ def test_full_config_roundtrip(client):
     assert loaded["users"][0]["username"] == "admin"
     assert loaded["groups"][0]["name"] == "all_group"
 
+
 def test_login_admin(client):
     # Prepare config with admin user (password: 'admin')
     config = {
-        "groups": [
-            {
-                "name": "test_group",
-                "permissions": ["security_editor_access"]
-            }
-        ],
+        "groups": [{"name": "test_group", "permissions": ["security_editor_access"]}],
         "users": [
             {
                 "allowed_apps": ["security_editor"],
                 "groups": ["test_group"],
                 "password_hash": "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918",  # hash for 'admin'
-                "username": "admin"
+                "username": "admin",
             }
-        ]
+        ],
     }
     client.post("/security-editor/api/config", json=config)
 
     # Try login with admin/admin
-    resp = client.post("/security/login", json={"username": "admin", "password": "admin", "app": "security_editor"})
+    resp = client.post(
+        "/security/login",
+        json={"username": "admin", "password": "admin", "app": "security_editor"},
+    )
     assert resp.status_code == 200
     data = resp.get_json()
     assert "token" in data
     assert data["user"] == "admin"
 
+
 def test_invalid_login(client):
     # Prepare config with admin user
     config = {
         "groups": [{"name": "test_group", "permissions": []}],
-        "users": [{
-            "allowed_apps": ["security_editor"],
-            "groups": ["test_group"],
-            "password_hash": "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918",
-            "username": "admin"
-        }]
+        "users": [
+            {
+                "allowed_apps": ["security_editor"],
+                "groups": ["test_group"],
+                "password_hash": "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918",
+                "username": "admin",
+            }
+        ],
     }
     client.post("/security-editor/api/config", json=config)
 
     # Wrong password
-    resp = client.post("/security/login", json={"username": "admin", "password": "wrong", "app": "security_editor"})
+    resp = client.post(
+        "/security/login",
+        json={"username": "admin", "password": "wrong", "app": "security_editor"},
+    )
     assert resp.status_code == 401
 
     # Unknown user
-    resp = client.post("/security/login", json={"username": "ghost", "password": "admin", "app": "security_editor"})
+    resp = client.post(
+        "/security/login",
+        json={"username": "ghost", "password": "admin", "app": "security_editor"},
+    )
     assert resp.status_code == 401
+
 
 def test_missing_fields(client):
     # POST config missing users/groups
     resp = client.post("/security-editor/api/config", json={})
     assert resp.status_code == 400 or resp.status_code == 422
 
+
 def test_permissions_structure(client):
     # Save config with multiple groups/permissions
     config = {
         "groups": [
             {"name": "g1", "permissions": ["p1", "p2"]},
-            {"name": "g2", "permissions": ["p3"]}
+            {"name": "g2", "permissions": ["p3"]},
         ],
         "users": [
-            {"username": "u1", "groups": ["g1"], "allowed_apps": [], "password_hash": ""},
-            {"username": "u2", "groups": ["g2"], "allowed_apps": [], "password_hash": ""}
-        ]
+            {
+                "username": "u1",
+                "groups": ["g1"],
+                "allowed_apps": [],
+                "password_hash": "",
+            },
+            {
+                "username": "u2",
+                "groups": ["g2"],
+                "allowed_apps": [],
+                "password_hash": "",
+            },
+        ],
     }
     resp = client.post("/security-editor/api/config", json=config)
     assert resp.status_code == 200

@@ -20,8 +20,9 @@ from flask import jsonify, request, render_template
 from . import security_bp
 
 CONFIG_FILE = os.path.join(
-    os.path.dirname(__file__), '..', '..', '..', 'config', 'security_config.json'
+    os.path.dirname(__file__), "..", "..", "..", "config", "security_config.json"
 )
+
 
 @security_bp.route("/")
 def editor():

@@ -30,19 +30,26 @@ class BoilerTestDriver(TestDriver):
         heater_tag = self._tags.get("HEATER")
 
         if not (valve_tag and pressure_tag and temp_tag and heater_tag):
-            print("[SIM] Missing tag(s):", {
-                "VALVE": bool(valve_tag),
-                "PRESSURE": bool(pressure_tag),
-                "TEMPERATURE": bool(temp_tag),
-                "HEATER": bool(heater_tag)
-            })
+            print(
+                "[SIM] Missing tag(s):",
+                {
+                    "VALVE": bool(valve_tag),
+                    "PRESSURE": bool(pressure_tag),
+                    "TEMPERATURE": bool(temp_tag),
+                    "HEATER": bool(heater_tag),
+                },
+            )
             return
 
         valve = valve_tag.value if valve_tag.value else "CLOSED"
         heater = heater_tag.value if heater_tag.value else "CLOSED"
 
         try:
-            pressure = float(pressure_tag.value) if pressure_tag.value not in (None, "") else 50.0
+            pressure = (
+                float(pressure_tag.value)
+                if pressure_tag.value not in (None, "")
+                else 50.0
+            )
         except Exception as e:
             print(f"[SIM] Error parsing pressure value: {pressure_tag.value} ({e})")
             pressure = 50.0
@@ -53,7 +60,9 @@ class BoilerTestDriver(TestDriver):
             print(f"[SIM] Error parsing temperature value: {temp_tag.value} ({e})")
             temp = 120.0
 
-        print(f"[SIM] Before: pressure={pressure}, temp={temp}, valve={valve}, heater={heater}")
+        print(
+            f"[SIM] Before: pressure={pressure}, temp={temp}, valve={valve}, heater={heater}"
+        )
 
         # --- simulate pressure ---
         if heater == "OPENED":

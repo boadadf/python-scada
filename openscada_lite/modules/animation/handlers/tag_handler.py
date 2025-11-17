@@ -58,12 +58,14 @@ class TagHandler:
             if agg_text:
                 cfg["text"] = agg_text
 
-            updates.append(AnimationUpdateMsg(
-                svg_name=svg_name,
-                element_id=elem_id,
-                animation_type=anim_name,
-                value=msg.value,
-                config=cfg,
-                test=getattr(msg, "test", False)
-            ))
+            updates.append(
+                AnimationUpdateMsg(
+                    svg_name=svg_name,
+                    element_id=elem_id,
+                    animation_type=anim_name,
+                    value=msg.value,
+                    config=cfg,
+                    test=getattr(msg, "test", False),
+                )
+            )
         return updates

@@ -21,12 +21,15 @@ from typing import Any, Callable, Dict, List
 
 from openscada_lite.common.bus.event_types import EventType
 
+
 class EventBus:
     _instance = None
 
     def __new__(cls, *args, **kwargs):
         if cls._instance is not None:
-            raise RuntimeError("Use EventBus.get_instance() instead of direct instantiation.")
+            raise RuntimeError(
+                "Use EventBus.get_instance() instead of direct instantiation."
+            )
         return super().__new__(cls)
 
     @classmethod
@@ -39,7 +42,9 @@ class EventBus:
 
     def __init__(self):
         # Each event type has a list of subscriber callbacks
-        self._subscribers: Dict[EventType, List[Callable[[Any], Any]]] = defaultdict(list)
+        self._subscribers: Dict[EventType, List[Callable[[Any], Any]]] = defaultdict(
+            list
+        )
 
     def clear_subscribers(self):
         """Remove all subscribers (for test isolation)."""

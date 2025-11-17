@@ -15,7 +15,12 @@
 # -----------------------------------------------------------------------------
 
 from typing import Protocol
-from openscada_lite.common.models.dtos import RawTagUpdateMsg, CommandFeedbackMsg, DriverConnectStatus
+from openscada_lite.common.models.dtos import (
+    RawTagUpdateMsg,
+    CommandFeedbackMsg,
+    DriverConnectStatus,
+)
+
 
 class CommunicationListener(Protocol):
     async def on_raw_tag_update(self, msg: RawTagUpdateMsg): ...

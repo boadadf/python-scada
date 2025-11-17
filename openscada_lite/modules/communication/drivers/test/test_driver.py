@@ -23,7 +23,12 @@ from typing import Dict, List, Callable, Any
 from openscada_lite.common.config.config import Config
 from openscada_lite.common.tracking.decorators import publish_data_flow_from_arg_async
 from openscada_lite.common.tracking.tracking_types import DataFlowStatus
-from openscada_lite.common.models.dtos import DriverConnectStatus, RawTagUpdateMsg, CommandFeedbackMsg, SendCommandMsg
+from openscada_lite.common.models.dtos import (
+    DriverConnectStatus,
+    RawTagUpdateMsg,
+    CommandFeedbackMsg,
+    SendCommandMsg,
+)
 from openscada_lite.modules.communication.drivers.driver_protocol import DriverProtocol
 from openscada_lite.common.models.entities import Datapoint
 
@@ -34,8 +39,12 @@ class TestDriver(DriverProtocol, ABC):
         self._server_name = server_name
         self._tags: Dict[str, RawTagUpdateMsg] = {}
         self._value_callback: Callable[[RawTagUpdateMsg], Any] | None = None
-        self._communication_status_callback: Callable[[DriverConnectStatus], Any] | None = None
-        self._command_feedback_callback: Callable[[CommandFeedbackMsg], Any] | None = None
+        self._communication_status_callback: (
+            Callable[[DriverConnectStatus], Any] | None
+        ) = None
+        self._command_feedback_callback: Callable[[CommandFeedbackMsg], Any] | None = (
+            None
+        )
         self._running = False
         self._connected = False
         self._task: asyncio.Task | None = None
@@ -63,14 +72,16 @@ class TestDriver(DriverProtocol, ABC):
     async def disconnect(self):
         self._connected = False
         await self.stop_test()
-        print(f"[DISCONNECT] Disconnecting driver {self._server_name}")        
-        await self.publish_driver_state("offline")        
+        print(f"[DISCONNECT] Disconnecting driver {self._server_name}")
+        await self.publish_driver_state("offline")
 
     async def initValues(self):
         now = datetime.datetime.now()
         print(f"[INIT] Initializing values for {self._server_name} tags: {self._tags}")
-        for tag in self._tags.values():            
-            tag.value = Config.get_instance().get_default_value(tag.datapoint_identifier)
+        for tag in self._tags.values():
+            tag.value = Config.get_instance().get_default_value(
+                tag.datapoint_identifier
+            )
             tag.timestamp = now
             tag.quality = "good"
             await self._publish_value(tag)
@@ -140,21 +151,21 @@ class TestDriver(DriverProtocol, ABC):
                     datapoint_identifier=full_tag_id,
                     value=value,
                     quality="good",
-                    timestamp=datetime.datetime.now()
+                    timestamp=datetime.datetime.now(),
                 )
                 await self._safe_invoke(self._value_callback, tag_msg)
-            
+
             feedback = "OK" if exists else "NOK"
             msg = CommandFeedbackMsg(
                 command_id=command_id,
                 datapoint_identifier=data.datapoint_identifier,
                 feedback=feedback,
                 value=data.value,
-                timestamp=datetime.datetime.now()
+                timestamp=datetime.datetime.now(),
             )
-            await self._safe_invoke(self._command_feedback_callback, msg)            
+            await self._safe_invoke(self._command_feedback_callback, msg)
 
-    async def handle_special_command(self, datapoint_name: str, value: str ) -> str:
+    async def handle_special_command(self, datapoint_name: str, value: str) -> str:
         print(f"[COMMAND] Handling special command: {datapoint_name} = {value}")
         if datapoint_name == "TEST_CMD":
             if value == "START":
@@ -172,7 +183,10 @@ class TestDriver(DriverProtocol, ABC):
                     else:
                         await self.stop_test()
                     return new_value
-        elif datapoint_name in ["PUMP_CMD", "DOOR_CMD", "VALVE_CMD", "HEATER_CMD"] and value == "TOGGLE":
+        elif (
+            datapoint_name in ["PUMP_CMD", "DOOR_CMD", "VALVE_CMD", "HEATER_CMD"]
+            and value == "TOGGLE"
+        ):
             base_name = datapoint_name[:-4]  # Remove _CMD
             if base_name in self._tags:
                 current_value = self._tags[base_name].value
@@ -210,18 +224,21 @@ class TestDriver(DriverProtocol, ABC):
                     await self._publish_value(tag)
                 print(f"[TEST] Published all tag values for {self._server_name}")
                 await asyncio.sleep(5)
-                print(f"[TEST] Simulation loop iteration complete for {self._server_name}")
+                print(
+                    f"[TEST] Simulation loop iteration complete for {self._server_name}"
+                )
         except asyncio.CancelledError:
             print(f"[DEBUG] Simulation loop canceled for {self._server_name}")
         finally:
             print(f"[TEST] Simulation loop stopped for {self._server_name}")
 
-
     # For testing: simulate a value change
     async def simulate_value(self, tag_id: str, value: Any, track_id: str):
         if self._value_callback:
             msg = RawTagUpdateMsg(
-                datapoint_identifier=f"{self._server_name}@{tag_id}", value=value, track_id=track_id
+                datapoint_identifier=f"{self._server_name}@{tag_id}",
+                value=value,
+                track_id=track_id,
             )
             await self._safe_invoke(self._value_callback, msg)
 
@@ -229,7 +246,7 @@ class TestDriver(DriverProtocol, ABC):
     async def _publish_value(self, tag: RawTagUpdateMsg):
         await self._safe_invoke(self._value_callback, tag)
 
-    async def _publish_all(self):   
+    async def _publish_all(self):
         for tag in self._tags.values():
             await self._publish_value(tag)
 

@@ -19,7 +19,11 @@ import uuid
 import asyncio
 from opcua import Server, ua
 from openscada_lite.modules.communication.drivers.server_protocol import ServerProtocol
-from openscada_lite.common.models.dtos import DriverConnectStatus, TagUpdateMsg, SendCommandMsg
+from openscada_lite.common.models.dtos import (
+    DriverConnectStatus,
+    TagUpdateMsg,
+    SendCommandMsg,
+)
 
 
 class OPCUAServerDriver(ServerProtocol):
@@ -63,7 +67,9 @@ class OPCUAServerDriver(ServerProtocol):
         objects = self.server.get_objects_node()
         for dp in datapoints:
             writable = bool(self.allow_write_regex.match(dp.name))
-            node = objects.add_variable(self.namespace_index, dp.name, ua.Variant("", ua.VariantType.String))
+            node = objects.add_variable(
+                self.namespace_index, dp.name, ua.Variant("", ua.VariantType.String)
+            )
             node.set_writable(writable)
             self.nodes[dp.name] = node
         print(f"[OPCUA] Exposed {len(datapoints)} nodes in OPC UA server")
@@ -72,8 +78,6 @@ class OPCUAServerDriver(ServerProtocol):
         """Start the OPC UA server and hook into write operations."""
         self.server.set_endpoint(self.endpoint)
         self.server.set_server_name(self._server_name)
-
-
 
         await self.server.init()
         await self.server.start()
@@ -84,7 +88,9 @@ class OPCUAServerDriver(ServerProtocol):
         if self._communication_status_callback:
             await self.publish_driver_state("online")
 
-        print(f"[OPCUA] Server started at {self.endpoint} (namespace: {self.namespace_url})")
+        print(
+            f"[OPCUA] Server started at {self.endpoint} (namespace: {self.namespace_url})"
+        )
 
     async def disconnect(self) -> None:
         """Stop the server and restore original handler."""
@@ -130,7 +136,9 @@ class OPCUAServerDriver(ServerProtocol):
     # ----------------------------------------------------------------------
     def _patch_write_handler(self):
         """Monkey-patch the internal write method to detect every client write."""
-        if not hasattr(self.server, "iserver") or not hasattr(self.server.iserver, "write_attribute"):
+        if not hasattr(self.server, "iserver") or not hasattr(
+            self.server.iserver, "write_attribute"
+        ):
             print("[WARN] Cannot patch write_attribute (server not started yet?)")
             return
 
@@ -140,19 +148,23 @@ class OPCUAServerDriver(ServerProtocol):
         def patched_write(nodeid, attributeid, datavalue):
             try:
                 val = datavalue.Value.Value
-                dp_name = next((n for n, node in self.nodes.items() if node.nodeid == nodeid), None)
+                dp_name = next(
+                    (n for n, node in self.nodes.items() if node.nodeid == nodeid), None
+                )
 
                 if dp_name and self.allow_write_regex.match(dp_name):
                     val_str = str(val)
                     msg = SendCommandMsg(
                         datapoint_identifier=dp_name,
                         value=val_str,
-                        command_id=str(uuid.uuid4())
+                        command_id=str(uuid.uuid4()),
                     )
                     print(f"[WRITE] Client wrote {dp_name} -> '{val_str}'")
 
                     if self._command_listener:
-                        asyncio.create_task(self._command_listener.on_driver_command(msg))
+                        asyncio.create_task(
+                            self._command_listener.on_driver_command(msg)
+                        )
             except Exception as e:
                 print(f"[ERROR] Intercept write failed: {e}")
 

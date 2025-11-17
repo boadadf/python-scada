@@ -25,6 +25,7 @@ from flask import Flask, app
 
 from openscada_lite.common.config.config import Config
 
+
 class SecurityModel:
     """
     Stores users and groups from a config dict and keeps an in-memory copy.
@@ -69,11 +70,11 @@ class SecurityModel:
         Returns a list of all unique endpoint names from all groups.
         """
         return sorted(list(self.endpoints))
-    
+
     def get_security_config(self) -> dict:
         with self._lock:
-            return copy.deepcopy(self._data)    
-        
+            return copy.deepcopy(self._data)
+
     def save_security_config(self, config: dict):
         with self._lock:
             self._data = copy.deepcopy(config)

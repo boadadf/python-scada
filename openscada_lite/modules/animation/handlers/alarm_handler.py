@@ -24,7 +24,9 @@ class AlarmHandler:
 
     def handle(self, msg, service):
         updates = []
-        identifier = getattr(msg, "datapoint_identifier", None) or getattr(msg, "alarm_id", None)
+        identifier = getattr(msg, "datapoint_identifier", None) or getattr(
+            msg, "alarm_id", None
+        )
         if not identifier:
             return updates
 
@@ -64,20 +66,24 @@ class AlarmHandler:
                 duration = dur or duration
 
                 if getattr(entry, "revertAfter", 0):
-                    asyncio.create_task(service.schedule_revert(svg_name, elem_id, anim_name, entry))
+                    asyncio.create_task(
+                        service.schedule_revert(svg_name, elem_id, anim_name, entry)
+                    )
             if not processed:
                 continue
             cfg = {"attr": agg_attr, "duration": duration}
             if agg_text:
                 cfg["text"] = agg_text
 
-            updates.append(AnimationUpdateMsg(
-                svg_name=svg_name,
-                element_id=elem_id,
-                animation_type=anim_name,
-                value=None,
-                config=cfg,
-                test=getattr(msg, "test", False)
-            ))
+            updates.append(
+                AnimationUpdateMsg(
+                    svg_name=svg_name,
+                    element_id=elem_id,
+                    animation_type=anim_name,
+                    value=None,
+                    config=cfg,
+                    test=getattr(msg, "test", False),
+                )
+            )
 
         return updates
