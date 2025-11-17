@@ -57,6 +57,7 @@ module.exports = {
         },
       },
     },
+    runtimeChunk: 'single', // separates webpack runtime into its own file
   },
 
   plugins: [

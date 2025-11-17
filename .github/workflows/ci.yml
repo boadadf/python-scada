@@ -1,0 +1,69 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-and-analyze:
+    name: Build, Test, and Analyze
+    runs-on: ubuntu-latest
+
+    env:
+      SONAR_ORGANIZATION: boadadf
+      SONAR_PROJECT_KEY: boadadf_python-scada
+
+    steps:
+      # 1️⃣ Checkout repo
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # 2️⃣ Set up Python
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install flake8 pytest
+
+      - name: Run Python lint
+        run: flake8 .
+
+      - name: Run Python tests
+        run: pytest
+
+      # 3️⃣ Set up Node.js / React
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: Install frontend dependencies
+        working-directory: ./web/scada/static/frontend
+        run: npm install
+
+      - name: Build React frontend
+        working-directory: ./web/scada/static/frontend
+        run: npm run build
+
+      # 4️⃣ SonarCloud analysis
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@v2
+        with:
+          organization: ${{ env.SONAR_ORGANIZATION }}
+          projectKey: ${{ env.SONAR_PROJECT_KEY }}
+          projectName: python-scada
+          token: ${{ secrets.SONAR_TOKEN }}
+          extraProperties: |
+            # Path to frontend and backend sources
+            sonar.sources=./,./web/scada/static/frontend/src
+            # Language-specific exclusions if needed
+            sonar.exclusions=**/node_modules/**,**/__pycache__/**
