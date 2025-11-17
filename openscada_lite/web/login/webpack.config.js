@@ -1,15 +1,17 @@
 const path = require("path");
 
 module.exports = {
+  mode: process.env.NODE_ENV === "production" ? "production" : "development",
   entry: "./src/index.js",
   output: {
     path: path.resolve(__dirname, "dist"),
-    filename: "main.js",
+    filename: "main.js",      // single output file for the library
     library: "login",
-    libraryTarget: "commonjs2"
+    libraryTarget: "commonjs2",
+    clean: true,              // cleans dist before building
   },
   resolve: {
-    extensions: [".js", ".jsx"]
+    extensions: [".js", ".jsx"],
   },
   module: {
     rules: [
@@ -19,18 +21,19 @@ module.exports = {
         use: {
           loader: "babel-loader",
           options: {
-            presets: ["@babel/preset-env", "@babel/preset-react"]
-          }
-        }
+            presets: ["@babel/preset-env", "@babel/preset-react"],
+          },
+        },
       },
       {
         test: /\.css$/i,
-        use: ["style-loader", "css-loader"]
-      }
-    ]
+        use: ["style-loader", "css-loader"],
+      },
+    ],
   },
   externals: {
     react: "react",
-    "react-dom": "react-dom"
-  }
+    "react-dom": "react-dom",
+  },
+  // Do NOT add splitChunks or runtimeChunk here — let consuming apps handle it
 };

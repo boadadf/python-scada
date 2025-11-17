@@ -1,18 +1,26 @@
 const path = require("path");
+const HtmlWebpackPlugin = require("html-webpack-plugin");
+const { BundleAnalyzerPlugin } = require("webpack-bundle-analyzer");
+
+const isProd = process.env.NODE_ENV === "production";
 
 module.exports = {
   entry: "./src/index.jsx",
+
   output: {
     path: path.resolve(__dirname, "dist"),
-    filename: "main.js",
+    filename: isProd ? "[name].[contenthash].js" : "[name].js",
+    chunkFilename: isProd ? "[name].[contenthash].chunk.js" : "[name].chunk.js",
+    clean: true, // deletes old builds automatically
   },
+
+  mode: isProd ? "production" : "development",
+
   module: {
     rules: [
       {
         test: /\.(js|jsx)$/,
-        // Exclude node_modules except for your linked login package
         exclude: (modulePath) => {
-          // Exclude node_modules except for the linked login package
           return /node_modules/.test(modulePath) && !/node_modules[\\/](login)/.test(modulePath);
         },
         use: {
@@ -28,6 +36,7 @@ module.exports = {
       },
     ],
   },
+
   resolve: {
     extensions: [".js", ".jsx"],
     symlinks: true,
@@ -36,9 +45,27 @@ module.exports = {
       "react-dom": path.resolve(__dirname, "node_modules/react-dom"),
     },
   },
+
+  optimization: {
+    splitChunks: {
+      chunks: "all",
+      cacheGroups: {
+        react: {
+          test: /[\\/]node_modules[\\/](react|react-dom)[\\/]/,
+          name: "react",
+          chunks: "all",
+        },
+      },
+    },
+  },
+
+  plugins: [
+    ...(process.env.ANALYZE ? [new BundleAnalyzerPlugin()] : []),
+  ],
+
   devServer: {
     static: path.join(__dirname, "dist"),
     port: 3000,
+    hot: true,
   },
 };
-
