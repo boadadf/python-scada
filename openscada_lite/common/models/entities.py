@@ -14,9 +14,6 @@
 # limitations under the License.
 # -----------------------------------------------------------------------------
 
-import uuid
-import datetime
-from datetime import timezone as UTC
 from dataclasses import dataclass, field
 from typing import List, Optional, Any, Dict
 

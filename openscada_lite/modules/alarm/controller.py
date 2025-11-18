@@ -21,14 +21,13 @@ from openscada_lite.common.models.dtos import AckAlarmMsg, AlarmUpdateMsg, Statu
 
 
 class AlarmController(BaseController[AlarmUpdateMsg, AckAlarmMsg]):
-    def __init__(self, model: AlarmModel, socketio, base_event: str, flask_app=None):
+    def __init__(self, model: AlarmModel, socketio, base_event: str):
         super().__init__(
             model,
             socketio,
             AlarmUpdateMsg,
             AckAlarmMsg,
             base_event=base_event,
-            flask_app=flask_app,
         )
         self.model: AlarmModel = model
 

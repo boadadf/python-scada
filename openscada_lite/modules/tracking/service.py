@@ -15,7 +15,7 @@
 # -----------------------------------------------------------------------------
 
 from openscada_lite.modules.base.base_service import BaseService
-from openscada_lite.common.models.dtos import DataFlowEventMsg, StatusDTO
+from openscada_lite.common.models.dtos import DataFlowEventMsg
 
 
 class TrackingService(BaseService[DataFlowEventMsg, None, DataFlowEventMsg]):

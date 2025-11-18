@@ -75,7 +75,8 @@ class ConnectorManager:
                     datapoint_objs.append(Datapoint(name=name, type=dp_type))
                 else:
                     print(
-                        f"WARNING: Datapoint type '{type_ref}' for '{name}' not found in dp_types config!"
+                        f"WARNING: Datapoint type '{type_ref}' "
+                        f"for '{name}' not found in dp_types config!"
                     )
             driver_cls = DRIVER_REGISTRY.get(cfg["driver_class"])
             if not driver_cls:

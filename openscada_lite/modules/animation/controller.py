@@ -13,45 +13,43 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # -----------------------------------------------------------------------------
-
-from typing import Union
+from fastapi import APIRouter
+from fastapi.responses import JSONResponse
 from openscada_lite.common.config.config import Config
 from openscada_lite.modules.base.base_controller import BaseController
 from openscada_lite.common.models.dtos import (
-    AlarmUpdateMsg,
     AnimationUpdateRequestMsg,
-    StatusDTO,
     AnimationUpdateMsg,
-    TagUpdateMsg,
 )
-
 
 class AnimationController(
     BaseController[AnimationUpdateMsg, AnimationUpdateRequestMsg]
 ):
-    def __init__(self, model, socketio, base_event="animation", flask_app=None):
+    def __init__(self, model, socketio, base_event="animation"):
         super().__init__(
             model,
             socketio,
             AnimationUpdateMsg,
             AnimationUpdateRequestMsg,
             base_event=base_event,
-            flask_app=flask_app,
         )
+
+        # Load SVG files from config
         self.svg_files = Config.get_instance().get_svg_files()
 
-    def register_http(self, flask_app):
-        super().register_http(flask_app)
+        # Create FastAPI router for HTTP endpoints
+        self.router = APIRouter(prefix="/api/animation", tags=["Animation"])
+        self.register_routes(self.router)
 
-        @flask_app.route(
-            "/animation_svgs", methods=["GET"], endpoint="animation_svgs_list"
-        )
-        def list_svgs():
-            from flask import jsonify
-
-            return jsonify(self.svg_files)
+    def register_routes(self, router: APIRouter):
+        @router.get("/svgs")
+        async def list_svgs():
+            """Return the list of SVG files for the animation module."""
+            return JSONResponse(content=self.svg_files)
 
     def validate_request_data(
         self, data: AnimationUpdateRequestMsg
-    ) -> AnimationUpdateRequestMsg | StatusDTO:
+    ) -> AnimationUpdateRequestMsg:
+        # You could also return a StatusDTO if invalid
         return data
+    

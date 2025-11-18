@@ -41,7 +41,7 @@ class TankTestDriver(TestDriver):
 
         try:
             level = float(level_tag.value) if level_tag.value not in (None, "") else 0.0
-        except Exception as e:
+        except Exception:
             level = 0.0
         pump = pump_tag.value if pump_tag.value else "CLOSED"
         door = door_tag.value if door_tag.value else "CLOSED"

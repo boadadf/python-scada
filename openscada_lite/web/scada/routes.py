@@ -13,16 +13,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # -----------------------------------------------------------------------------
+from fastapi import APIRouter
+from fastapi.responses import FileResponse
+from pathlib import Path
 
-from flask import jsonify, request, render_template
-from . import scada_bp
+scada_router = APIRouter(prefix="/scada")
 
+WEB_DIR = Path(__file__).parent
+DIST_INDEX = WEB_DIR / "static" / "frontend" / "dist" / "index.html"
 
-@scada_bp.route("/")
-def scada_index():
-    return render_template("scada.html")
-
-
-@scada_bp.route("/login")
-def scada_login():
-    return render_template("scada.html")
+@scada_router.get("/")
+@scada_router.get("/login")
+async def scada_index():
+    if DIST_INDEX.exists():
+        return FileResponse(DIST_INDEX)
+    return {"error": "scada index.html not found"}

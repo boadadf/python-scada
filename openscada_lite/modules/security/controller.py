@@ -13,115 +13,102 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # -----------------------------------------------------------------------------
-
-import os
-from flask import request, jsonify
+from fastapi import APIRouter, Depends, Request, HTTPException
+from fastapi.responses import JSONResponse
 from openscada_lite.modules.security.model import SecurityModel
-from openscada_lite.common.models.dtos import StatusDTO
 from openscada_lite.modules.security.service import SecurityService
+from openscada_lite.common.models.dtos import StatusDTO
 from openscada_lite.modules.security import utils
-from functools import wraps
 
 
 class SecurityController:
     """
-    REST-style controller for the security module.
-    JWT-based authentication. Use register_routes(flask_app) after initialization.
+    FastAPI-compatible controller for the Security module.
+    JWT-based authentication. Use register_routes(app) after initialization.
     """
 
     def __init__(self, model: SecurityModel, service: SecurityService):
         self.model = model
         self.service = service
+        self.router = APIRouter(prefix="/security", tags=["Security"])
 
-    # ---------------- JWT Decorator ----------------
-    def require_jwt(self, func):
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            auth_header = request.headers.get("Authorization", "")
-            token = auth_header.replace("Bearer ", "")
-            username = utils.verify_jwt(token)
-            if not username:
-                return (
-                    jsonify(StatusDTO(status="error", reason="Unauthorized").to_dict()),
-                    401,
-                )
-            return func(username=username, *args, **kwargs)
+        # Register all endpoints
+        self._register_routes()
 
-        return wrapper
+    # ---------------- JWT Dependency ----------------
+    async def require_jwt(self, request: Request) -> str:
+        auth_header = request.headers.get("Authorization", "")
+        token = auth_header.replace("Bearer ", "")
+        username = utils.verify_jwt(token)
+        if not username:
+            raise HTTPException(status_code=401, detail="Unauthorized")
+        return username
 
     # ---------------- Register Routes ----------------
-    def register_routes(self, flask_app):
-
-        # ---------------- Endpoints ----------------
-        @flask_app.route("/security/endpoints", methods=["GET"])
-        def _get_endpoints():
+    def _register_routes(self):
+        # GET all registered endpoints
+        @self.router.get("/endpoints")
+        async def get_endpoints():
             endpoints = self.model.get_end_points()
-            return jsonify(endpoints)
+            return JSONResponse(content=endpoints)
 
-        # ---------------- Login ----------------
-        @flask_app.route("/security/login", methods=["POST"])
-        def _login():
-            data = request.json or {}
+        # POST login
+        @self.router.post("/login")
+        async def login(data: dict):
             username = data.get("username")
             password = data.get("password")
-            app_name = data.get("app") or request.args.get("app")
+            app_name = data.get("app")
             if not username or not password or not app_name:
-                return (
-                    jsonify(
-                        StatusDTO(
-                            status="error", reason="username & password & app required"
-                        ).to_dict()
-                    ),
-                    400,
+                return JSONResponse(
+                    content=StatusDTO(
+                        status="error",
+                        reason="username & password & app required"
+                    ).to_dict(),
+                    status_code=400
                 )
-
-            # Verify credentials
             token = self.service.authenticate_user(username, password, app_name)
             if not token:
-                return jsonify({"error": "Unauthorized"}), 401
-            return jsonify({"token": token, "user": username})
+                raise HTTPException(status_code=401, detail="Unauthorized")
+            return {"token": token, "user": username}
 
-        @flask_app.route("/security-editor/api/config", methods=["GET"])
-        def get_security_config():
+        # GET security config
+        @self.router.get("/editor/api/config")
+        async def get_security_config():
             try:
                 config = self.model.get_security_config()
-                return jsonify(config)
+                return JSONResponse(content=config)
             except Exception as e:
-                return (
-                    jsonify(
-                        StatusDTO(
-                            status="error", reason=f"Failed to load: {e}"
-                        ).to_dict()
-                    ),
-                    500,
+                return JSONResponse(
+                    content=StatusDTO(
+                        status="error",
+                        reason=f"Failed to load: {e}"
+                    ).to_dict(),
+                    status_code=500
                 )
 
-        # --- Security Editor Config API ---
-        @flask_app.route("/security-editor/api/config", methods=["POST"])
-        def save_security_config():
-            data = request.get_json()
+        # POST security config
+        @self.router.post("/editor/api/config")
+        async def save_security_config(data: dict):
             if not data:
-                return (
-                    jsonify(
-                        StatusDTO(status="error", reason="No data provided").to_dict()
-                    ),
-                    400,
+                return JSONResponse(
+                    content=StatusDTO(status="error", reason="No data provided").to_dict(),
+                    status_code=400
                 )
             try:
                 self.model.save_security_config(data)
             except Exception as e:
-                return (
-                    jsonify(
-                        StatusDTO(
-                            status="error", reason=f"Failed to save: {e}"
-                        ).to_dict()
-                    ),
-                    500,
+                return JSONResponse(
+                    content=StatusDTO(
+                        status="error",
+                        reason=f"Failed to save: {e}"
+                    ).to_dict(),
+                    status_code=500
                 )
-
-            # Notify the system that the config has changed
-            # (You can implement this as needed, e.g., reload config, set a flag, etc.)
+            # Notify service if applicable
             if hasattr(self.service, "notify_config_changed"):
                 self.service.notify_config_changed()
+            return JSONResponse(content=StatusDTO(status="ok", reason="Config saved").to_dict())
 
-            return jsonify(StatusDTO(status="ok", reason="Config saved").to_dict())
+    # ---------------- Helper to register router ----------------
+    def register_routes(self, app):
+        app.include_router(self.router)

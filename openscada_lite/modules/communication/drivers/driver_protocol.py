@@ -14,7 +14,7 @@
 # limitations under the License.
 # -----------------------------------------------------------------------------
 
-from typing import Protocol, Callable, Any, List
+from typing import Protocol, Callable, List
 from typing import runtime_checkable
 
 from openscada_lite.common.models.dtos import SendCommandMsg

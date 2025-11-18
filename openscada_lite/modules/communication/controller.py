@@ -27,14 +27,13 @@ from openscada_lite.common.models.dtos import (
 class CommunicationController(
     BaseController[DriverConnectStatus, DriverConnectCommand]
 ):
-    def __init__(self, model, socketio, base_event="communication", flask_app=None):
+    def __init__(self, model, socketio, base_event="communication"):
         super().__init__(
             model,
             socketio,
             DriverConnectStatus,
             DriverConnectCommand,
             base_event=base_event,
-            flask_app=flask_app,
         )
 
     def validate_request_data(

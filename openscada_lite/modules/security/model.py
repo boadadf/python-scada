@@ -20,33 +20,30 @@ import os
 import threading
 import copy
 from typing import List
-
-from flask import Flask, app
-
 from openscada_lite.common.config.config import Config
-
+from fastapi import FastAPI
 
 class SecurityModel:
     """
     Stores users and groups from a config dict and keeps an in-memory copy.
     """
 
-    def __init__(self, flask_app: Flask = None):
+    def __init__(self, fastapi_app: FastAPI = None):
         self._lock = threading.RLock()
         self.file_path = Config.get_instance().get_security_config_path()
         self._load()
         self.endpoints = set()  # registered endpoint names
-        self.app = flask_app
+        self.app = fastapi_app
         if self.app:
             self._load_endpoints()
 
     def _load_endpoints(self):
-        """Scan Flask app for all registered POST endpoint names."""
+        """Scan FastAPI app for all registered POST endpoint names."""
         with self._lock:
             self.endpoints = set(
-                rule.endpoint
-                for rule in self.app.url_map.iter_rules()
-                if "POST" in rule.methods
+                route.name
+                for route in self.app.routes
+                if "POST" in getattr(route, "methods", [])
             )
 
     def _load(self):

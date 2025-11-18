@@ -16,10 +16,8 @@
 
 # communications_model.py
 import datetime
-from typing import Dict
 from openscada_lite.common.models.dtos import TagUpdateMsg
 from openscada_lite.common.config.config import Config
-from openscada_lite.modules.datapoint.utils import Utils
 from openscada_lite.modules.base.base_model import BaseModel
 
 

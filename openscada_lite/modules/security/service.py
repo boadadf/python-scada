@@ -15,7 +15,7 @@
 # -----------------------------------------------------------------------------
 
 # openscada_lite/modules/security/security_service.py
-from typing import Optional, List
+from typing import Optional
 from openscada_lite.modules.security.model import SecurityModel
 from openscada_lite.modules.security import utils
 

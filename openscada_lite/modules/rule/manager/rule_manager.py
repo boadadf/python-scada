@@ -38,8 +38,10 @@ class RuleEngine:
     """
     RuleEngine evaluates rules on tag updates and executes actions accordingly.
 
-    - If a rule has both on_condition and off_condition, it follows an on/off lifecycle (actions are only triggered on state transitions).
-    - If a rule has no off_condition, its on_actions are executed every time the on_condition is true (no latching).
+    - If a rule has both on_condition and off_condition, it follows an
+      on/off lifecycle (actions are only triggered on state transitions).
+    - If a rule has no off_condition, its on_actions are executed every time
+      the on_condition is true (no latching).
     """
 
     _instance = None
@@ -141,7 +143,8 @@ class RuleEngine:
         impacted_rules = self.tag_to_rules.get(tag_id, [])
         print(f"[RuleEngine] Received tag update: {tag_id} = {value}")
         print(
-            f"[RuleEngine] Updated asteval symbol table: {safe_key} = {self.asteval.symtable[safe_key]}"
+            f"[RuleEngine] Updated asteval "
+            f"symbol table: {safe_key} = {self.asteval.symtable[safe_key]}"
         )
         print(f"[RuleEngine] Impacted rules: {impacted_rules}")
         for rule in impacted_rules:

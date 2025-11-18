@@ -13,17 +13,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # -----------------------------------------------------------------------------
+from fastapi import APIRouter
+from fastapi.staticfiles import StaticFiles
 
-from flask import Blueprint
+# Create FastAPI router
+config_router = APIRouter(prefix="/config-editor", tags=["ConfigEditor"])
 
-config_bp = Blueprint(
-    "config_bp",
-    __name__,
-    static_folder="static",
-    static_url_path="/config-editor/static",  # ensures correct static path
-    template_folder="templates",
-    url_prefix="/config-editor",
+# Mount static files (equivalent to Blueprint's static_folder/static_url_path)
+config_router.mount(
+    "/static",  # URL path equivalent to static_url_path
+    app=StaticFiles(directory="static"),  # folder relative to this file
+    name="config_static"
 )
-
-# Import routes so they attach to this blueprint
-from . import routes

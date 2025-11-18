@@ -47,32 +47,28 @@ module.exports = {
   },
 
   optimization: {
-    runtimeChunk: 'single', // keeps runtime in its own small file
+    runtimeChunk: 'single',
     splitChunks: {
       chunks: 'all',
       cacheGroups: {
-        // Separate react and react-dom into their own chunk
         reactVendor: {
           test: /[\\/]node_modules[\\/](react|react-dom)[\\/]/,
           name: 'react-vendor',
           chunks: 'all',
           priority: 20,
         },
-        // Separate GSAP into its own chunk
         gsapVendor: {
           test: /[\\/]node_modules[\\/]gsap[\\/]/,
           name: 'gsap-vendor',
           chunks: 'all',
           priority: 15,
         },
-        // Separate Leaflet into its own chunk
         leafletVendor: {
           test: /[\\/]node_modules[\\/]leaflet[\\/]/,
           name: 'leaflet-vendor',
           chunks: 'all',
           priority: 10,
         },
-        // Everything else from node_modules goes into vendors
         vendors: {
           test: /[\\/]node_modules[\\/]/,
           name: 'vendors',
@@ -83,9 +79,13 @@ module.exports = {
     },
   },
 
-
   plugins: [
-    ...(process.env.ANALYZE ? [new BundleAnalyzerPlugin()] : []),
+    new HtmlWebpackPlugin({
+      template: "./src/index.html", // <-- your HTML template in src
+      inject: "body", // inject scripts at the bottom
+    }),
+    // Optionally include BundleAnalyzerPlugin if you want
+    // new BundleAnalyzerPlugin(),
   ],
 
   devServer: {

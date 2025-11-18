@@ -19,9 +19,9 @@ from openscada_lite.modules.base.base_controller import BaseController
 
 
 class RuleController(BaseController[None, None]):
-    def __init__(self, model, socketio, base_event: str, flask_app=None):
+    def __init__(self, model, socketio, base_event: str):
         super().__init__(
-            model, socketio, None, None, base_event=base_event, flask_app=flask_app
+            model, socketio, None, None, base_event=base_event
         )
 
     def validate_request_data(self, data):

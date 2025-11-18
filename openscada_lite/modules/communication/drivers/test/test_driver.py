@@ -17,7 +17,6 @@ import asyncio
 import datetime
 import inspect
 from abc import ABC, abstractmethod
-import threading
 from typing import Dict, List, Callable, Any
 
 from openscada_lite.common.config.config import Config

@@ -14,16 +14,20 @@
 # limitations under the License.
 # -----------------------------------------------------------------------------
 
-from flask import Blueprint
+from fastapi import APIRouter
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+from fastapi import Request
+import os
 
-security_bp = Blueprint(
-    "security_bp",
-    __name__,
-    static_folder="static",
-    static_url_path="/security-editor/static",  # ensures correct static path
-    template_folder="templates",
-    url_prefix="/security-editor",
-)
+security_router = APIRouter(prefix="/security-editor", tags=["Security Editor"])
 
-# Import routes so they attach to this blueprint
-from . import routes
+static_path = os.path.join(os.path.dirname(__file__), "static")
+templates_path = os.path.join(os.path.dirname(__file__), "templates")
+
+templates = Jinja2Templates(directory=templates_path)
+
+@security_router.get("/", response_class=HTMLResponse)
+async def editor(request: Request):
+    return templates.TemplateResponse("editor.html", {"request": request})

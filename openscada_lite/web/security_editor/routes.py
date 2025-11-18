@@ -13,17 +13,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # -----------------------------------------------------------------------------
-
 import os
-import json
-from flask import jsonify, request, render_template
-from . import security_bp
+from fastapi import APIRouter, Request
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
+
+router = APIRouter(prefix="/security-editor", tags=["Security Editor"])
 
 CONFIG_FILE = os.path.join(
     os.path.dirname(__file__), "..", "..", "..", "config", "security_config.json"
 )
 
+templates = Jinja2Templates(directory=os.path.join(os.path.dirname(__file__), "templates"))
 
-@security_bp.route("/")
-def editor():
-    return render_template("security_editor.html")
+@router.get("/", response_class=HTMLResponse)
+async def editor(request: Request):
+    return templates.TemplateResponse("security_editor.html", {"request": request})

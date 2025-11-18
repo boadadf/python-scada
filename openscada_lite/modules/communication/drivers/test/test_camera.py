@@ -15,7 +15,6 @@
 # -----------------------------------------------------------------------------
 
 # tank_test_driver.py
-import datetime
 from openscada_lite.modules.communication.drivers.test.test_driver import TestDriver
 
 

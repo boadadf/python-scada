@@ -21,16 +21,15 @@ from openscada_lite.common.tracking.decorators import (
     publish_data_flow_from_return_sync,
 )
 from openscada_lite.common.tracking.tracking_types import DataFlowStatus
-from openscada_lite.common.models.dtos import DTO, DataFlowEventMsg
+from openscada_lite.common.models.dtos import DTO
 from openscada_lite.modules.base.base_model import BaseModel
 from openscada_lite.common.bus.event_bus import EventBus
+from typing import TYPE_CHECKING
 
 T = TypeVar("T", bound=DTO)  # From bus
 U = TypeVar("U", bound=DTO)  # From controller
 V = TypeVar("V", bound=DTO)  # Stored in model and published to view (processed T)
 # W = TypeVar('W', bound=DTO)  # Published to bus (processed U)
-
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .base_controller import BaseController
@@ -38,7 +37,8 @@ if TYPE_CHECKING:
 
 class BaseService(ABC, Generic[T, U, V]):
     """
-    Generic service for handling bus messages of type T (or multiple types) and controller messages of type U.
+    Generic service for handling bus messages of type T (or multiple types)
+    and controller messages of type U.
     """
 
     def __init__(

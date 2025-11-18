@@ -14,7 +14,6 @@
 # limitations under the License.
 # -----------------------------------------------------------------------------
 
-import asyncio
 import datetime
 from openscada_lite.modules.communication.drivers.test.test_driver import TestDriver
 

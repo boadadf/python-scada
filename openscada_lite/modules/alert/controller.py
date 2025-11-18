@@ -20,14 +20,13 @@ from openscada_lite.common.models.dtos import ClientAlertFeedbackMsg, ClientAler
 
 
 class AlertController(BaseController[ClientAlertMsg, ClientAlertFeedbackMsg]):
-    def __init__(self, model, socketio, base_event: str, flask_app=None):
+    def __init__(self, model, socketio, base_event: str):
         super().__init__(
             model,
             socketio,
             ClientAlertMsg,
             ClientAlertFeedbackMsg,
             base_event=base_event,
-            flask_app=flask_app,
         )
 
     def validate_request_data(self, data: ClientAlertMsg):
