@@ -34,6 +34,7 @@ from openscada_lite.modules.security.model import SecurityModel
 from openscada_lite.modules.security.service import SecurityService
 from openscada_lite.modules.security.controller import SecurityController
 
+from openscada_lite.web.config_editor.routes import config_router
 # -----------------------------------------------------------------------------
 # Socket.IO
 # -----------------------------------------------------------------------------
@@ -52,6 +53,7 @@ async def lifespan(app: FastAPI):
     print("[LIFESPAN] Shutdown complete")
 
 app = FastAPI(title="OpenSCADA-Lite", version="2.0", lifespan=lifespan)
+app.include_router(config_router)
 
 # Single ASGI entrypoint combining Socket.IO + FastAPI
 asgi_app = socketio.ASGIApp(sio, other_asgi_app=app)
@@ -71,7 +73,10 @@ app.mount(
 # Config Editor
 app.mount(
     "/config-editor",
-    StaticFiles(directory=web_dir / "config_editor" / "static", html=True),
+    StaticFiles(
+        directory=web_dir / "config_editor" / "static" / "frontend" / "dist",
+        html=True,
+    ),
     name="config_editor",
 )
 
@@ -81,6 +86,11 @@ app.mount(
     StaticFiles(directory=web_dir / "security_editor" / "static", html=True),
     name="security_editor",
 )
+
+# Path to icons directory (relative to this file)
+icons_path = os.path.join(os.path.dirname(__file__), "web", "icons")
+
+app.mount("/static/icons", StaticFiles(directory=icons_path), name="icons")
 
 # Optional: serve SVGs
 @app.get("/svg/{filename:path}")

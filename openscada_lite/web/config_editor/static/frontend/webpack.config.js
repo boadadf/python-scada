@@ -59,7 +59,11 @@ module.exports = {
     },
     runtimeChunk: 'single', // separates webpack runtime into its own file
   },
-
+  plugins: [
+      new HtmlWebpackPlugin({
+          template: './src/index.html'
+      })
+  ],
   devServer: {
     static: path.join(__dirname, "dist"),
     port: 3000,

@@ -13,15 +13,3 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # -----------------------------------------------------------------------------
-from fastapi import APIRouter
-from fastapi.staticfiles import StaticFiles
-
-# Create FastAPI router
-config_router = APIRouter(prefix="/config-editor", tags=["ConfigEditor"])
-
-# Mount static files (equivalent to Blueprint's static_folder/static_url_path)
-config_router.mount(
-    "/static",  # URL path equivalent to static_url_path
-    app=StaticFiles(directory="static"),  # folder relative to this file
-    name="config_static"
-)
