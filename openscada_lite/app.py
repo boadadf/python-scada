@@ -15,7 +15,6 @@
 # -----------------------------------------------------------------------------
 import os
 import sys
-import importlib
 import asyncio
 from pathlib import Path
 from contextlib import asynccontextmanager
@@ -23,19 +22,18 @@ from contextlib import asynccontextmanager
 import socketio
 import uvicorn
 from fastapi import FastAPI
-from fastapi.responses import RedirectResponse, FileResponse
+from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
-from openscada_lite.modules.base.base_controller import BaseController
 from openscada_lite.common.bus.event_bus import EventBus
 from openscada_lite.common.config.config import Config
 
-from openscada_lite.modules.security.model import SecurityModel
-from openscada_lite.modules.security.service import SecurityService
-from openscada_lite.modules.security.controller import SecurityController
+from openscada_lite.modules.loader import module_loader
 
 from openscada_lite.web.config_editor.routes import config_router
 from openscada_lite.web.security_editor.routes import security_router
+
+
 # -----------------------------------------------------------------------------
 # Socket.IO
 # -----------------------------------------------------------------------------
@@ -49,7 +47,7 @@ sio = socketio.AsyncServer(
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     print("[LIFESPAN] Startup starting...")
-    asyncio.create_task(async_init_all())
+    asyncio.create_task(module_loader(system_config, sio, event_bus, app))
     yield
     print("[LIFESPAN] Shutdown complete")
 
@@ -95,14 +93,6 @@ icons_path = os.path.join(os.path.dirname(__file__), "web", "icons")
 
 app.mount("/static/icons", StaticFiles(directory=icons_path), name="icons")
 
-# Optional: serve SVGs
-@app.get("/svg/{filename:path}")
-async def svg(filename: str):
-    svg_dir = Path(__file__).parent.parent / "config" / "svg"
-    file = svg_dir / filename
-    if file.exists():
-        return FileResponse(file)
-    return FileResponse(status_code=404)
 
 # Redirect root to SCADA
 @app.get("/")
@@ -115,61 +105,6 @@ async def index():
 event_bus = EventBus.get_instance()
 system_config = Config.get_instance().load_system_config()
 
-security_model = SecurityModel()
-security_service = SecurityService(event_bus, security_model)
-security_controller = SecurityController(security_model, security_service)
-security_controller.register_routes(app)
-
-# -----------------------------------------------------------------------------
-# Dynamic Module Loader
-# -----------------------------------------------------------------------------
-def initialize_modules(config: dict, socketio_obj, event_bus_obj) -> dict:
-    module_instances = {}
-    for module_entry in config.get("modules", []):
-        if isinstance(module_entry, dict):
-            module_name = module_entry.get("name", "")
-        else:
-            module_name = str(module_entry)
-
-        base_path = f"openscada_lite.modules.{module_name}"
-        class_prefix = module_name.capitalize()
-
-        print(f"[INIT] Loading module: {module_name}")
-
-        model_cls = getattr(importlib.import_module(f"{base_path}.model"), f"{class_prefix}Model")
-        controller_cls = getattr(importlib.import_module(f"{base_path}.controller"), f"{class_prefix}Controller")
-        service_cls = getattr(importlib.import_module(f"{base_path}.service"), f"{class_prefix}Service")
-
-        model = model_cls()
-
-        try:
-            controller:BaseController = controller_cls(model, socketio_obj, module_name, app)
-        except TypeError:
-            controller:BaseController = controller_cls(model, socketio_obj, module_name)
-        router = controller.get_router()
-        print(f"[INIT] Module router: {router}")
-        if router:
-            app.include_router(router)
-
-        service = service_cls(event_bus_obj, model, controller)
-        if hasattr(controller, "set_service"):
-            controller.set_service(service)
-
-        if hasattr(controller, "register_routes"):
-            try:
-                controller.register_routes(app)
-            except Exception as e:
-                print(f"[INIT] Warning: register_routes failed for {module_name}: {e}")
-
-        module_instances[module_name] = {
-            "model": model,
-            "controller": controller,
-            "service": service,
-        }
-
-    return module_instances
-
-module_instances = initialize_modules(system_config, sio, event_bus)
 
 # -----------------------------------------------------------------------------
 # Async module init

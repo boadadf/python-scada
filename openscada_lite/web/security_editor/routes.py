@@ -24,7 +24,7 @@ from pathlib import Path
 # Paths
 current_dir = Path(__file__).parent
 static_dir = current_dir / "static" / "frontend" / "dist"
-config_file = Path(__file__).parent.parent.parent / "config" / "security_config.json"
+config_file = Path(__file__).parent.parent.parent / ".." / "config" / "security_config.json"
 
 # API router
 security_router = APIRouter(prefix="/security-editor", tags=["SecurityEditor"])

@@ -32,7 +32,7 @@
           "name": "CameraDriver@CAMERA_2_POSITION",
           "type": "CAMERA_POSITION"
         },
-		{
+        {
           "name": "CameraDriver@CAMERA_3_POSITION",
           "type": "CAMERA_POSITION"
         },
@@ -43,7 +43,8 @@
         {
           "name": "CameraDriver@CAMERA_1_POSITION_CMD",
           "type": "CAMERA_POSITION"
-        },{
+        },
+        {
           "name": "CameraDriver@CAMERA_1_POSITION_CMD",
           "type": "CAMERA_POSITION"
         }

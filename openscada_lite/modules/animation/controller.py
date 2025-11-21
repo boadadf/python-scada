@@ -13,8 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # -----------------------------------------------------------------------------
+from pathlib import Path
 from fastapi import APIRouter
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
 from openscada_lite.common.config.config import Config
 from openscada_lite.modules.base.base_controller import BaseController
 from openscada_lite.common.models.dtos import (
@@ -25,27 +26,32 @@ from openscada_lite.common.models.dtos import (
 class AnimationController(
     BaseController[AnimationUpdateMsg, AnimationUpdateRequestMsg]
 ):
-    def __init__(self, model, socketio, base_event="animation"):
+    def __init__(self, model, socketio, module_name:str, router: APIRouter):
         super().__init__(
             model,
             socketio,
             AnimationUpdateMsg,
             AnimationUpdateRequestMsg,
-            base_event=base_event,
+            module_name,
+            router
         )
 
         # Load SVG files from config
         self.svg_files = Config.get_instance().get_svg_files()
 
-        # Create FastAPI router for HTTP endpoints
-        self.router = APIRouter(prefix="/api/animation", tags=["Animation"])
-        self.register_routes(self.router)
-
-    def register_routes(self, router: APIRouter):
-        @router.get("/svgs")
+    def register_local_routes(self, router: APIRouter):        
+        @router.get("/api/animation/svgs")
         async def list_svgs():
             """Return the list of SVG files for the animation module."""
             return JSONResponse(content=self.svg_files)
+
+        @router.get("/svg/{filename:path}")
+        async def svg(filename: str):
+            svg_dir = Path(__file__).parent.parent / "config" / "svg"
+            file = svg_dir / filename
+            if file.exists():
+                return FileResponse(file)
+            return JSONResponse(content={"error": "File not found"}, status_code=404)
 
     def validate_request_data(
         self, data: AnimationUpdateRequestMsg

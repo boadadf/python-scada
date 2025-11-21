@@ -47,16 +47,17 @@ class BaseController(ABC, Generic[T, U]):
         T_cls: Type[T],
         U_cls: Optional[Type[U]],
         base_event: str,
-        room: Optional[str] = None,
-        batch_interval: float = 1.0,  # seconds
+        router: APIRouter,        
+        batch_interval: float = 1.0  # seconds      
     ):
         self.model = model
         self.socketio = socketio
         self.T_cls = T_cls
         self.U_cls = U_cls
         self.base_event = base_event
-        self.room = room or f"{base_event}_room"
+        self.room = f"{base_event}_room"
         self.service = None
+        self.router = router
         self._initializing_clients = set()
 
         # --- Async batching ---
@@ -65,17 +66,17 @@ class BaseController(ABC, Generic[T, U]):
         self._batch_interval = batch_interval
         self._batch_task_started = False
 
-        # HTTP router container
-        self.router: Optional[APIRouter] = None
-
         # Register WebSocket events
         self.register_socketio()
+           # Create FastAPI router for HTTP endpoints        
+        self._register_generic_routes()
+        self.register_local_routes(router)
+    
+    def register_local_routes(self, router: APIRouter):
+        pass
 
     def set_service(self, service: "BaseService"):
         self.service = service
-
-    def get_router(self) -> APIRouter:
-        return self.router
     
     # ---------------------------------------------------------------------
     # WebSocket handling
@@ -133,15 +134,14 @@ class BaseController(ABC, Generic[T, U]):
     # ---------------------------------------------------------------------
     # HTTP endpoints via APIRouter
     # ---------------------------------------------------------------------
-    def register_routes(self, router: APIRouter):
-        self.router = router
+    def _register_generic_routes(self):
         if self.U_cls is None:
             return
 
         endpoint_name = f"{self.base_event}_send_{self.U_cls.__name__.lower()}"
         route_path = f"/{endpoint_name}"
 
-        @router.post(route_path, name=endpoint_name)
+        @self.router.post(route_path, name=endpoint_name)
         async def _incoming_handler(request: Request):
             data = await request.json()
             obj_data = self.U_cls(**data) if isinstance(data, dict) else data

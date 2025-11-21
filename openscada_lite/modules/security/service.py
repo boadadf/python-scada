@@ -16,14 +16,23 @@
 
 # openscada_lite/modules/security/security_service.py
 from typing import Optional
+from openscada_lite.modules.base.base_service import BaseService
 from openscada_lite.modules.security.model import SecurityModel
 from openscada_lite.modules.security import utils
 
 
-class SecurityService:
+class SecurityService(BaseService[None, None, None]):
     _instance: Optional["SecurityService"] = None
-
-    def __init__(self, event_bus, model: SecurityModel):
+    
+    def __init__(self, event_bus, model:SecurityModel, controller):
+        super().__init__(
+            event_bus,
+            model,
+            controller,
+            None,
+            None,
+            None
+        )
         SecurityService._instance = self
         self.model = model
         self._endpoints = set()  # registered endpoint names
@@ -83,3 +92,7 @@ class SecurityService:
             if group and endpoint_name in group.get("permissions", []):
                 return True
         return False
+
+    def should_accept_update(self, tag: None) -> bool:
+        return False
+    

@@ -17,18 +17,21 @@
 # communications_controller.py
 import datetime
 from typing import Union
+
+from fastapi import APIRouter
 from openscada_lite.modules.base.base_controller import BaseController
 from openscada_lite.common.models.dtos import StatusDTO, TagUpdateMsg, RawTagUpdateMsg
 
 
 class DatapointController(BaseController[TagUpdateMsg, RawTagUpdateMsg]):
-    def __init__(self, model, socketio, base_event="datapoint"):
+    def __init__(self, model, socketio, module_name: str, router: APIRouter):
         super().__init__(
             model,
             socketio,
             TagUpdateMsg,
             RawTagUpdateMsg,
-            base_event=base_event,
+            module_name,
+            router
         )
 
     def validate_request_data(

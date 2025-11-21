@@ -13,21 +13,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # -----------------------------------------------------------------------------
-
 from typing import Union
+
+from fastapi import APIRouter
 from openscada_lite.modules.alarm.model import AlarmModel
 from openscada_lite.modules.base.base_controller import BaseController
 from openscada_lite.common.models.dtos import AckAlarmMsg, AlarmUpdateMsg, StatusDTO
 
 
 class AlarmController(BaseController[AlarmUpdateMsg, AckAlarmMsg]):
-    def __init__(self, model: AlarmModel, socketio, base_event: str):
+    def __init__(self, model: AlarmModel, socketio, module_name: str, router: APIRouter):
         super().__init__(
             model,
             socketio,
             AlarmUpdateMsg,
             AckAlarmMsg,
-            base_event=base_event,
+            module_name,
+            router
         )
         self.model: AlarmModel = model
 

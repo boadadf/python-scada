@@ -17,36 +17,31 @@
 # openscada_lite/modules/security/model.py
 import json
 import os
-import threading
 import copy
+import threading
 from typing import List
+from openscada_lite.modules.base.base_model import BaseModel
 from openscada_lite.common.config.config import Config
-from fastapi import FastAPI
 
-class SecurityModel:
-    """
-    Stores users and groups from a config dict and keeps an in-memory copy.
-    """
+class SecurityModel(BaseModel[None]):
 
-    def __init__(self, fastapi_app: FastAPI = None):
-        self._lock = threading.RLock()
+    def __init__(self):
+        super().__init__()
         self.file_path = Config.get_instance().get_security_config_path()
-        self._load()
         self.endpoints = set()  # registered endpoint names
-        self.app = fastapi_app
-        if self.app:
-            self._load_endpoints()
+        self._lock = threading.RLock()
 
-    def _load_endpoints(self):
+
+    def load_endpoints(self, app):
         """Scan FastAPI app for all registered POST endpoint names."""
         with self._lock:
             self.endpoints = set(
                 route.name
-                for route in self.app.routes
+                for route in app.routes
                 if "POST" in getattr(route, "methods", [])
             )
 
-    def _load(self):
+    def load(self):
         if os.path.exists(self.file_path):
             with open(self.file_path) as f:
                 self._data = json.load(f)
@@ -55,17 +50,15 @@ class SecurityModel:
             self._save()
 
     def _save(self):
-        with open(self.file_path, "w") as f:
-            json.dump(self._data, f, indent=2)
+        with self._lock:
+            with open(self.file_path, "w") as f:
+                json.dump(self._data, f, indent=2)
 
     def get_all_users_list(self) -> List[dict]:
         with self._lock:
             return copy.deepcopy(self._data["users"])
 
     def get_end_points(self) -> List[str]:
-        """
-        Returns a list of all unique endpoint names from all groups.
-        """
         return sorted(list(self.endpoints))
 
     def get_security_config(self) -> dict:

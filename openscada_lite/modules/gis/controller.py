@@ -26,25 +26,23 @@ class GisController(BaseController[GisUpdateMsg, None]):
     Handles Socket.IO events via BaseController and HTTP endpoints via APIRouter.
     """
 
-    def __init__(self, model, socketio, base_event="gis"):
+    def __init__(self, model, socketio, module_name:str, router: APIRouter):
         super().__init__(
             model,
             socketio,
             GisUpdateMsg,
             None,
-            base_event=base_event
+            module_name,
+            router
         )
-
-        # FastAPI router for HTTP endpoints
-        self.router = APIRouter(prefix="/api/gis", tags=["GIS"])
-        self.register_routes(self.router)
             
     # FastAPI route registration
-    def register_routes(self, router: APIRouter):
-        @router.get("/config")
+    def register_local_routes(self, router: APIRouter):
+        @router.get("/api/gis/config")
         async def get_gis_config():
             """Expose the GIS configuration from system_config.json."""
             config = Config.get_instance().get_module_config("gis")
+            print(f"[GIS] Returning GIS config: {config}")
             return JSONResponse(content=config)
 
     # Required abstract method from BaseController

@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # -----------------------------------------------------------------------------
-
 from openscada_lite.modules.base.base_controller import BaseController
 from openscada_lite.common.models.dtos import DataFlowEventMsg, StatusDTO
 

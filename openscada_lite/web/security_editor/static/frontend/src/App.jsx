@@ -120,11 +120,9 @@ export default function App() {
 function RequireAuth({ children }) {
   const { isAuthenticated, loading } = useAuth();
 
-  // ⛑️ Prevent login "flash"
   if (loading) return null;
 
   if (!isAuthenticated) {
-    // ⛑️ Trailing slash required!
     return <Login redirectPath="/security-editor/" />;
   }
 

@@ -15,25 +15,25 @@
 # -----------------------------------------------------------------------------
 from fastapi import APIRouter, Depends, Request, HTTPException
 from fastapi.responses import JSONResponse
+from openscada_lite.modules.base.base_controller import BaseController
 from openscada_lite.modules.security.model import SecurityModel
 from openscada_lite.modules.security.service import SecurityService
 from openscada_lite.common.models.dtos import StatusDTO
 from openscada_lite.modules.security import utils
 
 
-class SecurityController:
-    """
-    FastAPI-compatible controller for the Security module.
-    JWT-based authentication. Use register_routes(app) after initialization.
-    """
+class SecurityController(BaseController[None, None], ):
 
-    def __init__(self, model: SecurityModel, service: SecurityService):
+    def __init__(self, model, socketio, module_name:str, router: APIRouter):     
+        super().__init__(
+            model,
+            socketio,
+            None,
+            None,
+            module_name,
+            router
+        )
         self.model = model
-        self.service = service
-        self.router = APIRouter(prefix="/security", tags=["Security"])
-
-        # Register all endpoints
-        self._register_routes()
 
     # ---------------- JWT Dependency ----------------
     async def require_jwt(self, request: Request) -> str:
@@ -45,15 +45,17 @@ class SecurityController:
         return username
 
     # ---------------- Register Routes ----------------
-    def _register_routes(self):
+    def load_local_routes(self, router: APIRouter):
+        self.model.load_endpoints()
+        
         # GET all registered endpoints
-        @self.router.get("/endpoints")
+        @router.get("/endpoints")
         async def get_endpoints():
             endpoints = self.model.get_end_points()
             return JSONResponse(content=endpoints)
 
         # POST login
-        @self.router.post("/login")
+        @router.post("/login")
         async def login(data: dict):
             username = data.get("username")
             password = data.get("password")
@@ -72,7 +74,7 @@ class SecurityController:
             return {"token": token, "user": username}
 
         # GET security config
-        @self.router.get("/editor/api/config")
+        @router.get("/editor/api/config")
         async def get_security_config():
             try:
                 config = self.model.get_security_config()
@@ -87,7 +89,7 @@ class SecurityController:
                 )
 
         # POST security config
-        @self.router.post("/editor/api/config")
+        @router.post("/editor/api/config")
         async def save_security_config(data: dict):
             if not data:
                 return JSONResponse(
@@ -109,6 +111,5 @@ class SecurityController:
                 self.service.notify_config_changed()
             return JSONResponse(content=StatusDTO(status="ok", reason="Config saved").to_dict())
 
-    # ---------------- Helper to register router ----------------
-    def register_routes(self, app):
-        app.include_router(self.router)
+    def validate_request_data(self, data: dict, required_fields: list) -> bool:
+        return False

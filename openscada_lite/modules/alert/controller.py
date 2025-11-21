@@ -15,18 +15,20 @@
 # -----------------------------------------------------------------------------
 
 # communications_controller.py
+from fastapi import APIRouter
 from openscada_lite.modules.base.base_controller import BaseController
 from openscada_lite.common.models.dtos import ClientAlertFeedbackMsg, ClientAlertMsg
 
 
 class AlertController(BaseController[ClientAlertMsg, ClientAlertFeedbackMsg]):
-    def __init__(self, model, socketio, base_event: str):
+    def __init__(self, model, socketio, module_name: str, router: APIRouter):
         super().__init__(
             model,
             socketio,
             ClientAlertMsg,
             ClientAlertFeedbackMsg,
-            base_event=base_event,
+            module_name,
+            router
         )
 
     def validate_request_data(self, data: ClientAlertMsg):
