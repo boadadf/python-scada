@@ -159,6 +159,9 @@
   ],
   "modules": [
     {
+      "name": "animation"
+    },
+    {
       "name": "alarm"
     },
     {

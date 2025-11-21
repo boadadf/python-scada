@@ -35,6 +35,7 @@ from openscada_lite.modules.security.service import SecurityService
 from openscada_lite.modules.security.controller import SecurityController
 
 from openscada_lite.web.config_editor.routes import config_router
+from openscada_lite.web.security_editor.routes import security_router
 # -----------------------------------------------------------------------------
 # Socket.IO
 # -----------------------------------------------------------------------------
@@ -54,6 +55,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="OpenSCADA-Lite", version="2.0", lifespan=lifespan)
 app.include_router(config_router)
+app.include_router(security_router)
 
 # Single ASGI entrypoint combining Socket.IO + FastAPI
 asgi_app = socketio.ASGIApp(sio, other_asgi_app=app)
@@ -83,7 +85,8 @@ app.mount(
 # Security Editor
 app.mount(
     "/security-editor",
-    StaticFiles(directory=web_dir / "security_editor" / "static", html=True),
+    StaticFiles(directory=web_dir / "security_editor" / "static" / "frontend" / "dist",
+     html=True),
     name="security_editor",
 )
 

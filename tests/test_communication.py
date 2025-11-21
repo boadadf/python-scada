@@ -1,7 +1,4 @@
-from flask import Flask
-import json
 import asyncio
-from typing import Any
 import pytest
 from unittest.mock import ANY, AsyncMock, MagicMock, call, patch
 from openscada_lite.common.models.dtos import (

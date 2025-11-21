@@ -1,12 +1,4 @@
-{
-  "name": "login",
-  "version": "1.0.0",
-  "exports": {
-    ".": "./src/index.js",
-    "./AuthContext": "./src/AuthContext.jsx",
-    "./Login": "./src/Login.jsx",
-    "./login.css": "./src/login.css"
-  },
+{ 
   "main": "src/index.js",
   "scripts": {
     "start": "webpack serve --mode development --open",

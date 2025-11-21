@@ -13,19 +13,62 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # -----------------------------------------------------------------------------
+# openscada_lite/web/security_editor/routes.py
 import os
+import json
 from fastapi import APIRouter, Request
-from fastapi.responses import HTMLResponse
-from fastapi.templating import Jinja2Templates
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
+from pathlib import Path
 
-router = APIRouter(prefix="/security-editor", tags=["Security Editor"])
+# Paths
+current_dir = Path(__file__).parent
+static_dir = current_dir / "static" / "frontend" / "dist"
+config_file = Path(__file__).parent.parent.parent / "config" / "security_config.json"
 
-CONFIG_FILE = os.path.join(
-    os.path.dirname(__file__), "..", "..", "..", "config", "security_config.json"
+# API router
+security_router = APIRouter(prefix="/security-editor", tags=["SecurityEditor"])
+
+# Mount static frontend files
+security_router.mount(
+    "/static",
+    StaticFiles(directory=static_dir),
+    name="security_static"
 )
 
-templates = Jinja2Templates(directory=os.path.join(os.path.dirname(__file__), "templates"))
+# Serve main React index.html for the editor
+@security_router.get("/", response_class=FileResponse)
+async def editor_index():
+    index_file = static_dir / "index.html"
+    if index_file.exists():
+        return FileResponse(index_file)
+    return FileResponse(status_code=404)
 
-@router.get("/", response_class=HTMLResponse)
-async def editor(request: Request):
-    return templates.TemplateResponse("security_editor.html", {"request": request})
+# -------------------- API Endpoints --------------------
+
+@security_router.get("/api/config", response_class=JSONResponse)
+async def get_security_config():
+    with open(config_file) as f:
+        return json.load(f)
+
+@security_router.post("/api/config", response_class=JSONResponse)
+async def save_security_config(request: Request):
+    config = await request.json()
+    with open(config_file, "w") as f:
+        json.dump(config, f, indent=2)
+    return {"status": "ok"}
+
+@security_router.post("/api/restart", response_class=JSONResponse)
+async def restart_app():
+    import sys
+    import threading
+
+    def do_restart():
+        print("[RESTART] Restarting OpenSCADA-Lite process...")
+        project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../.."))
+        os.chdir(project_root)
+        python = sys.executable
+        os.execl(python, python, "-m", "openscada_lite.app", *sys.argv[1:])
+
+    threading.Thread(target=do_restart).start()
+    return {"message": "Restarting OpenSCADA-Lite..."}

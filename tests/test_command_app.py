@@ -2,7 +2,7 @@ import os
 
 os.makedirs("svg", exist_ok=True)
 os.environ["SCADA_CONFIG_PATH"] = "tests"
-
+import uvicorn
 import asyncio
 import pytest
 import threading
@@ -28,16 +28,21 @@ def reset_event_bus(monkeypatch):
 
 @pytest.fixture(scope="module", autouse=True)
 def run_server():
-    # Start the Flask app in a background thread
-    thread = threading.Thread(
-        target=lambda: flask_socketio.run(app, port=5000, allow_unsafe_werkzeug=True),
-        daemon=True,
+    import subprocess
+    import time
+
+    # Start Uvicorn in a subprocess
+    process = subprocess.Popen(
+        [
+            "uvicorn",
+            "openscada_lite.app:app",
+            "--host", "127.0.0.1",
+            "--port", "5000",
+        ]
     )
-    flask_socketio.start_background_task = immediate_call
-    thread.start()
-    time.sleep(1)  # Give the server time to start
+    time.sleep(2)  # Give the server time to start
     yield
-    # No explicit shutdown; daemon thread will exit with pytest
+    process.terminate()
 
 
 def immediate_call(func, *args, **kwargs):
