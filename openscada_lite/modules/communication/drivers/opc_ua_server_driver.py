@@ -17,7 +17,7 @@
 import re
 import uuid
 import asyncio
-from opcua import Server, ua
+from asyncua import Server, ua
 from openscada_lite.modules.communication.drivers.server_protocol import ServerProtocol
 from openscada_lite.common.models.dtos import (
     DriverConnectStatus,
@@ -61,7 +61,7 @@ class OPCUAServerDriver(ServerProtocol):
         self.endpoint = config.get("endpoint", self.endpoint)
         self.namespace_index = self.server.register_namespace(self.namespace_url)
 
-    def subscribe(self, datapoints: list) -> None:
+    async def subscribe(self, datapoints: list) -> None:
         """Expose all datapoints as variables (before server start)."""
         self._pending_datapoints = datapoints
         objects = self.server.get_objects_node()
@@ -70,7 +70,7 @@ class OPCUAServerDriver(ServerProtocol):
             node = objects.add_variable(
                 self.namespace_index, dp.name, ua.Variant("", ua.VariantType.String)
             )
-            node.set_writable(writable)
+            await node.set_writable(writable)
             self.nodes[dp.name] = node
         print(f"[OPCUA] Exposed {len(datapoints)} nodes in OPC UA server")
 
