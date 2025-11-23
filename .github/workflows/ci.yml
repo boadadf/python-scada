@@ -48,6 +48,22 @@ jobs:
         working-directory: ./openscada_lite/web/scada/static/frontend
         run: npm run build
 
+      - name: Install frontend dependencies
+        working-directory: ./openscada_lite/web/config_editor/static/frontend
+        run: npm install
+
+      - name: Build React frontend
+        working-directory: ./openscada_lite/web/config_editor/static/frontend
+        run: npm run build
+
+      - name: Install frontend dependencies
+        working-directory: ./openscada_lite/web/security_editor/static/frontend
+        run: npm install
+
+      - name: Build React frontend
+        working-directory: ./openscada_lite/web/security_editor/static/frontend
+        run: npm run build
+
       # Run Python lint
       - name: Run Python lint
         run: flake8 .
