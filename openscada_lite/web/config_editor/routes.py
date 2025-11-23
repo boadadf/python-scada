@@ -16,6 +16,7 @@
 # openscada_lite/web/config_editor/routes.py
 import os
 import json
+import anyio
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 import sys
@@ -29,21 +30,20 @@ config_router = APIRouter(prefix="/config-editor/api", tags=["ConfigEditor"])
 
 @config_router.get("/config", response_class=JSONResponse)
 async def get_config():
-    with open(CONFIG_FILE) as f:
-        return json.load(f)
-
+    async with await anyio.open_file(CONFIG_FILE, "r") as file:
+        data = await file.read()
+    return json.loads(data)
 
 @config_router.post("/config", response_class=JSONResponse)
 async def save_config(request: Request):
     config = await request.json()
-    with open(CONFIG_FILE, "w") as f:
-        json.dump(config, f, indent=2)
+    async with await anyio.open_file(CONFIG_FILE, "w") as file:
+        await file.write(json.dumps(config, indent=2))
     return {"status": "ok"}
-
 
 @config_router.post("/restart", response_class=JSONResponse)
 async def restart_app():
-
+    
     def do_restart():
         print("[RESTART] Restarting OpenSCADA-Lite process...")
         project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../.."))

@@ -16,6 +16,7 @@
 # openscada_lite/web/security_editor/routes.py
 import os
 import json
+import anyio
 from fastapi import APIRouter, Request
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -47,15 +48,15 @@ async def editor_index():
 
 @security_router.get("/api/config", response_class=JSONResponse)
 async def get_security_config():
-    with open(config_file) as f:
-        return json.load(f)
-
+    async with await anyio.open_file(config_file, "r") as file:
+        data = await file.read()
+        return json.loads(data)
 
 @security_router.post("/api/config", response_class=JSONResponse)
 async def save_security_config(request: Request):
     config = await request.json()
-    with open(config_file, "w") as f:
-        json.dump(config, f, indent=2)
+    async with await anyio.open_file(config_file, "w") as file:
+        await file.write(json.dumps(config, indent=2))
     return {"status": "ok"}
 
 

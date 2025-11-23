@@ -45,7 +45,8 @@ sio = socketio.AsyncServer(
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     print("[LIFESPAN] Startup starting...")
-    asyncio.create_task(module_loader(system_config, sio, event_bus, app))
+    task = asyncio.create_task(module_loader(system_config, sio, event_bus, app))
+    await task
     yield
     print("[LIFESPAN] Shutdown complete")
 

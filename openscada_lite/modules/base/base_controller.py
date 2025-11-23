@@ -74,6 +74,7 @@ class BaseController(ABC, Generic[T, U]):
         self.register_local_routes(router)
 
     def register_local_routes(self, router: APIRouter):
+        """Register module-specific FastAPI routes. To be overridden by subclasses."""
         pass
 
     def set_service(self, service: "BaseService"):
