@@ -198,8 +198,14 @@ class Config:
         svg_files = self._config.get("svg_files", [])
         if svg_files:
             return svg_files
+
         svg_folder = self._get_svg_folder()
+        if not os.path.exists(svg_folder):
+            # folder missing — return empty list instead of crashing
+            return []
+
         return [f for f in os.listdir(svg_folder) if f.endswith(".svg")]
+
 
     def get_animation_datapoint_map(self) -> dict:
         """
