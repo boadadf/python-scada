@@ -1,6 +1,3 @@
-# -----------------------------------------------------------------------------
-# Static & Frontend Mounts
-# -----------------------------------------------------------------------------
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
@@ -9,38 +6,42 @@ from pathlib import Path
 def mount_enpoints(app):
     web_dir = Path(__file__).parent
 
-    # SCADA: serve the build folder directly
-    app.mount(
+    def safe_mount(path: str, directory: Path, name: str):
+        if directory.exists():
+            app.mount(path, StaticFiles(directory=directory, html=True), name=name)
+        else:
+            # Prevent application crash in environments without frontend build artifacts
+            print(f"⚠ Skipping mount '{name}': {directory} not found")
+
+    # SCADA
+    safe_mount(
         "/scada",
-        StaticFiles(directory=web_dir / "scada" / "static" / "frontend" / "dist", html=True),
-        name="scada",
+        web_dir / "scada" / "static" / "frontend" / "dist",
+        "scada",
     )
 
     # Config Editor
-    app.mount(
+    safe_mount(
         "/config-editor",
-        StaticFiles(
-            directory=web_dir / "config_editor" / "static" / "frontend" / "dist",
-            html=True,
-        ),
-        name="config_editor",
+        web_dir / "config_editor" / "static" / "frontend" / "dist",
+        "config_editor",
     )
 
     # Security Editor
-    app.mount(
+    safe_mount(
         "/security-editor",
-        StaticFiles(
-            directory=web_dir / "security_editor" / "static" / "frontend" / "dist", html=True
-        ),
-        name="security_editor",
+        web_dir / "security_editor" / "static" / "frontend" / "dist",
+        "security_editor",
     )
 
-    # Path to icons directory (relative to this file)
-    icons_path = web_dir / "icons"
+    # Icons directory (this usually exists; still safe to check)
+    safe_mount(
+        "/static/icons",
+        web_dir / "icons",
+        "icons",
+    )
 
-    app.mount("/static/icons", StaticFiles(directory=icons_path), name="icons")
-
-    # Redirect root to SCADA
+    # Root redirect
     @app.get("/")
     async def index():
         return RedirectResponse("/scada")
