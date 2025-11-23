@@ -25,7 +25,7 @@ def reset_event_bus(monkeypatch):
 async def test_alarm_active_creation():
     bus = EventBus.get_instance()
     model = AlarmModel()
-    service = AlarmService(bus, model, controller=None)
+    AlarmService(bus, model, controller=None)
 
     updates = []
 
@@ -152,7 +152,7 @@ async def test_alarm_acknowledge_inactive_finishes():
 async def test_recursive_alarms_full_updates():
     bus = EventBus.get_instance()
     model = AlarmModel()
-    service = AlarmService(bus, model, controller=None)
+    AlarmService(bus, model, controller=None)
 
     updates = []
 
