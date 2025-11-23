@@ -1,3 +1,6 @@
+# -----------------------------------------------------------------------------
+# Static & Frontend Mounts
+# -----------------------------------------------------------------------------
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
@@ -10,8 +13,7 @@ def mount_enpoints(app):
         if directory.exists():
             app.mount(path, StaticFiles(directory=directory, html=True), name=name)
         else:
-            # Prevent application crash in environments without frontend build artifacts
-            print(f"⚠ Skipping mount '{name}': {directory} not found")
+            print(f"⚠ Skipping mount '{name}': {directory} does not exist")
 
     # SCADA
     safe_mount(
@@ -34,14 +36,13 @@ def mount_enpoints(app):
         "security_editor",
     )
 
-    # Icons directory (this usually exists; still safe to check)
+    # Icons (usually exists, but keep safe)
     safe_mount(
         "/static/icons",
         web_dir / "icons",
         "icons",
     )
 
-    # Root redirect
     @app.get("/")
     async def index():
         return RedirectResponse("/scada")
