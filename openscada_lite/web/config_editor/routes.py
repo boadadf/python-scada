@@ -18,7 +18,8 @@ import os
 import json
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
-
+import sys
+import threading
 CONFIG_FILE = os.path.join(
     os.path.dirname(__file__), "..", "..", "..", "config", "system_config.json"
 )
@@ -42,7 +43,6 @@ async def save_config(request: Request):
 
 @config_router.post("/restart", response_class=JSONResponse)
 async def restart_app():
-    import sys, os, threading
 
     def do_restart():
         print("[RESTART] Restarting OpenSCADA-Lite process...")

@@ -1,4 +1,3 @@
-from asyncio import events
 import os
 import pytest
 import asyncio

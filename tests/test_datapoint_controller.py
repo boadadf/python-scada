@@ -123,9 +123,6 @@ async def test_handle_subscribe_live_feed_emits_initial_state(controller):
         assert found, "No initial_state emit found"
 
 
-from fastapi.testclient import TestClient
-
-
 @pytest.mark.asyncio
 async def test_set_tag_calls_service_and_emits_ack(controller):
     from openscada_lite.modules.datapoint.controller import DatapointController

@@ -1,4 +1,5 @@
 import os
+import json
 
 from common.bus.event_bus import EventBus
 import asyncio
@@ -70,9 +71,6 @@ async def test_live_feed_and_set_tag_real():
     sio.connect(SERVER_URL)
     sio.emit("datapoint_subscribe_live_feed")
     await asyncio.sleep(1)  # Wait for initial state
-
-    # Check initial state contains all tags from test_config.json
-    import json, os
 
     with open(os.path.join(os.path.dirname(__file__), "test_config.json")) as f:
         config = json.load(f)

@@ -29,7 +29,6 @@ def reset_event_bus(monkeypatch):
 def run_server():
     import subprocess
     import time
-    import os
 
     # Ensure SCADA_CONFIG_PATH is set
     os.environ["SCADA_CONFIG_PATH"] = "tests"

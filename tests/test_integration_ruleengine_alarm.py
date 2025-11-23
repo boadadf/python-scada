@@ -1,6 +1,5 @@
 import asyncio
 import pytest
-from datetime import datetime
 
 from openscada_lite.common.bus.event_bus import EventBus
 from openscada_lite.common.bus.event_types import EventType
@@ -38,16 +37,20 @@ async def test_integration_switch_rules_alarm_lifecycle():
     engine.rules = [
         Rule(
             rule_id="switch_error_straight",
-            on_condition="TrainTestDriver@RIGHT_SWITCH_CONTROL == 'STRAIGHT' and TrainTestDriver@LEFT_SWITCH_CONTROL == 'TURN'",
+            on_condition="TrainTestDriver@RIGHT_SWITCH_CONTROL == 'STRAIGHT' "
+            "and TrainTestDriver@LEFT_SWITCH_CONTROL == 'TURN'",
             on_actions=["raise_alarm()"],
-            off_condition="not (TrainTestDriver@RIGHT_SWITCH_CONTROL == 'STRAIGHT' and TrainTestDriver@LEFT_SWITCH_CONTROL == 'TURN')",
+            off_condition="not (TrainTestDriver@RIGHT_SWITCH_CONTROL == 'STRAIGHT' "
+            "and TrainTestDriver@LEFT_SWITCH_CONTROL == 'TURN')",
             off_actions=["lower_alarm()"],
         ),
         Rule(
             rule_id="switch_error_turn",
-            on_condition="TrainTestDriver@RIGHT_SWITCH_CONTROL == 'TURN' and TrainTestDriver@LEFT_SWITCH_CONTROL == 'STRAIGHT'",
+            on_condition="TrainTestDriver@RIGHT_SWITCH_CONTROL == 'TURN' "
+            "and TrainTestDriver@LEFT_SWITCH_CONTROL == 'STRAIGHT'",
             on_actions=["raise_alarm()"],
-            off_condition="not (TrainTestDriver@RIGHT_SWITCH_CONTROL == 'TURN' and TrainTestDriver@LEFT_SWITCH_CONTROL == 'STRAIGHT')",
+            off_condition="not (TrainTestDriver@RIGHT_SWITCH_CONTROL == 'TURN' "
+            "and TrainTestDriver@LEFT_SWITCH_CONTROL == 'STRAIGHT')",
             off_actions=["lower_alarm()"],
         ),
     ]

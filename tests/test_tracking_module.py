@@ -4,14 +4,11 @@ import pytest
 from unittest.mock import MagicMock
 from fastapi import APIRouter
 
-from openscada_lite.common.bus.event_bus import EventBus
-from openscada_lite.common.tracking.utils import safe_serialize
 from openscada_lite.common.config.config import Config
 from openscada_lite.modules.tracking.model import TrackingModel
 from openscada_lite.modules.tracking.controller import TrackingController
 from openscada_lite.modules.tracking.service import TrackingService
 from openscada_lite.common.models.dtos import DataFlowEventMsg, DataFlowStatus
-from openscada_lite.common.bus.event_types import EventType
 
 
 @pytest.fixture

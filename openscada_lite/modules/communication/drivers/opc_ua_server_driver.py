@@ -95,7 +95,8 @@ class OPCUAServerDriver(ServerProtocol):
             await self.publish_driver_state("online")
 
         print(
-            f"[OPCUA] Server started at {self.endpoint} (namespace: {self.namespace_url}, index: {self.namespace_index})"
+            f"[OPCUA] Server started at {self.endpoint} "
+            f"(namespace: {self.namespace_url}, index: {self.namespace_index})"
         )
 
     async def disconnect(self) -> None:

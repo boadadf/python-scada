@@ -6,9 +6,6 @@ from openscada_lite.modules.communication.service import CommunicationService
 from openscada_lite.common.bus.event_bus import EventBus
 from openscada_lite.modules.datapoint.model import DatapointModel
 from openscada_lite.modules.datapoint.service import DatapointService
-from openscada_lite.modules.communication.manager.connector_manager import (
-    ConnectorManager,
-)
 from openscada_lite.common.bus.event_types import EventType
 from openscada_lite.common.models.dtos import CommandFeedbackMsg, SendCommandMsg
 from openscada_lite.common.config.config import Config

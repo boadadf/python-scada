@@ -8,9 +8,6 @@ from openscada_lite.modules.alarm.model import AlarmModel
 from openscada_lite.common.bus.event_bus import EventBus
 from openscada_lite.modules.datapoint.model import DatapointModel
 from openscada_lite.modules.datapoint.service import DatapointService
-from openscada_lite.modules.communication.manager.connector_manager import (
-    ConnectorManager,
-)
 from openscada_lite.modules.rule.manager.rule_manager import RuleEngine
 from openscada_lite.modules.alarm.service import AlarmService
 from openscada_lite.common.bus.event_types import EventType

@@ -1,7 +1,6 @@
 # -----------------------------------------------------------------------------
 # Static & Frontend Mounts
 # -----------------------------------------------------------------------------
-import os
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path

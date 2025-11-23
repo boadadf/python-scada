@@ -191,12 +191,14 @@ async def test_switch_error_rules_toggle():
     engine.rules = [
         Rule(
             rule_id="switch_error_straight",
-            on_condition="TrainTestDriver@RIGHT_SWITCH_CONTROL == 'STRAIGHT' and TrainTestDriver@LEFT_SWITCH_CONTROL == 'TURN'",
+            on_condition="TrainTestDriver@RIGHT_SWITCH_CONTROL == 'STRAIGHT' "
+            "and TrainTestDriver@LEFT_SWITCH_CONTROL == 'TURN'",
             on_actions=["raise_alarm()"],
         ),
         Rule(
             rule_id="switch_error_turn",
-            on_condition="TrainTestDriver@RIGHT_SWITCH_CONTROL == 'TURN' and TrainTestDriver@LEFT_SWITCH_CONTROL == 'STRAIGHT'",
+            on_condition="TrainTestDriver@RIGHT_SWITCH_CONTROL == 'TURN' "
+            "and TrainTestDriver@LEFT_SWITCH_CONTROL == 'STRAIGHT'",
             on_actions=["raise_alarm()"],
         ),
     ]
@@ -238,14 +240,15 @@ async def test_switch_error_rules_toggle():
     await asyncio.sleep(0.01)
     assert any(r[1] == "switch_error_turn" for r in raised)
 
-    # --- 3. Now Left TURN, Right TURN -> error_turn should deactivate, error_straight should NOT activate
+    # --- 3. Now Left TURN, Right TURN -> error_turn should deactivate,
+    #  error_straight should NOT activate
     await test_bus.publish(
         EventType.TAG_UPDATE,
         TagUpdateMsg(datapoint_identifier="TrainTestDriver@LEFT_SWITCH_CONTROL", value="TURN"),
     )
     await asyncio.sleep(0.01)
     # should deactivate switch_error_turn
-    assert any(l[1] == "switch_error_turn" for l in lowered)
+    assert any(lowered_alarm[1] == "switch_error_turn" for lowered_alarm in lowered)
     # and not raise straight alarm
     assert not any(r[1] == "switch_error_straight" for r in raised if r[1] != "switch_error_turn")
 
@@ -266,4 +269,4 @@ async def test_switch_error_rules_toggle():
         TagUpdateMsg(datapoint_identifier="TrainTestDriver@LEFT_SWITCH_CONTROL", value="STRAIGHT"),
     )
     await asyncio.sleep(0.01)
-    assert any(l[1] == "switch_error_straight" for l in lowered)
+    assert any(lowered_alarm[1] == "switch_error_straight" for lowered_alarm in lowered)

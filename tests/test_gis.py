@@ -1,12 +1,11 @@
 import pytest
-from unittest.mock import MagicMock, AsyncMock, patch
+from unittest.mock import MagicMock, patch
 from fastapi import APIRouter, FastAPI
 from fastapi.testclient import TestClient
 from openscada_lite.modules.gis.controller import GisController
 from openscada_lite.modules.gis.service import GisService
 from openscada_lite.modules.gis.model import GisModel
 from openscada_lite.common.models.dtos import GisUpdateMsg, TagUpdateMsg, AlarmUpdateMsg
-from openscada_lite.common.config.config import Config
 
 
 @pytest.fixture(scope="function")

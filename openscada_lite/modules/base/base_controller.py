@@ -93,7 +93,8 @@ class BaseController(ABC, Generic[T, U]):
         all_msgs = self.model.get_all()
         sorted_msgs = sorted(all_msgs.values(), key=lambda v: v.get_id())
         print(
-            f"[{self.base_event}] Sending initial state to {self.base_event}, {len(sorted_msgs)} items."
+            f"[{self.base_event}] Sending initial "
+            f"state to {self.base_event}, {len(sorted_msgs)} items."
         )
         await self.socketio.enter_room(sid, self.room)
         await self.socketio.emit(

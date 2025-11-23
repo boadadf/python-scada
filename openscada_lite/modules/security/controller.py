@@ -13,11 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # -----------------------------------------------------------------------------
-from fastapi import APIRouter, Depends, Request, HTTPException
+from fastapi import APIRouter, Request, HTTPException
 from fastapi.responses import JSONResponse
 from openscada_lite.modules.base.base_controller import BaseController
 from openscada_lite.modules.security.model import SecurityModel
-from openscada_lite.modules.security.service import SecurityService
 from openscada_lite.common.models.dtos import StatusDTO
 from openscada_lite.modules.security import utils
 

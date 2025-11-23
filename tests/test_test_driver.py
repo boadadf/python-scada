@@ -6,9 +6,6 @@ from openscada_lite.modules.communication.drivers.test.tank_test_driver import (
 from openscada_lite.common.models.dtos import SendCommandMsg, TagUpdateMsg
 from openscada_lite.common.models.entities import Datapoint
 
-import asyncio
-import pytest
-
 
 @pytest.mark.asyncio
 async def test_test_driver_value_callback():

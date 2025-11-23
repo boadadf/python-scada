@@ -44,7 +44,8 @@ def dummy_config(monkeypatch, tmp_path):
         """
     <svg>
       <rect id="tank_fill" data-datapoint="WaterTank@TANK" data-animation="fill_level"/>
-      <text id="tank_level_text" data-datapoint="WaterTank@TANK" data-animation="level_text">0.0</text>
+      <text id="tank_level_text" data-datapoint="WaterTank@TANK"
+      data-animation="level_text">0.0</text>
     </svg>
     """
     )

@@ -68,7 +68,8 @@ def test_full_config_roundtrip(client):
             {
                 "allowed_apps": ["security_editor", "config_editor", "scada"],
                 "groups": ["all_group"],
-                "password_hash": "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918",  # hash for 'admin'
+                "password_hash": "8c6976e5b5410415bde908bd4dee15dfb167a9"
+                "c873fc4bb8a81f6f2ab448a918",  # hash for 'admin'
                 "username": "admin",
             }
         ],
@@ -98,7 +99,8 @@ def test_login_admin(client):
             {
                 "allowed_apps": ["security_editor"],
                 "groups": ["test_group"],
-                "password_hash": "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918",  # hash for 'admin'
+                "password_hash": "8c6976e5b5410415bde908bd4dee15dfb167"
+                "a9c873fc4bb8a81f6f2ab448a918",  # hash for 'admin'
                 "username": "admin",
             }
         ],
