@@ -18,22 +18,6 @@ def set_config_env(monkeypatch):
 
 SERVER_URL = "http://localhost:5000"
 
-import os
-from starlette.staticfiles import StaticFiles
-
-def mount_enpoints(app):
-    web_dir = os.getenv("WEB_DIR", "/path/to/default/web/dir")
-    static_dir = web_dir / "scada" / "static" / "frontend" / "dist"
-
-    if not static_dir.exists():
-        print(f"Skipping StaticFiles mounting: {static_dir} does not exist")
-        return
-
-    app.mount(
-        "/static",
-        StaticFiles(directory=static_dir, html=True),
-        name="static",
-    )
 
 @pytest.fixture(autouse=True)
 def reset_event_bus(monkeypatch):
