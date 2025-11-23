@@ -52,6 +52,7 @@ async def get_security_config():
         data = await file.read()
         return json.loads(data)
 
+
 @security_router.post("/api/config", response_class=JSONResponse)
 async def save_security_config(request: Request):
     config = await request.json()
