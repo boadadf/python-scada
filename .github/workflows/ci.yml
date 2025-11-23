@@ -18,11 +18,11 @@ jobs:
       SONAR_PROJECT_KEY: boadadf_python-scada
 
     steps:
-      # 1️⃣ Checkout repo
+      # Checkout repo
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # 2️⃣ Set up Python
+      # Set up Python
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
@@ -34,13 +34,7 @@ jobs:
           pip install -r requirements.txt
           pip install flake8 pytest
 
-      - name: Run Python lint
-        run: flake8 .
-
-      - name: Run Python tests
-        run: pytest
-
-      # 3️⃣ Set up Node.js / React
+      # Set up Node.js / React
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
@@ -54,7 +48,15 @@ jobs:
         working-directory: ./web/scada/static/frontend
         run: npm run build
 
-      # 4️⃣ SonarCloud analysis
+      # Run Python lint
+      - name: Run Python lint
+        run: flake8 .
+
+      # Run Python tests
+      - name: Run Python tests
+        run: pytest
+
+      # SonarCloud analysis
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@v2
         with:
