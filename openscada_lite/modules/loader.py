@@ -37,5 +37,4 @@ async def module_loader(config: dict, socketio_obj, event_bus, app) -> dict:
     security_controller = SecurityController(security_model, socketio_obj, "security", app)
     security_service = SecurityService(event_bus, security_model, security_controller)    
     security_controller.set_service(security_service)
-    security_model.load_endpoints(app)
     print(f"[INIT] Security module loaded")

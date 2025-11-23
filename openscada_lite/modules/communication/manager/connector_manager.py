@@ -87,6 +87,7 @@ class ConnectorManager:
             driver_instance.initialize(
                 cfg.get("params", {})
             )  # Pass params if present, else empty dict
+            print(f"[CONNECTOR MANAGER] Subscribing driver '{cfg['name']}' to {len(datapoint_objs)} datapoints")
             driver_instance.subscribe(datapoint_objs)
             # Optionally assign datapoints to driver_instance if needed
             self.driver_instances[cfg["name"]] = driver_instance

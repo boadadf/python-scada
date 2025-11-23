@@ -1,40 +1,42 @@
 import os
 
-os.environ["SCADA_CONFIG_PATH"] = "tests"
-
-
+from common.bus.event_bus import EventBus
 import asyncio
 import pytest
-import threading
-import time
 import socketio
-from openscada_lite.app import app, socketio as flask_socketio
 from common.models.dtos import RawTagUpdateMsg
 import requests
 
-SERVER_URL = "http://localhost:5000"
-
+SERVER_URL = "http://localhost:5001"
 
 @pytest.fixture(autouse=True)
-def ensure_svg_folder_exists():
-    svg_dir = os.path.abspath("config/svg")
-    if not os.path.exists(svg_dir):
-        os.makedirs(svg_dir)
+def reset_event_bus(monkeypatch):
+    # Reset the singleton before each test
+    monkeypatch.setattr(EventBus, "_instance", None)
 
-
-@pytest.fixture(scope="module", autouse=True)
+@pytest.fixture(scope="session", autouse=True)
 def run_server():
-    # Start the Flask app in a background thread
-    thread = threading.Thread(
-        target=lambda: flask_socketio.run(app, port=5000, allow_unsafe_werkzeug=True),
-        daemon=True,
-    )
-    flask_socketio.start_background_task = immediate_call
-    thread.start()
-    time.sleep(1)  # Give the server time to start
-    yield
-    # No explicit shutdown; daemon thread will exit with pytest
+    import subprocess
+    import time
+    import os
 
+    # Ensure SCADA_CONFIG_PATH is set
+    os.environ["SCADA_CONFIG_PATH"] = "tests"
+
+    # Start Uvicorn in a subprocess
+    process = subprocess.Popen(
+        [
+            "uvicorn",
+            "openscada_lite.app:asgi_app",
+            "--host", "127.0.0.1",
+            "--port", "5001",
+        ],
+        env=os.environ.copy(),  # Pass the current environment variables to the subprocess
+    )
+    time.sleep(2)  # Give the server time to start
+    yield
+    process.terminate()
+    process.wait()
 
 def immediate_call(func, *args, **kwargs):
     import asyncio
@@ -87,11 +89,18 @@ async def test_live_feed_and_set_tag_real():
         f"{SERVER_URL}/datapoint_send_rawtagupdatemsg",
         json=RawTagUpdateMsg(test_tag, test_value, "good", None).to_dict(),
     )
-    await asyncio.sleep(1)  # Wait for update
+    await asyncio.sleep(1.1)  # Wait for update
 
     assert received_updates, "No datapoint_update received after set_tag"
-    update = received_updates[-1]
-    assert update["datapoint_identifier"] == test_tag
+
+    # Flatten the received updates (in case of batched messages)
+    all_updates = [item for batch in received_updates for item in batch]
+
+    # Check if the expected update is in the batch
+    update = next(
+        (u for u in all_updates if u["datapoint_identifier"] == test_tag), None
+    )
+    assert update is not None, "Expected update not found in received updates"
     assert update["value"] == test_value
 
     sio.disconnect()

@@ -16,20 +16,20 @@
   ],
   "users": [
     {
-      "allowed_apps": [],
+      "username": "u1",
       "groups": [
         "g1"
       ],
-      "password_hash": "",
-      "username": "u1"
+      "allowed_apps": [],
+      "password_hash": ""
     },
     {
-      "allowed_apps": [],
+      "username": "u2",
       "groups": [
         "g2"
       ],
-      "password_hash": "",
-      "username": "u2"
+      "allowed_apps": [],
+      "password_hash": ""
     }
   ]
 }

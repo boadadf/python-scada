@@ -133,12 +133,11 @@ class RuleEngine:
         self.datapoint_state[tag_id] = value
 
         safe_key = self._safe_key(tag_id)
-        # Normalize value to boolean where applicable
-        self.asteval.symtable[safe_key] = (
-            value
-            if isinstance(value, (int, float, bool))
-            else str(value).upper() == "TRUE"
-        )
+        # Normalize string values to boolean only if they are "TRUE" or "FALSE"
+        if isinstance(value, str) and value.upper() in ("TRUE", "FALSE"):
+            self.asteval.symtable[safe_key] = value.upper() == "TRUE"
+        else:
+            self.asteval.symtable[safe_key] = value
 
         impacted_rules = self.tag_to_rules.get(tag_id, [])
         print(f"[RuleEngine] Received tag update: {tag_id} = {value}")

@@ -16,14 +16,11 @@
 import os
 import sys
 import asyncio
-from pathlib import Path
 from contextlib import asynccontextmanager
-
+from pathlib import Path
 import socketio
 import uvicorn
 from fastapi import FastAPI
-from fastapi.responses import RedirectResponse
-from fastapi.staticfiles import StaticFiles
 
 from openscada_lite.common.bus.event_bus import EventBus
 from openscada_lite.common.config.config import Config
@@ -32,7 +29,7 @@ from openscada_lite.modules.loader import module_loader
 
 from openscada_lite.web.config_editor.routes import config_router
 from openscada_lite.web.security_editor.routes import security_router
-
+from openscada_lite.web.mounter import mount_enpoints
 
 # -----------------------------------------------------------------------------
 # Socket.IO
@@ -54,67 +51,16 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="OpenSCADA-Lite", version="2.0", lifespan=lifespan)
 app.include_router(config_router)
 app.include_router(security_router)
+mount_enpoints(app)
 
 # Single ASGI entrypoint combining Socket.IO + FastAPI
 asgi_app = socketio.ASGIApp(sio, other_asgi_app=app)
-
-# -----------------------------------------------------------------------------
-# Static & Frontend Mounts
-# -----------------------------------------------------------------------------
-web_dir = Path(__file__).parent / "web"
-
-# SCADA: serve the build folder directly
-app.mount(
-    "/scada",
-    StaticFiles(directory=web_dir / "scada" / "static" / "frontend" / "dist", html=True),
-    name="scada",
-)
-
-# Config Editor
-app.mount(
-    "/config-editor",
-    StaticFiles(
-        directory=web_dir / "config_editor" / "static" / "frontend" / "dist",
-        html=True,
-    ),
-    name="config_editor",
-)
-
-# Security Editor
-app.mount(
-    "/security-editor",
-    StaticFiles(directory=web_dir / "security_editor" / "static" / "frontend" / "dist",
-     html=True),
-    name="security_editor",
-)
-
-# Path to icons directory (relative to this file)
-icons_path = os.path.join(os.path.dirname(__file__), "web", "icons")
-
-app.mount("/static/icons", StaticFiles(directory=icons_path), name="icons")
-
-
-# Redirect root to SCADA
-@app.get("/")
-async def index():
-    return RedirectResponse("/scada")
 
 # -----------------------------------------------------------------------------
 # Core Security Module
 # -----------------------------------------------------------------------------
 event_bus = EventBus.get_instance()
 system_config = Config.get_instance().load_system_config()
-
-
-# -----------------------------------------------------------------------------
-# Async module init
-# -----------------------------------------------------------------------------
-async def async_init_all():
-    for name, mod in module_instances.items():
-        service = mod["service"]
-        if hasattr(service, "async_init"):
-            print(f"[INIT] async_init: {name}")
-            await service.async_init()
 
 # -----------------------------------------------------------------------------
 # Entrypoint

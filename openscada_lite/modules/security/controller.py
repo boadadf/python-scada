@@ -24,7 +24,7 @@ from openscada_lite.modules.security import utils
 
 class SecurityController(BaseController[None, None], ):
 
-    def __init__(self, model, socketio, module_name:str, router: APIRouter):     
+    def __init__(self, model: SecurityModel, socketio, module_name:str, router: APIRouter):     
         super().__init__(
             model,
             socketio,
@@ -45,21 +45,23 @@ class SecurityController(BaseController[None, None], ):
         return username
 
     # ---------------- Register Routes ----------------
-    def load_local_routes(self, router: APIRouter):
-        self.model.load_endpoints()
+    def register_local_routes(self, router: APIRouter):
+        print("[SECURITY] Loading security routes")
+        self.model.load_endpoints(router)
         
         # GET all registered endpoints
-        @router.get("/endpoints")
+        @router.get("/security/endpoints")
         async def get_endpoints():
             endpoints = self.model.get_end_points()
             return JSONResponse(content=endpoints)
-
+        print("[SECURITY] Registered endpoints route loaded")
         # POST login
-        @router.post("/login")
-        async def login(data: dict):
+        @router.post("/security/login")
+        async def login(data: dict, app: str = None):
+            print("[SECURITY] Login attempt:", data)
             username = data.get("username")
             password = data.get("password")
-            app_name = data.get("app")
+            app_name = app if app is not None else data.get("app")
             if not username or not password or not app_name:
                 return JSONResponse(
                     content=StatusDTO(
@@ -68,13 +70,14 @@ class SecurityController(BaseController[None, None], ):
                     ).to_dict(),
                     status_code=400
                 )
+            print("[SECURITY] Authenticating user:", username, "for app:", app_name)
             token = self.service.authenticate_user(username, password, app_name)
             if not token:
                 raise HTTPException(status_code=401, detail="Unauthorized")
             return {"token": token, "user": username}
 
         # GET security config
-        @router.get("/editor/api/config")
+        @router.get("/security-editor/api/config")
         async def get_security_config():
             try:
                 config = self.model.get_security_config()
@@ -89,7 +92,7 @@ class SecurityController(BaseController[None, None], ):
                 )
 
         # POST security config
-        @router.post("/editor/api/config")
+        @router.post("/security-editor/api/config")
         async def save_security_config(data: dict):
             if not data:
                 return JSONResponse(

@@ -2,6 +2,7 @@ import asyncio
 from datetime import datetime
 import pytest
 from unittest.mock import MagicMock
+from fastapi import APIRouter
 
 from openscada_lite.common.bus.event_bus import EventBus
 from openscada_lite.common.tracking.utils import safe_serialize
@@ -33,7 +34,11 @@ def model():
 @pytest.fixture
 def controller(model):
     socketio = MagicMock()
-    return TrackingController(model, socketio)
+    module_name = "tracking"
+    router = APIRouter()
+
+    # Create the TrackingController instance
+    return TrackingController(model, socketio, module_name, router)
 
 
 @pytest.mark.asyncio
@@ -66,9 +71,16 @@ async def test_service_bus_mode_adds_event(model, controller, sample_event):
     assert stored.payload == sample_event.payload
 
 
-def test_controller_publish_live_feed(model):
+@pytest.mark.asyncio
+async def test_controller_publish_live_feed(model):
     socketio = MagicMock()
-    controller = TrackingController(model, socketio)
+    module_name = "tracking"
+    router = APIRouter()
+
+    # Create the TrackingController instance with the required parameters
+    controller = TrackingController(model, socketio, module_name, router)
+
+    # Create a sample event
     event = DataFlowEventMsg(
         track_id="abc123",
         event_type="TestEvent",
@@ -77,11 +89,21 @@ def test_controller_publish_live_feed(model):
         timestamp="2025-09-24T12:00:00",
         payload={"foo": "bar"},
     )
+
+    # Publish the event
     controller.publish(event)
+
+    # Wait for the batch worker to process the buffer
+    await asyncio.sleep(1.1)  # Slightly longer than the batch interval (1 second)
+
+    # Assert that the event was emitted via Socket.IO
     socketio.emit.assert_called_once()
     args, kwargs = socketio.emit.call_args
     assert args[0] == "tracking_datafloweventmsg"
-    assert args[1]["track_id"] == "abc123"
+    assert any(
+        emitted_event["track_id"] == "abc123" and emitted_event["event_type"] == "TestEvent"
+        for emitted_event in args[1]
+    )
 
 
 def test_model_add_and_get_events(model: TrackingModel, sample_event):

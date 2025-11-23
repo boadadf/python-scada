@@ -31,7 +31,9 @@
     {
       "username": "dani",
       "password_hash": "bbdda550319287f2dfa031ab9c67a181b6886cad91b645c04c29c773a537c3c2",
-      "groups": [],
+      "groups": [
+        "all_group"
+      ],
       "allowed_apps": []
     }
   ]

@@ -1,28 +1,48 @@
 import pytest
-from flask import Flask
 import json
+from fastapi import FastAPI, APIRouter
+from fastapi.testclient import TestClient
+from unittest.mock import MagicMock
+from openscada_lite.modules.security.model import SecurityModel
+from openscada_lite.modules.security.service import SecurityService
+from openscada_lite.modules.security.controller import SecurityController
 
 
 @pytest.fixture
 def app(tmp_path):
-    from openscada_lite.modules.security.model import SecurityModel
-    from openscada_lite.modules.security.service import SecurityService
-    from openscada_lite.modules.security.controller import SecurityController
+    """Create a FastAPI app with SecurityController mounted."""
+    # Create a FastAPI app
+    app = FastAPI()
 
-    flask_app = Flask(__name__)
+    # Create a temporary security configuration file
     config_path = tmp_path / "security_config.json"
     config_path.write_text(json.dumps({"users": [], "groups": []}))
-    model = SecurityModel(flask_app)
-    service = SecurityService(None, model)
-    controller = SecurityController(model, service)
-    controller.register_routes(flask_app)
-    flask_app.config["TESTING"] = True
-    return flask_app
+
+    # Initialize the SecurityModel
+    model = SecurityModel()
+
+    # Create an APIRouter
+    router = APIRouter()
+
+    # Initialize the SecurityController
+    socketio = MagicMock()
+    controller = SecurityController(model, socketio, "security", router)
+
+    # Create the SecurityService
+    event_bus = MagicMock()
+    service = SecurityService(event_bus, model, controller)
+
+    # Include the router in the FastAPI app
+    app.include_router(router)
+
+    # Return the FastAPI app, model, controller, and service for testing
+    return app, model, controller, service
 
 
 @pytest.fixture
 def client(app):
-    return app.test_client()
+    app, _, _, _ = app
+    return TestClient(app)
 
 
 def test_full_config_roundtrip(client):
@@ -61,7 +81,7 @@ def test_full_config_roundtrip(client):
     # Load config
     resp = client.get("/security-editor/api/config")
     assert resp.status_code == 200
-    loaded = resp.get_json()
+    loaded = resp.json()
     assert loaded == config
 
     # Check users/groups structure
@@ -91,7 +111,7 @@ def test_login_admin(client):
         json={"username": "admin", "password": "admin", "app": "security_editor"},
     )
     assert resp.status_code == 200
-    data = resp.get_json()
+    data = resp.json()
     assert "token" in data
     assert data["user"] == "admin"
 
@@ -158,7 +178,7 @@ def test_permissions_structure(client):
     assert resp.status_code == 200
     resp = client.get("/security-editor/api/config")
     assert resp.status_code == 200
-    loaded = resp.get_json()
+    loaded = resp.json()
     assert len(loaded["groups"]) == 2
     assert len(loaded["users"]) == 2
     assert loaded["groups"][0]["permissions"] == ["p1", "p2"]
