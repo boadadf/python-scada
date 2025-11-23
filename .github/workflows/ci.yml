@@ -60,12 +60,12 @@ jobs:
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@v2
         with:
-          organization: ${{ env.SONAR_ORGANIZATION }}
-          projectKey: ${{ env.SONAR_PROJECT_KEY }}
-          projectName: python-scada
-          token: ${{ secrets.SONAR_TOKEN }}
-          extraProperties: |
-            # Path to frontend and backend sources
-            sonar.sources=./,./web/scada/static/frontend/src
-            # Language-specific exclusions if needed
-            sonar.exclusions=**/node_modules/**,**/__pycache__/**
+          projectBaseDir: .
+          args: >
+            -Dsonar.organization=${{ env.SONAR_ORGANIZATION }}
+            -Dsonar.projectKey=${{ env.SONAR_PROJECT_KEY }}
+            -Dsonar.projectName=python-scada
+            -Dsonar.sources=.,./openscada_lite/web/scada/static/frontend/src
+            -Dsonar.exclusions=**/node_modules/**,**/__pycache__/**
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
