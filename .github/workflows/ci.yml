@@ -41,11 +41,11 @@ jobs:
           node-version: '20'
 
       - name: Install frontend dependencies
-        working-directory: ./web/scada/static/frontend
+        working-directory: ./openscada_lite/web/scada/static/frontend
         run: npm install
 
       - name: Build React frontend
-        working-directory: ./web/scada/static/frontend
+        working-directory: ./openscada_lite/web/scada/static/frontend
         run: npm run build
 
       # Run Python lint
