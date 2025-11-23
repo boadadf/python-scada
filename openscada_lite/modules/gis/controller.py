@@ -26,16 +26,9 @@ class GisController(BaseController[GisUpdateMsg, None]):
     Handles Socket.IO events via BaseController and HTTP endpoints via APIRouter.
     """
 
-    def __init__(self, model, socketio, module_name:str, router: APIRouter):
-        super().__init__(
-            model,
-            socketio,
-            GisUpdateMsg,
-            None,
-            module_name,
-            router
-        )
-            
+    def __init__(self, model, socketio, module_name: str, router: APIRouter):
+        super().__init__(model, socketio, GisUpdateMsg, None, module_name, router)
+
     # FastAPI route registration
     def register_local_routes(self, router: APIRouter):
         @router.get("/api/gis/config")

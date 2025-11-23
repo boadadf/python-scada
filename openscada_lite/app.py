@@ -41,12 +41,14 @@ sio = socketio.AsyncServer(
     ping_timeout=120,
 )
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     print("[LIFESPAN] Startup starting...")
     asyncio.create_task(module_loader(system_config, sio, event_bus, app))
     yield
     print("[LIFESPAN] Shutdown complete")
+
 
 app = FastAPI(title="OpenSCADA-Lite", version="2.0", lifespan=lifespan)
 app.include_router(config_router)
@@ -61,6 +63,7 @@ asgi_app = socketio.ASGIApp(sio, other_asgi_app=app)
 # -----------------------------------------------------------------------------
 event_bus = EventBus.get_instance()
 system_config = Config.get_instance().load_system_config()
+
 
 # -----------------------------------------------------------------------------
 # Entrypoint

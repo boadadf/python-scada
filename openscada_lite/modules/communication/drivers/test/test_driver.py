@@ -38,12 +38,8 @@ class TestDriver(DriverProtocol, ABC):
         self._server_name = server_name
         self._tags: Dict[str, RawTagUpdateMsg] = {}
         self._value_callback: Callable[[RawTagUpdateMsg], Any] | None = None
-        self._communication_status_callback: (
-            Callable[[DriverConnectStatus], Any] | None
-        ) = None
-        self._command_feedback_callback: Callable[[CommandFeedbackMsg], Any] | None = (
-            None
-        )
+        self._communication_status_callback: Callable[[DriverConnectStatus], Any] | None = None
+        self._command_feedback_callback: Callable[[CommandFeedbackMsg], Any] | None = None
         self._running = False
         self._connected = False
         self._task: asyncio.Task | None = None
@@ -78,9 +74,7 @@ class TestDriver(DriverProtocol, ABC):
         now = datetime.datetime.now()
         print(f"[INIT] Initializing values for {self._server_name} tags: {self._tags}")
         for tag in self._tags.values():
-            tag.value = Config.get_instance().get_default_value(
-                tag.datapoint_identifier
-            )
+            tag.value = Config.get_instance().get_default_value(tag.datapoint_identifier)
             tag.timestamp = now
             tag.quality = "good"
             await self._publish_value(tag)
@@ -223,9 +217,7 @@ class TestDriver(DriverProtocol, ABC):
                     await self._publish_value(tag)
                 print(f"[TEST] Published all tag values for {self._server_name}")
                 await asyncio.sleep(5)
-                print(
-                    f"[TEST] Simulation loop iteration complete for {self._server_name}"
-                )
+                print(f"[TEST] Simulation loop iteration complete for {self._server_name}")
         except asyncio.CancelledError:
             print(f"[DEBUG] Simulation loop canceled for {self._server_name}")
         finally:

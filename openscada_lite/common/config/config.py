@@ -25,9 +25,7 @@ class Config:
 
     def __new__(cls, *args, **kwargs):
         if cls._instance is not None:
-            raise RuntimeError(
-                "Use Config.get_instance() instead of direct instantiation."
-            )
+            raise RuntimeError("Use Config.get_instance() instead of direct instantiation.")
         return super().__new__(cls)
 
     def __init__(self, config_path: str):
@@ -74,10 +72,7 @@ class Config:
         """
         for drv in self.get_drivers():
             if drv["name"] == driver_name:
-                return {
-                    dp["name"]: types.get(dp["type"])
-                    for dp in drv.get("datapoints", [])
-                }
+                return {dp["name"]: types.get(dp["type"]) for dp in drv.get("datapoints", [])}
         return {}
 
     def get_allowed_datapoint_identifiers(self):
@@ -89,9 +84,7 @@ class Config:
                 # Check if the datapoint_identifier is already fully qualified
                 # Fully qualified dps are handled by its own driver
                 if "@" not in datapoint_identifier["name"]:
-                    datapoint_identifiers.append(
-                        f"{driver_name}@{datapoint_identifier['name']}"
-                    )
+                    datapoint_identifiers.append(f"{driver_name}@{datapoint_identifier['name']}")
         return datapoint_identifiers
 
     def get_allowed_command_identifiers(self):
@@ -100,9 +93,7 @@ class Config:
         for driver in self.get_drivers():
             driver_name = driver["name"]
             for datapoint_identifier in driver.get("command_datapoints", []):
-                datapoint_identifiers.append(
-                    f"{driver_name}@{datapoint_identifier['name']}"
-                )
+                datapoint_identifiers.append(f"{driver_name}@{datapoint_identifier['name']}")
         return datapoint_identifiers
 
     def get_default_value(self, datapoint_identifier: str):
@@ -139,9 +130,7 @@ class Config:
         # Find the driver and datapoint type
         for driver in self.get_drivers():
             driver_name = driver["name"]
-            for dp in driver.get("datapoints", []) + driver.get(
-                "command_datapoints", []
-            ):
+            for dp in driver.get("datapoints", []) + driver.get("command_datapoints", []):
                 if f"{driver_name}@{dp['name']}" == datapoint_identifier:
                     dp_type_name = dp.get("type")
                     dp_types = self.get_types()
@@ -180,9 +169,7 @@ class Config:
     def get_animations(self):
         animations_dict = self._config.get("animations", {})
         return {
-            name: Animation(
-                name=name, entries=[AnimationEntry(**entry) for entry in entries]
-            )
+            name: Animation(name=name, entries=[AnimationEntry(**entry) for entry in entries])
             for name, entries in animations_dict.items()
         }
 
@@ -197,9 +184,7 @@ class Config:
         Internal: Returns the SVG folder path from config or defaults to './svg'.
         """
         config_dir = (
-            os.path.dirname(self._config_path)
-            if hasattr(self, "_config_path")
-            else os.getcwd()
+            os.path.dirname(self._config_path) if hasattr(self, "_config_path") else os.getcwd()
         )
         svg_folder = self._config.get("svg_folder", None)
         if svg_folder:
@@ -234,9 +219,7 @@ class Config:
                 dp = elem.attrib.get("data-datapoint")
                 anim = elem.attrib.get("data-animation")
                 if dp and anim:
-                    datapoint_map.setdefault(dp, []).append(
-                        (fname, elem.attrib.get("id"), anim)
-                    )
+                    datapoint_map.setdefault(dp, []).append((fname, elem.attrib.get("id"), anim))
         return datapoint_map
 
     def get_security_config_path(self) -> str:
@@ -244,9 +227,7 @@ class Config:
         Returns the absolute path to security_config.json in the config folder.
         """
         config_dir = (
-            os.path.dirname(self._config_path)
-            if hasattr(self, "_config_path")
-            else os.getcwd()
+            os.path.dirname(self._config_path) if hasattr(self, "_config_path") else os.getcwd()
         )
         return os.path.join(config_dir, "security_config.json")
 

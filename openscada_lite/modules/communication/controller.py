@@ -26,17 +26,10 @@ from openscada_lite.common.models.dtos import (
 )
 
 
-class CommunicationController(
-    BaseController[DriverConnectStatus, DriverConnectCommand]
-):
-    def __init__(self, model, socketio, module_name:str, router: APIRouter):
+class CommunicationController(BaseController[DriverConnectStatus, DriverConnectCommand]):
+    def __init__(self, model, socketio, module_name: str, router: APIRouter):
         super().__init__(
-            model,
-            socketio,
-            DriverConnectStatus,
-            DriverConnectCommand,
-            module_name,
-            router
+            model, socketio, DriverConnectStatus, DriverConnectCommand, module_name, router
         )
 
     def validate_request_data(

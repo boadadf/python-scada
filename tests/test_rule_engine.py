@@ -217,9 +217,7 @@ async def test_switch_error_rules_toggle():
     # --- 1. Both STRAIGHT initially -> no alarms
     await test_bus.publish(
         EventType.TAG_UPDATE,
-        TagUpdateMsg(
-            datapoint_identifier="TrainTestDriver@LEFT_SWITCH_CONTROL", value="STRAIGHT"
-        ),
+        TagUpdateMsg(datapoint_identifier="TrainTestDriver@LEFT_SWITCH_CONTROL", value="STRAIGHT"),
     )
     await test_bus.publish(
         EventType.TAG_UPDATE,
@@ -235,9 +233,7 @@ async def test_switch_error_rules_toggle():
     # --- 2. Right TURN, Left STRAIGHT -> switch_error_turn should activate
     await test_bus.publish(
         EventType.TAG_UPDATE,
-        TagUpdateMsg(
-            datapoint_identifier="TrainTestDriver@RIGHT_SWITCH_CONTROL", value="TURN"
-        ),
+        TagUpdateMsg(datapoint_identifier="TrainTestDriver@RIGHT_SWITCH_CONTROL", value="TURN"),
     )
     await asyncio.sleep(0.01)
     assert any(r[1] == "switch_error_turn" for r in raised)
@@ -245,17 +241,13 @@ async def test_switch_error_rules_toggle():
     # --- 3. Now Left TURN, Right TURN -> error_turn should deactivate, error_straight should NOT activate
     await test_bus.publish(
         EventType.TAG_UPDATE,
-        TagUpdateMsg(
-            datapoint_identifier="TrainTestDriver@LEFT_SWITCH_CONTROL", value="TURN"
-        ),
+        TagUpdateMsg(datapoint_identifier="TrainTestDriver@LEFT_SWITCH_CONTROL", value="TURN"),
     )
     await asyncio.sleep(0.01)
     # should deactivate switch_error_turn
     assert any(l[1] == "switch_error_turn" for l in lowered)
     # and not raise straight alarm
-    assert not any(
-        r[1] == "switch_error_straight" for r in raised if r[1] != "switch_error_turn"
-    )
+    assert not any(r[1] == "switch_error_straight" for r in raised if r[1] != "switch_error_turn")
 
     # --- 4. Right STRAIGHT, Left TURN -> now switch_error_straight should activate
     await test_bus.publish(
@@ -271,9 +263,7 @@ async def test_switch_error_rules_toggle():
     # --- 5. Both STRAIGHT again -> switch_error_straight should deactivate
     await test_bus.publish(
         EventType.TAG_UPDATE,
-        TagUpdateMsg(
-            datapoint_identifier="TrainTestDriver@LEFT_SWITCH_CONTROL", value="STRAIGHT"
-        ),
+        TagUpdateMsg(datapoint_identifier="TrainTestDriver@LEFT_SWITCH_CONTROL", value="STRAIGHT"),
     )
     await asyncio.sleep(0.01)
     assert any(l[1] == "switch_error_straight" for l in lowered)

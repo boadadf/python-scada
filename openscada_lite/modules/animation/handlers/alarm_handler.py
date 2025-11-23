@@ -24,9 +24,7 @@ class AlarmHandler:
 
     def handle(self, msg, service):
         updates = []
-        identifier = getattr(msg, "datapoint_identifier", None) or getattr(
-            msg, "alarm_id", None
-        )
+        identifier = getattr(msg, "datapoint_identifier", None) or getattr(msg, "alarm_id", None)
         if not identifier:
             return updates
 

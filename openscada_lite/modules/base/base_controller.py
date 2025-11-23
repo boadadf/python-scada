@@ -38,6 +38,7 @@ class BaseController(ABC, Generic[T, U]):
       - HTTP POST endpoints via APIRouter
       - Batch publishing (async-safe)
     """
+
     service: Optional["BaseService[T, U]"]
 
     def __init__(
@@ -47,8 +48,8 @@ class BaseController(ABC, Generic[T, U]):
         T_cls: Type[T],
         U_cls: Optional[Type[U]],
         base_event: str,
-        router: APIRouter,        
-        batch_interval: float = 1.0  # seconds      
+        router: APIRouter,
+        batch_interval: float = 1.0,  # seconds
     ):
         self.model = model
         self.socketio = socketio
@@ -68,16 +69,16 @@ class BaseController(ABC, Generic[T, U]):
 
         # Register WebSocket events
         self.register_socketio()
-           # Create FastAPI router for HTTP endpoints        
+        # Create FastAPI router for HTTP endpoints
         self._register_generic_routes()
         self.register_local_routes(router)
-    
+
     def register_local_routes(self, router: APIRouter):
         pass
 
     def set_service(self, service: "BaseService"):
         self.service = service
-    
+
     # ---------------------------------------------------------------------
     # WebSocket handling
     # ---------------------------------------------------------------------
@@ -91,7 +92,9 @@ class BaseController(ABC, Generic[T, U]):
         self._initializing_clients.add(sid)
         all_msgs = self.model.get_all()
         sorted_msgs = sorted(all_msgs.values(), key=lambda v: v.get_id())
-        print(f"[{self.base_event}] Sending initial state to {self.base_event}, {len(sorted_msgs)} items.")
+        print(
+            f"[{self.base_event}] Sending initial state to {self.base_event}, {len(sorted_msgs)} items."
+        )
         await self.socketio.enter_room(sid, self.room)
         await self.socketio.emit(
             f"{self.base_event}_initial_state",
@@ -167,4 +170,6 @@ class BaseController(ABC, Generic[T, U]):
     # ---------------------------------------------------------------------
     @classmethod
     def is_allowed(cls, username: str, endpoint_name: str) -> bool:
-        return SecurityService.get_instance_or_none().is_user_allowed_for_endpoint(username, endpoint_name)
+        return SecurityService.get_instance_or_none().is_user_allowed_for_endpoint(
+            username, endpoint_name
+        )

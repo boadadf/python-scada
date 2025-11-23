@@ -32,8 +32,7 @@ def hash_password(password: str) -> str:
 def create_jwt(username: str) -> str:
     payload = {
         "username": username,
-        "exp": datetime.datetime.now()
-        + datetime.timedelta(seconds=JWT_EXP_DELTA_SECONDS),
+        "exp": datetime.datetime.now() + datetime.timedelta(seconds=JWT_EXP_DELTA_SECONDS),
     }
     token = jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
     return token

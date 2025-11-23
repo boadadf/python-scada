@@ -25,7 +25,7 @@ scada_router = APIRouter(prefix="/scada", tags=["SCADA"])
 scada_router.mount(
     "/static",
     app=StaticFiles(directory=os.path.join(os.path.dirname(__file__), "static")),
-    name="scada_static"
+    name="scada_static",
 )
 
 # Templates

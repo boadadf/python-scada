@@ -9,10 +9,12 @@ import requests
 
 SERVER_URL = "http://localhost:5001"
 
+
 @pytest.fixture(autouse=True)
 def reset_event_bus(monkeypatch):
     # Reset the singleton before each test
     monkeypatch.setattr(EventBus, "_instance", None)
+
 
 @pytest.fixture(scope="session", autouse=True)
 def run_server():
@@ -28,8 +30,10 @@ def run_server():
         [
             "uvicorn",
             "openscada_lite.app:asgi_app",
-            "--host", "127.0.0.1",
-            "--port", "5001",
+            "--host",
+            "127.0.0.1",
+            "--port",
+            "5001",
         ],
         env=os.environ.copy(),  # Pass the current environment variables to the subprocess
     )
@@ -37,6 +41,7 @@ def run_server():
     yield
     process.terminate()
     process.wait()
+
 
 def immediate_call(func, *args, **kwargs):
     import asyncio
@@ -97,9 +102,7 @@ async def test_live_feed_and_set_tag_real():
     all_updates = [item for batch in received_updates for item in batch]
 
     # Check if the expected update is in the batch
-    update = next(
-        (u for u in all_updates if u["datapoint_identifier"] == test_tag), None
-    )
+    update = next((u for u in all_updates if u["datapoint_identifier"] == test_tag), None)
     assert update is not None, "Expected update not found in received updates"
     assert update["value"] == test_value
 

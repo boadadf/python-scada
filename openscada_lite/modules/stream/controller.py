@@ -9,9 +9,7 @@ from openscada_lite.common.config.config import Config
 
 class StreamController(BaseController):
     def __init__(self, model, socketio, module_name: str, router: APIRouter):
-        super().__init__(
-            model, socketio, None, None, module_name, router
-        )
+        super().__init__(model, socketio, None, None, module_name, router)
         self.streams = Config.get_instance().get_streams()
 
     def validate_request_data(self, data):

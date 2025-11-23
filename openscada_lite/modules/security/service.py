@@ -23,16 +23,9 @@ from openscada_lite.modules.security import utils
 
 class SecurityService(BaseService[None, None, None]):
     _instance: Optional["SecurityService"] = None
-    
-    def __init__(self, event_bus, model:SecurityModel, controller):
-        super().__init__(
-            event_bus,
-            model,
-            controller,
-            None,
-            None,
-            None
-        )
+
+    def __init__(self, event_bus, model: SecurityModel, controller):
+        super().__init__(event_bus, model, controller, None, None, None)
         SecurityService._instance = self
         self.model = model
         self._endpoints = set()  # registered endpoint names
@@ -82,11 +75,7 @@ class SecurityService(BaseService[None, None, None]):
             return False
         for group_name in user.get("groups", []):
             group = next(
-                (
-                    g
-                    for g in self.model.get_all_groups_list()
-                    if g["name"] == group_name
-                ),
+                (g for g in self.model.get_all_groups_list() if g["name"] == group_name),
                 None,
             )
             if group and endpoint_name in group.get("permissions", []):
@@ -95,4 +84,3 @@ class SecurityService(BaseService[None, None, None]):
 
     def should_accept_update(self, tag: None) -> bool:
         return False
-    

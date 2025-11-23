@@ -94,7 +94,9 @@ class OPCUAServerDriver(ServerProtocol):
         if self._communication_status_callback:
             await self.publish_driver_state("online")
 
-        print(f"[OPCUA] Server started at {self.endpoint} (namespace: {self.namespace_url}, index: {self.namespace_index})")
+        print(
+            f"[OPCUA] Server started at {self.endpoint} (namespace: {self.namespace_url}, index: {self.namespace_index})"
+        )
 
     async def disconnect(self) -> None:
         """Stop the server and clean up."""
@@ -124,23 +126,18 @@ class OPCUAServerDriver(ServerProtocol):
             initial_value = self._nodes.get(datapoint, "")
 
             node = await objects.add_variable(
-                self.namespace_index,
-                datapoint,
-                ua.Variant(initial_value, ua.VariantType.String)
+                self.namespace_index, datapoint, ua.Variant(initial_value, ua.VariantType.String)
             )
 
             if writable:
                 await node.set_writable()
                 # Update masks so UA Expert sees the node as writable
                 await node.write_attribute(
-                    ua.AttributeIds.UserWriteMask,
-                    ua.DataValue(ua.UInt32(1))  # 1 = writeable
+                    ua.AttributeIds.UserWriteMask, ua.DataValue(ua.UInt32(1))  # 1 = writeable
                 )
                 await node.write_attribute(
-                    ua.AttributeIds.WriteMask,
-                    ua.DataValue(ua.UInt32(1))  # 1 = writeable
+                    ua.AttributeIds.WriteMask, ua.DataValue(ua.UInt32(1))  # 1 = writeable
                 )
-
 
             self.nodes[datapoint] = node
 
@@ -168,9 +165,7 @@ class OPCUAServerDriver(ServerProtocol):
             print(f"[WRITE] Client wrote {dp_name} -> '{val_str}'")
             if self._command_listener:
                 msg = SendCommandMsg(
-                    datapoint_identifier=dp_name,
-                    value=val_str,
-                    command_id=str(uuid.uuid4())
+                    datapoint_identifier=dp_name, value=val_str, command_id=str(uuid.uuid4())
                 )
                 await self._command_listener.on_driver_command(msg)
 
@@ -180,9 +175,9 @@ class OPCUAServerDriver(ServerProtocol):
     async def handle_tag_update(self, msg: TagUpdateMsg) -> None:
         """Update OPC UA node value asynchronously when internal tag changes."""
         dp_name = msg.datapoint_identifier
-        val_str = str(msg.value)        
+        val_str = str(msg.value)
         self._nodes[dp_name] = val_str
-        
+
         node = self.nodes.get(dp_name)
         if node:
             await node.set_value(ua.Variant(val_str, ua.VariantType.String))

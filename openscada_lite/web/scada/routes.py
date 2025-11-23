@@ -22,6 +22,7 @@ scada_router = APIRouter(prefix="/scada")
 WEB_DIR = Path(__file__).parent
 DIST_INDEX = WEB_DIR / "static" / "frontend" / "dist" / "index.html"
 
+
 @scada_router.get("/")
 @scada_router.get("/login")
 async def scada_index():

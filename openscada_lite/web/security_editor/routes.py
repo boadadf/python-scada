@@ -30,11 +30,8 @@ config_file = Path(__file__).parent.parent.parent / ".." / "config" / "security_
 security_router = APIRouter(prefix="/security-editor", tags=["SecurityEditor"])
 
 # Mount static frontend files
-security_router.mount(
-    "/static",
-    StaticFiles(directory=static_dir),
-    name="security_static"
-)
+security_router.mount("/static", StaticFiles(directory=static_dir), name="security_static")
+
 
 # Serve main React index.html for the editor
 @security_router.get("/", response_class=FileResponse)
@@ -44,12 +41,15 @@ async def editor_index():
         return FileResponse(index_file)
     return FileResponse(status_code=404)
 
+
 # -------------------- API Endpoints --------------------
+
 
 @security_router.get("/api/config", response_class=JSONResponse)
 async def get_security_config():
     with open(config_file) as f:
         return json.load(f)
+
 
 @security_router.post("/api/config", response_class=JSONResponse)
 async def save_security_config(request: Request):
@@ -57,6 +57,7 @@ async def save_security_config(request: Request):
     with open(config_file, "w") as f:
         json.dump(config, f, indent=2)
     return {"status": "ok"}
+
 
 @security_router.post("/api/restart", response_class=JSONResponse)
 async def restart_app():

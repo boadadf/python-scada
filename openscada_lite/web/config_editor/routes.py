@@ -25,10 +25,12 @@ CONFIG_FILE = os.path.join(
 
 config_router = APIRouter(prefix="/config-editor/api", tags=["ConfigEditor"])
 
+
 @config_router.get("/config", response_class=JSONResponse)
 async def get_config():
     with open(CONFIG_FILE) as f:
         return json.load(f)
+
 
 @config_router.post("/config", response_class=JSONResponse)
 async def save_config(request: Request):
@@ -41,11 +43,13 @@ async def save_config(request: Request):
 @config_router.post("/restart", response_class=JSONResponse)
 async def restart_app():
     import sys, os, threading
+
     def do_restart():
         print("[RESTART] Restarting OpenSCADA-Lite process...")
         project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../.."))
         os.chdir(project_root)
         python = sys.executable
         os.execl(python, python, "-m", "openscada_lite.app", *sys.argv[1:])
+
     threading.Thread(target=do_restart).start()
     return {"message": "Restarting OpenSCADA-Lite..."}

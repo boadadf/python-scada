@@ -69,9 +69,7 @@ class TrackingPublisher:
 
     def _run_in_thread(self, flow_event: DataFlowEventMsg):
         # Legacy: not used with the queue/worker pattern, but kept for compatibility.
-        threading.Thread(
-            target=self.thread_job, args=(flow_event,), daemon=True
-        ).start()
+        threading.Thread(target=self.thread_job, args=(flow_event,), daemon=True).start()
 
     def thread_job(self, flow_event: DataFlowEventMsg):
         """
@@ -82,7 +80,4 @@ class TrackingPublisher:
         asyncio.run(EventBus.get_instance().publish(EventType.FLOW_EVENT, flow_event))
         if self.mode == "file":
             with open(self.file_path, "a") as f:
-                f.write(
-                    json.dumps(flow_event.get_track_payload(), default=safe_serialize)
-                    + "\n"
-                )
+                f.write(json.dumps(flow_event.get_track_payload(), default=safe_serialize) + "\n")

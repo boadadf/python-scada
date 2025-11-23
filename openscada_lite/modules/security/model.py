@@ -25,6 +25,7 @@ from fastapi import APIRouter
 from openscada_lite.modules.base.base_model import BaseModel
 from openscada_lite.common.config.config import Config
 
+
 class SecurityModel(BaseModel[None]):
 
     def __init__(self):
@@ -32,15 +33,13 @@ class SecurityModel(BaseModel[None]):
         self._lock = threading.RLock()  # Initialize _lock first
         self.file_path = Config.get_instance().get_security_config_path()
         self.endpoints = set()  # registered endpoint names
-        self._load() 
+        self._load()
 
-    def load_endpoints(self, router:APIRouter):
+    def load_endpoints(self, router: APIRouter):
         """Scan FastAPI app for all registered POST endpoint names."""
         with self._lock:
             self.endpoints = set(
-                route.name
-                for route in router.routes
-                if "POST" in getattr(route, "methods", [])
+                route.name for route in router.routes if "POST" in getattr(route, "methods", [])
             )
 
     def _load(self):

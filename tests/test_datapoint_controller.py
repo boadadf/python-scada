@@ -32,13 +32,13 @@ def model():
     )
     return m
 
+
 @pytest.fixture
 def socketio_mock():
     sio = MagicMock()
     sio.join_room = AsyncMock()
     sio.emit = AsyncMock()
     return sio
-
 
 
 @pytest.fixture
@@ -87,10 +87,7 @@ async def test_publish_tag_emits_when_no_initializing(controller):
     controller.socketio.emit.assert_called_once()
     args, kwargs = controller.socketio.emit.call_args
     assert args[0] == "datapoint_tagupdatemsg"
-    assert any(
-        tag["datapoint_identifier"] == "Test@TAG" and tag["value"] == 456
-        for tag in args[1]
-    )
+    assert any(tag["datapoint_identifier"] == "Test@TAG" and tag["value"] == 456 for tag in args[1])
 
 
 @pytest.mark.asyncio
@@ -127,6 +124,7 @@ async def test_handle_subscribe_live_feed_emits_initial_state(controller):
 
 
 from fastapi.testclient import TestClient
+
 
 @pytest.mark.asyncio
 async def test_set_tag_calls_service_and_emits_ack(controller):

@@ -31,9 +31,7 @@ from openscada_lite.common.models.dtos import (
 )
 
 
-class AlarmService(
-    BaseService[Union[RaiseAlarmMsg, LowerAlarmMsg], AckAlarmMsg, AlarmUpdateMsg]
-):
+class AlarmService(BaseService[Union[RaiseAlarmMsg, LowerAlarmMsg], AckAlarmMsg, AlarmUpdateMsg]):
     def __init__(self, event_bus, model: AlarmModel, controller: AlarmController):
         super().__init__(
             event_bus,

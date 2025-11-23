@@ -48,9 +48,7 @@ class RuleEngine:
 
     def __new__(cls, *args, **kwargs):
         if cls._instance is not None:
-            raise RuntimeError(
-                "Use RuleManager.get_instance() instead of direct instantiation."
-            )
+            raise RuntimeError("Use RuleManager.get_instance() instead of direct instantiation.")
         cls._instance = super().__new__(cls)
         return cls._instance
 
@@ -151,9 +149,7 @@ class RuleEngine:
             on_active = self.rule_states.get(rule_id, False)
             try:
                 on_result = self.asteval(rule.on_condition.replace("@", "__"))
-                print(
-                    f"[RuleEngine] Evaluated on_condition for rule {rule_id}: {on_result}"
-                )
+                print(f"[RuleEngine] Evaluated on_condition for rule {rule_id}: {on_result}")
                 if self.asteval.error:
                     print("asteval errors:", self.asteval.error)
                 off_cond = getattr(rule, "off_condition", None)
@@ -192,10 +188,7 @@ class RuleEngine:
                     # Reset state so next true will trigger again
                     self.rule_states[rule_id] = False
                     # If raise_alarm is in on_actions, trigger lower_alarm automatically
-                    if any(
-                        "raise_alarm" in action
-                        for action in getattr(rule, "on_actions", [])
-                    ):
+                    if any("raise_alarm" in action for action in getattr(rule, "on_actions", [])):
                         await self.execute_action(
                             "lower_alarm()",
                             tag_id,
@@ -221,9 +214,7 @@ class RuleEngine:
         params = eval(f"({params_str},)") if params_str else ()
         return action_name, params
 
-    async def execute_action(
-        self, action_str, identifier, track_id, active=True, rule_id=None
-    ):
+    async def execute_action(self, action_str, identifier, track_id, active=True, rule_id=None):
         """
         Execute an action by looking up its handler and calling it.
 

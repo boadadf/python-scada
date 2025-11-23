@@ -23,23 +23,17 @@ from openscada_lite.common.models.dtos import (
     AnimationUpdateMsg,
 )
 
-class AnimationController(
-    BaseController[AnimationUpdateMsg, AnimationUpdateRequestMsg]
-):
-    def __init__(self, model, socketio, module_name:str, router: APIRouter):
+
+class AnimationController(BaseController[AnimationUpdateMsg, AnimationUpdateRequestMsg]):
+    def __init__(self, model, socketio, module_name: str, router: APIRouter):
         super().__init__(
-            model,
-            socketio,
-            AnimationUpdateMsg,
-            AnimationUpdateRequestMsg,
-            module_name,
-            router
+            model, socketio, AnimationUpdateMsg, AnimationUpdateRequestMsg, module_name, router
         )
 
         # Load SVG files from config
         self.svg_files = Config.get_instance().get_svg_files()
 
-    def register_local_routes(self, router: APIRouter):        
+    def register_local_routes(self, router: APIRouter):
         @router.get("/api/animation/svgs")
         async def list_svgs():
             """Return the list of SVG files for the animation module."""
@@ -53,9 +47,6 @@ class AnimationController(
                 return FileResponse(file)
             return JSONResponse(content={"error": "File not found"}, status_code=404)
 
-    def validate_request_data(
-        self, data: AnimationUpdateRequestMsg
-    ) -> AnimationUpdateRequestMsg:
+    def validate_request_data(self, data: AnimationUpdateRequestMsg) -> AnimationUpdateRequestMsg:
         # You could also return a StatusDTO if invalid
         return data
-    

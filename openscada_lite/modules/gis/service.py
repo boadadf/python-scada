@@ -76,11 +76,7 @@ class GisService(BaseService[Union[TagUpdateMsg, AlarmUpdateMsg], None, GisUpdat
             ):
 
                 # Determine alarm state
-                if (
-                    msg.deactivation_time
-                    and msg.acknowledge_time
-                    and msg.activation_time
-                ):
+                if msg.deactivation_time and msg.acknowledge_time and msg.activation_time:
                     alarm_state = "FINISHED"
                 elif msg.deactivation_time:
                     alarm_state = "INACTIVE"
@@ -111,6 +107,5 @@ class GisService(BaseService[Union[TagUpdateMsg, AlarmUpdateMsg], None, GisUpdat
             )
         else:
             return any(
-                icon.get("datapoint") == tag.datapoint_identifier
-                for icon in self.gis_icons_config
+                icon.get("datapoint") == tag.datapoint_identifier for icon in self.gis_icons_config
             )

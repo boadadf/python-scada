@@ -61,6 +61,4 @@ class AlertService(BaseService[ClientAlertMsg, ClientAlertFeedbackMsg, ClientAle
                         datapoint_identifier=alert_msg.command_datapoint,
                         value=alert_msg.command_value,
                     )
-                    await self.event_bus.publish(
-                        SendCommandMsg.get_event_type(), cmd_msg
-                    )
+                    await self.event_bus.publish(SendCommandMsg.get_event_type(), cmd_msg)

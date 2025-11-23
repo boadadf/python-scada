@@ -45,9 +45,7 @@ class ConnectorManager:
 
     def __new__(cls, *args, **kwargs):
         if cls._instance is not None:
-            raise RuntimeError(
-                "Use EventBus.get_instance() instead of direct instantiation."
-            )
+            raise RuntimeError("Use EventBus.get_instance() instead of direct instantiation.")
         return super().__new__(cls)
 
     @classmethod
@@ -81,13 +79,10 @@ class ConnectorManager:
             driver_cls = DRIVER_REGISTRY.get(cfg["driver_class"])
             if not driver_cls:
                 raise ValueError(f"Unknown driver class: {cfg['driver_class']}")
-            driver_instance: DriverProtocol = driver_cls(
-                **cfg.get("connection_info", {})
-            )
+            driver_instance: DriverProtocol = driver_cls(**cfg.get("connection_info", {}))
             driver_instance.initialize(
                 cfg.get("params", {})
             )  # Pass params if present, else empty dict
-            print(f"[CONNECTOR MANAGER] Subscribing driver '{cfg['name']}' to {len(datapoint_objs)} datapoints")
             driver_instance.subscribe(datapoint_objs)
             # Optionally assign datapoints to driver_instance if needed
             self.driver_instances[cfg["name"]] = driver_instance
@@ -97,9 +92,7 @@ class ConnectorManager:
         for driver in self.driver_instances.values():
             driver.register_value_listener(self.emit_value)
             driver.register_command_feedback(self.emit_command_feedback)
-            driver.register_communication_status_listener(
-                self.emit_communication_status
-            )
+            driver.register_communication_status_listener(self.emit_communication_status)
             await self.emit_communication_status(
                 DriverConnectStatus(driver_name=driver.server_name, status="offline")
             )
@@ -123,9 +116,6 @@ class ConnectorManager:
         driver_name = data.driver_name
         status = data.status
         driver = self.driver_instances.get(driver_name)
-        print(
-            f"[CONNECT CMD] Driver '{driver_name}' -> {status} {self.driver_instances}"
-        )
         if driver:
             if status == "connect":
                 await driver.connect()
@@ -160,13 +150,9 @@ class ConnectorManager:
 
     async def publish_unknown_for_driver(self, driver_name: str):
         now = datetime.datetime.now()
-        datapoint_types = self.config.get_datapoint_types_for_driver(
-            driver_name, self.types
-        )
+        datapoint_types = self.config.get_datapoint_types_for_driver(driver_name, self.types)
         for tag_name, dp_type in datapoint_types.items():
-            default_value = (
-                dp_type.get("default") if dp_type and "default" in dp_type else None
-            )
+            default_value = dp_type.get("default") if dp_type and "default" in dp_type else None
             tag_msg = RawTagUpdateMsg(
                 datapoint_identifier=f"{driver_name}@{tag_name}",
                 value=default_value,

@@ -31,6 +31,9 @@ class BaseModel(ABC, Generic[T]):
     def __init__(self):
         self._store: Dict[str, T] = {}
 
+    def reset(self):
+        self._store: Dict[str, T] = {}
+
     def update(self, msg: T):
         """
         Store or update a message.

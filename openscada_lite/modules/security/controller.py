@@ -22,17 +22,12 @@ from openscada_lite.common.models.dtos import StatusDTO
 from openscada_lite.modules.security import utils
 
 
-class SecurityController(BaseController[None, None], ):
+class SecurityController(
+    BaseController[None, None],
+):
 
-    def __init__(self, model: SecurityModel, socketio, module_name:str, router: APIRouter):     
-        super().__init__(
-            model,
-            socketio,
-            None,
-            None,
-            module_name,
-            router
-        )
+    def __init__(self, model: SecurityModel, socketio, module_name: str, router: APIRouter):
+        super().__init__(model, socketio, None, None, module_name, router)
         self.model = model
 
     # ---------------- JWT Dependency ----------------
@@ -48,13 +43,15 @@ class SecurityController(BaseController[None, None], ):
     def register_local_routes(self, router: APIRouter):
         print("[SECURITY] Loading security routes")
         self.model.load_endpoints(router)
-        
+
         # GET all registered endpoints
         @router.get("/security/endpoints")
         async def get_endpoints():
             endpoints = self.model.get_end_points()
             return JSONResponse(content=endpoints)
+
         print("[SECURITY] Registered endpoints route loaded")
+
         # POST login
         @router.post("/security/login")
         async def login(data: dict, app: str = None):
@@ -65,10 +62,9 @@ class SecurityController(BaseController[None, None], ):
             if not username or not password or not app_name:
                 return JSONResponse(
                     content=StatusDTO(
-                        status="error",
-                        reason="username & password & app required"
+                        status="error", reason="username & password & app required"
                     ).to_dict(),
-                    status_code=400
+                    status_code=400,
                 )
             print("[SECURITY] Authenticating user:", username, "for app:", app_name)
             token = self.service.authenticate_user(username, password, app_name)
@@ -84,11 +80,8 @@ class SecurityController(BaseController[None, None], ):
                 return JSONResponse(content=config)
             except Exception as e:
                 return JSONResponse(
-                    content=StatusDTO(
-                        status="error",
-                        reason=f"Failed to load: {e}"
-                    ).to_dict(),
-                    status_code=500
+                    content=StatusDTO(status="error", reason=f"Failed to load: {e}").to_dict(),
+                    status_code=500,
                 )
 
         # POST security config
@@ -97,17 +90,14 @@ class SecurityController(BaseController[None, None], ):
             if not data:
                 return JSONResponse(
                     content=StatusDTO(status="error", reason="No data provided").to_dict(),
-                    status_code=400
+                    status_code=400,
                 )
             try:
                 self.model.save_security_config(data)
             except Exception as e:
                 return JSONResponse(
-                    content=StatusDTO(
-                        status="error",
-                        reason=f"Failed to save: {e}"
-                    ).to_dict(),
-                    status_code=500
+                    content=StatusDTO(status="error", reason=f"Failed to save: {e}").to_dict(),
+                    status_code=500,
                 )
             # Notify service if applicable
             if hasattr(self.service, "notify_config_changed"):

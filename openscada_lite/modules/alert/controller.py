@@ -23,12 +23,7 @@ from openscada_lite.common.models.dtos import ClientAlertFeedbackMsg, ClientAler
 class AlertController(BaseController[ClientAlertMsg, ClientAlertFeedbackMsg]):
     def __init__(self, model, socketio, module_name: str, router: APIRouter):
         super().__init__(
-            model,
-            socketio,
-            ClientAlertMsg,
-            ClientAlertFeedbackMsg,
-            module_name,
-            router
+            model, socketio, ClientAlertMsg, ClientAlertFeedbackMsg, module_name, router
         )
 
     def validate_request_data(self, data: ClientAlertMsg):

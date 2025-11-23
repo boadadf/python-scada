@@ -26,6 +26,7 @@ from openscada_lite.modules.communication.manager.connector_manager import Conne
 # Fixtures
 # --------------------------
 
+
 @pytest.fixture(autouse=True)
 def reset_event_bus(monkeypatch):
     """Reset the EventBus singleton before each test."""
@@ -37,15 +38,18 @@ def reset_connector_manager(monkeypatch):
     """Reset the ConnectorManager singleton before each test."""
     monkeypatch.setattr(ConnectorManager, "_instance", None)
 
+
 @pytest.fixture(scope="session", autouse=True)
 def set_scada_config_path():
     """Ensure SCADA_CONFIG_PATH points to the test configuration."""
     os.environ["SCADA_CONFIG_PATH"] = "system_config.json"
     print(f"[TEST SETUP] SCADA_CONFIG_PATH set to {os.environ['SCADA_CONFIG_PATH']}")
 
+
 @pytest.fixture
 def dummy_event_bus():
     """Provide a dummy async EventBus for tests."""
+
     class DummyEventBus:
         def __init__(self):
             self.published = []
@@ -85,6 +89,7 @@ def fastapi_app(model):
 # Tests: Controller Endpoints
 # --------------------------
 
+
 @pytest.mark.asyncio
 async def test_connect_driver_valid_status(fastapi_app):
     app, controller = fastapi_app
@@ -94,9 +99,7 @@ async def test_connect_driver_valid_status(fastapi_app):
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://testserver") as ac:
         data = DriverConnectCommand(driver_name="WaterTank", status="connect")
-        response = await ac.post(
-            "/communication_send_driverconnectcommand", json=data.to_dict()
-        )
+        response = await ac.post("/communication_send_driverconnectcommand", json=data.to_dict())
 
     assert response.status_code == 200
     assert response.json() == {"status": "ok", "reason": "Request accepted."}
@@ -112,9 +115,7 @@ async def test_connect_driver_invalid_status(fastapi_app):
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://testserver") as ac:
         data = DriverConnectCommand(driver_name="WaterTank", status="bad_status")
-        response = await ac.post(
-            "/communication_send_driverconnectcommand", json=data.to_dict()
-        )
+        response = await ac.post("/communication_send_driverconnectcommand", json=data.to_dict())
 
     assert response.status_code == 400
     assert response.json() == {
@@ -133,6 +134,7 @@ async def test_publish_status_emits(fastapi_app):
 
     # Mock socketio.emit as async function
     async_mock = MagicMock()
+
     async def fake_emit(*args, **kwargs):
         async_mock(*args, **kwargs)
 
@@ -170,6 +172,7 @@ async def test_publish_status_emits(fastapi_app):
 # Tests: Service / EventBus
 # --------------------------
 
+
 @pytest.mark.asyncio
 async def test_service_publishes_connect_status(service):
     Config.reset_instance()
@@ -198,12 +201,15 @@ async def test_service_invalid_bus_message_raises(service):
     svc, _, _ = service
     svc.controller = MagicMock()
     with pytest.raises(TypeError):
-        await svc.handle_bus_message(DriverConnectStatus(track_id="1", driver_name="X", status="connect"))
+        await svc.handle_bus_message(
+            DriverConnectStatus(track_id="1", driver_name="X", status="connect")
+        )
 
 
 # --------------------------
 # Tests: CommunicationModel
 # --------------------------
+
 
 def test_set_and_get_status():
     model = CommunicationModel()

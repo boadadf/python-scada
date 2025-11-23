@@ -116,9 +116,7 @@ def dummy_config(monkeypatch, tmp_path):
 @pytest.mark.asyncio
 async def test_tag_update_triggers_animation(dummy_config):
     controller = DummyController()
-    service = AnimationService(
-        DummyEventBus(), model=DummyModel(), controller=controller
-    )
+    service = AnimationService(DummyEventBus(), model=DummyModel(), controller=controller)
 
     msg = TagUpdateMsg(datapoint_identifier="WaterTank@TANK", value=50, quality="good")
     updates = service.process_msg(msg)
@@ -139,9 +137,7 @@ async def test_tag_update_triggers_animation(dummy_config):
 @pytest.mark.asyncio
 async def test_alarm_update_triggers_alarm_animation(dummy_config):
     controller = DummyController()
-    service = AnimationService(
-        DummyEventBus(), model=DummyModel(), controller=controller
-    )
+    service = AnimationService(DummyEventBus(), model=DummyModel(), controller=controller)
 
     # Add alarm animation manually to dummy_config for testing
     service.animations["ALARM_TEST"] = Animation(
@@ -160,9 +156,7 @@ async def test_alarm_update_triggers_alarm_animation(dummy_config):
         ],
     )
     # Add mapping for alarm animation
-    service.datapoint_map["WaterTank@ALARM_DP"] = [
-        ("train.svg", "alert-switch", "ALARM_TEST")
-    ]
+    service.datapoint_map["WaterTank@ALARM_DP"] = [("train.svg", "alert-switch", "ALARM_TEST")]
 
     msg = AlarmUpdateMsg(
         datapoint_identifier="WaterTank@ALARM_DP",

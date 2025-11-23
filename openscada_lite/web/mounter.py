@@ -6,6 +6,7 @@ from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 
+
 def mount_enpoints(app):
     web_dir = Path(__file__).parent
 
@@ -29,8 +30,9 @@ def mount_enpoints(app):
     # Security Editor
     app.mount(
         "/security-editor",
-        StaticFiles(directory=web_dir / "security_editor" / "static" / "frontend" / "dist",
-        html=True),
+        StaticFiles(
+            directory=web_dir / "security_editor" / "static" / "frontend" / "dist", html=True
+        ),
         name="security_editor",
     )
 
@@ -38,7 +40,6 @@ def mount_enpoints(app):
     icons_path = web_dir / "icons"
 
     app.mount("/static/icons", StaticFiles(directory=icons_path), name="icons")
-
 
     # Redirect root to SCADA
     @app.get("/")

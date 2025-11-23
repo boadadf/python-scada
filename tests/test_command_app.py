@@ -10,9 +10,11 @@ from openscada_lite.common.config.config import Config
 from openscada_lite.common.models.dtos import CommandFeedbackMsg, SendCommandMsg
 from openscada_lite.modules.command.model import CommandModel
 
+
 @pytest.fixture(autouse=True)
 def set_config_env(monkeypatch):
     monkeypatch.setenv("SCADA_CONFIG_PATH", "tests")
+
 
 SERVER_URL = "http://localhost:5000"
 
@@ -21,6 +23,7 @@ SERVER_URL = "http://localhost:5000"
 def reset_event_bus(monkeypatch):
     # Reset the singleton before each test
     monkeypatch.setattr(EventBus, "_instance", None)
+
 
 @pytest.fixture(scope="session", autouse=True)
 def run_server():
@@ -36,8 +39,10 @@ def run_server():
         [
             "uvicorn",
             "openscada_lite.app:asgi_app",
-            "--host", "127.0.0.1",
-            "--port", "5000",
+            "--host",
+            "127.0.0.1",
+            "--port",
+            "5000",
         ],
         env=os.environ.copy(),  # Pass the current environment variables to the subprocess
     )
@@ -99,9 +104,7 @@ async def test_command_live_feed_and_feedback():
     all_feedback = [item for batch in received_feedback for item in batch]
 
     # Check if the expected feedback is in the batch
-    feedback = next(
-        (f for f in all_feedback if f["command_id"] == "testcmd1"), None
-    )
+    feedback = next((f for f in all_feedback if f["command_id"] == "testcmd1"), None)
     assert feedback is not None, "Expected feedback not found in received feedback"
     assert feedback["datapoint_identifier"] == "WaterTank@TANK"
     assert feedback["value"] == 42

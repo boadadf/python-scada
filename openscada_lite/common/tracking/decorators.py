@@ -33,9 +33,7 @@ def isValidDTO(obj: Any) -> bool:
 
 
 # 1. Async: DTO as first argument
-def publish_data_flow_from_arg_async(
-    status: DataFlowStatus, source: Optional[str] = None
-):
+def publish_data_flow_from_arg_async(status: DataFlowStatus, source: Optional[str] = None):
     def decorator(func: AsyncFunc) -> AsyncFunc:
         @wraps(func)
         async def wrapper(self, *args, **kwargs) -> Any:
@@ -43,9 +41,7 @@ def publish_data_flow_from_arg_async(
             event_source = source or self.__class__.__name__
             dto: MaybeDTO = args[0] if args else None
             if isValidDTO(dto):
-                publisher.publish_data_flow_event(
-                    dto, source=event_source, status=status
-                )
+                publisher.publish_data_flow_event(dto, source=event_source, status=status)
             return result
 
         return wrapper
@@ -54,9 +50,7 @@ def publish_data_flow_from_arg_async(
 
 
 # 2. Sync: DTO as first argument
-def publish_data_flow_from_arg_sync(
-    status: DataFlowStatus, source: Optional[str] = None
-):
+def publish_data_flow_from_arg_sync(status: DataFlowStatus, source: Optional[str] = None):
     def decorator(func: SyncFunc) -> SyncFunc:
         @wraps(func)
         def wrapper(self, *args, **kwargs) -> Any:
@@ -65,9 +59,7 @@ def publish_data_flow_from_arg_sync(
             dto: MaybeDTO = args[0] if args else None
             if isValidDTO(dto):
                 # If publisher is async, schedule it
-                publisher.publish_data_flow_event(
-                    dto, source=event_source, status=status
-                )
+                publisher.publish_data_flow_event(dto, source=event_source, status=status)
             return result
 
         return wrapper
@@ -76,9 +68,7 @@ def publish_data_flow_from_arg_sync(
 
 
 # 3. Async: DTO as return value (or first of tuple/list)
-def publish_data_flow_from_return_async(
-    status: DataFlowStatus, source: Optional[str] = None
-):
+def publish_data_flow_from_return_async(status: DataFlowStatus, source: Optional[str] = None):
     def decorator(func: AsyncFunc) -> AsyncFunc:
         @wraps(func)
         async def wrapper(self, *args, **kwargs) -> Any:
@@ -89,9 +79,7 @@ def publish_data_flow_from_return_async(
                 dto = result
             event_source = source or self.__class__.__name__
             if isValidDTO(dto):
-                publisher.publish_data_flow_event(
-                    dto, source=event_source, status=status
-                )
+                publisher.publish_data_flow_event(dto, source=event_source, status=status)
             return result
 
         return wrapper
@@ -100,9 +88,7 @@ def publish_data_flow_from_return_async(
 
 
 # 4. Sync: DTO as return value (or first of tuple/list)
-def publish_data_flow_from_return_sync(
-    status: DataFlowStatus, source: Optional[str] = None
-):
+def publish_data_flow_from_return_sync(status: DataFlowStatus, source: Optional[str] = None):
     def decorator(func: SyncFunc) -> SyncFunc:
         @wraps(func)
         def wrapper(self, *args, **kwargs) -> Any:
@@ -113,9 +99,7 @@ def publish_data_flow_from_return_sync(
                 dto = result
             event_source = source or self.__class__.__name__
             if isValidDTO(dto):
-                publisher.publish_data_flow_event(
-                    dto, source=event_source, status=status
-                )
+                publisher.publish_data_flow_event(dto, source=event_source, status=status)
             return result
 
         return wrapper

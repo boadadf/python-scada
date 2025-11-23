@@ -35,9 +35,7 @@ from openscada_lite.common.models.dtos import (
 
 
 class CommunicationService(
-    BaseService[
-        Union[SendCommandMsg, TagUpdateMsg], DriverConnectCommand, DriverConnectStatus
-    ],
+    BaseService[Union[SendCommandMsg, TagUpdateMsg], DriverConnectCommand, DriverConnectStatus],
     CommandListener,
 ):
     def __init__(self, event_bus, model, controller):
@@ -51,9 +49,7 @@ class CommunicationService(
         )
         self.connection_manager = ConnectorManager.get_instance()
         self.connection_manager.register_listener(self)
-        self.connection_manager.set_command_listener(
-            self
-        )  # Register as command listener
+        self.connection_manager.set_command_listener(self)  # Register as command listener
 
     async def async_init(self):
         await self.connection_manager.init_drivers()

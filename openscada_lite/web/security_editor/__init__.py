@@ -28,6 +28,7 @@ templates_path = os.path.join(os.path.dirname(__file__), "templates")
 
 templates = Jinja2Templates(directory=templates_path)
 
+
 @security_router.get("/", response_class=HTMLResponse)
 async def editor(request: Request):
     return templates.TemplateResponse("editor.html", {"request": request})
