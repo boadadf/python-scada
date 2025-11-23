@@ -1,6 +1,8 @@
 import os
 import json
 
+from fastapi.staticfiles import StaticFiles
+
 from common.bus.event_bus import EventBus
 import asyncio
 import pytest
@@ -16,6 +18,20 @@ def reset_event_bus(monkeypatch):
     # Reset the singleton before each test
     monkeypatch.setattr(EventBus, "_instance", None)
 
+
+def mount_enpoints(app):
+    web_dir = os.getenv("WEB_DIR", "/path/to/default/web/dir")
+    static_dir = web_dir / "scada" / "static" / "frontend" / "dist"
+
+    if not static_dir.exists():
+        print(f"Skipping StaticFiles mounting: {static_dir} does not exist")
+        return
+
+    app.mount(
+        "/static",
+        StaticFiles(directory=static_dir, html=True),
+        name="static",
+    )
 
 @pytest.fixture(scope="session", autouse=True)
 def run_server():
