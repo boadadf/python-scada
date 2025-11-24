@@ -68,8 +68,8 @@ def test_full_config_roundtrip(client):
             {
                 "allowed_apps": ["security_editor", "config_editor", "scada"],
                 "groups": ["all_group"],
-                "password_hash": "8c6976e5b5410415bde908bd4dee15dfb167a9"
-                "c873fc4bb8a81f6f2ab448a918",  # hash for 'admin'
+                "password_hash": "8c6976e5b5410415bde908bd4dee15dfb167a9" # NOSONAR
+                "c873fc4bb8a81f6f2ab448a918", # NOSONAR
                 "username": "admin",
             }
         ],
@@ -99,8 +99,8 @@ def test_login_admin(client):
             {
                 "allowed_apps": ["security_editor"],
                 "groups": ["test_group"],
-                "password_hash": "8c6976e5b5410415bde908bd4dee15dfb167"
-                "a9c873fc4bb8a81f6f2ab448a918",  # hash for 'admin'
+                "password_hash": "8c6976e5b5410415bde908bd4dee15dfb167" # NOSONAR
+                "a9c873fc4bb8a81f6f2ab448a918", # NOSONAR
                 "username": "admin",
             }
         ],
@@ -110,7 +110,7 @@ def test_login_admin(client):
     # Try login with admin/admin
     resp = client.post(
         "/security/login",
-        json={"username": "admin", "password": "admin", "app": "security_editor"},
+        json={"username": "admin", "password": "admin", "app": "security_editor"}, # NOSONAR
     )
     assert resp.status_code == 200
     data = resp.json()
@@ -126,7 +126,8 @@ def test_invalid_login(client):
             {
                 "allowed_apps": ["security_editor"],
                 "groups": ["test_group"],
-                "password_hash": "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918",
+                "password_hash": "8c6976e5b5410415bde908bd4dee15df"
+                "b167a9c873fc4bb8a81f6f2ab448a918", # NOSONAR
                 "username": "admin",
             }
         ],
@@ -136,14 +137,14 @@ def test_invalid_login(client):
     # Wrong password
     resp = client.post(
         "/security/login",
-        json={"username": "admin", "password": "wrong", "app": "security_editor"},
+        json={"username": "admin", "password": "wrong", "app": "security_editor"}, # NOSONAR
     )
     assert resp.status_code == 401
 
     # Unknown user
     resp = client.post(
         "/security/login",
-        json={"username": "ghost", "password": "admin", "app": "security_editor"},
+        json={"username": "ghost", "password": "admin", "app": "security_editor"}, # NOSONAR
     )
     assert resp.status_code == 401
 
@@ -166,13 +167,13 @@ def test_permissions_structure(client):
                 "username": "u1",
                 "groups": ["g1"],
                 "allowed_apps": [],
-                "password_hash": "",
+                "password_hash": "", # NOSONAR
             },
             {
                 "username": "u2",
                 "groups": ["g2"],
                 "allowed_apps": [],
-                "password_hash": "",
+                "password_hash": "", # NOSONAR
             },
         ],
     }
