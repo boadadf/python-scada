@@ -121,7 +121,9 @@ class Config:
                 if default is not None:
                     return default
                 # Search in command_datapoints if not found
-                return self._get_default_for_datapoint(dp_name, driver.get("command_datapoints", []))
+                return self._get_default_for_datapoint(
+                    dp_name, driver.get("command_datapoints", [])
+                )
         return None
 
     def _find_datapoint_type(self, datapoint_identifier: str):
@@ -158,12 +160,10 @@ class Config:
         dp_type = self._find_datapoint_type(datapoint_identifier)
         if not dp_type:
             return False
-        
         if dp_type["type"] == "float":
             return self._validate_float_value(value, dp_type)
         elif dp_type["type"] == "enum":
             return self._validate_enum_value(value, dp_type)
-        
         return True
 
     def get_module_config(self, module_name: str) -> dict:

@@ -20,4 +20,4 @@ from openscada_lite.modules.communication.drivers.test.test_driver import TestDr
 
 class CameraDriver(TestDriver):
     def _simulate_values(self):
-        pass # No simulation needed for camera driver
+        pass  # No simulation needed for camera driver

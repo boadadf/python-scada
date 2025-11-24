@@ -82,7 +82,6 @@ class AnimationService(
             return
 
         agg_attr, agg_text = self._collect_default_values(animation.entries)
-        
         cfg = {"attr": agg_attr, "duration": self.DURATION_DEFAULT}
         if agg_text:
             cfg["text"] = agg_text
@@ -102,7 +101,7 @@ class AnimationService(
         """Collect default attribute and text values from animation entries."""
         agg_attr = {}
         agg_text = None
-        
+
         for entry in entries:
             if getattr(entry, "default", None) is None:
                 continue
@@ -110,7 +109,7 @@ class AnimationService(
                 agg_text = str(entry.default)
             else:
                 agg_attr[entry.attribute] = entry.default
-        
+
         return agg_attr, agg_text
 
     def process_msg(self, msg):

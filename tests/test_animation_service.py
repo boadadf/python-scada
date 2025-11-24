@@ -8,15 +8,15 @@ from openscada_lite.common.config.config import Config
 
 class DummyEventBus:
     async def publish(self, event_type, data):
-        pass # Test does not require actual publishing
+        pass  # Test does not require actual publishing
 
     def subscribe(self, event_type, handler):
-        pass # To implement if needed by the test
+        pass  # To implement if needed by the test
 
 
 class DummyModel:
     def update(self, msg):
-        pass # To implement if needed by the test
+        pass  # To implement if needed by the test
 
 
 class DummyController:

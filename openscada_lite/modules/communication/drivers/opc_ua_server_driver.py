@@ -55,7 +55,7 @@ class OPCUAServerDriver(ServerProtocol):
 
     def initialize(self, config: dict) -> None:
         """Prepare OPC UA namespace and regex config (sync)."""
-        self.namespace_url = config.get("namespaceurl", "http://default.namespace") # NOSONAR
+        self.namespace_url = config.get("namespaceurl", "http://default.namespace")  # NOSONAR
         self.allow_write_regex = re.compile(config.get("allow_write_regex", ".*_CMD$"))
         self.endpoint = config.get("endpoint", self.endpoint)
 
@@ -136,9 +136,7 @@ class OPCUAServerDriver(ServerProtocol):
                 await node.write_attribute(
                     ua.AttributeIds.UserWriteMask, ua.DataValue(ua.UInt32(1))
                 )
-                await node.write_attribute(
-                    ua.AttributeIds.WriteMask, ua.DataValue(ua.UInt32(1))
-                )
+                await node.write_attribute(ua.AttributeIds.WriteMask, ua.DataValue(ua.UInt32(1)))
 
             self.nodes[datapoint] = node
 

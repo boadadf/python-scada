@@ -39,7 +39,6 @@ class AlarmHandler:
         """Process animation entries and return aggregated attributes, text, and duration."""
         agg_attr, agg_text, duration = {}, None, service.DURATION_DEFAULT
         processed = False
-        
         for entry in animation.entries:
             if getattr(entry, "trigger_type", "") != "alarm":
                 continue
@@ -51,14 +50,11 @@ class AlarmHandler:
             if text_change:
                 agg_text = text_change
             duration = dur or duration
-            
         return processed, agg_attr, agg_text, duration
 
     def _schedule_revert_if_needed(self, entry, svg_name, elem_id, anim_name, service):
         if getattr(entry, "revert_after", 0):
-            task = asyncio.create_task(
-                service.schedule_revert(svg_name, elem_id, anim_name, entry)
-            )
+            task = asyncio.create_task(service.schedule_revert(svg_name, elem_id, anim_name, entry))
             task.add_done_callback(lambda t: t.exception())
 
     def handle(self, msg, service):
@@ -81,10 +77,9 @@ class AlarmHandler:
             processed, agg_attr, agg_text, duration = self._process_animation_entries(
                 animation, event_value, getattr(msg, "quality", None), service
             )
-            
+
             if not processed:
                 continue
-
             for entry in animation.entries:
                 if getattr(entry, "trigger_type", "") == "alarm":
                     self._schedule_revert_if_needed(entry, svg_name, elem_id, anim_name, service)

@@ -63,11 +63,11 @@ class GisService(BaseService[Union[TagUpdateMsg, AlarmUpdateMsg], None, GisUpdat
     def _process_tag_update(self, msg: TagUpdateMsg, icon_cfg: dict) -> GisUpdateMsg | None:
         if icon_cfg.get("datapoint") != msg.datapoint_identifier:
             return None
-        
+
         icon_url = icon_cfg["icon"]
         if "states" in icon_cfg and str(msg.value) in icon_cfg["states"]:
             icon_url = icon_cfg["states"][str(msg.value)]
-        
+
         return GisUpdateMsg(
             id=icon_cfg["id"],
             latitude=icon_cfg["latitude"],

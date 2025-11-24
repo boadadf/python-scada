@@ -21,6 +21,7 @@ from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 import sys
 import threading
+
 CONFIG_FILE = os.path.join(
     os.path.dirname(__file__), "..", "..", "..", "config", "system_config.json"
 )

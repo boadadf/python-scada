@@ -114,15 +114,15 @@ class TestDriver(DriverProtocol, ABC):
     async def send_command(self, data: SendCommandMsg):
         if not self._command_feedback_callback:
             return
-        
+
         dp_name = self._extract_datapoint_name(data.datapoint_identifier)
         dp_name_base = self._remove_cmd_suffix(dp_name)
         value = await self._process_command_value(dp_name, data.value)
-        
+
         exists = dp_name_base in self._tags
         if exists:
             await self._update_tag_and_publish(dp_name_base, value)
-        
+
         await self._send_command_feedback(data, exists)
 
     def _extract_datapoint_name(self, identifier: str) -> str:
@@ -143,7 +143,7 @@ class TestDriver(DriverProtocol, ABC):
     async def _update_tag_and_publish(self, dp_name_base: str, value: str):
         if not self._value_callback:
             return
-        
+
         if dp_name_base in self._tags:
             self._tags[dp_name_base].value = value
             self._tags[dp_name_base].timestamp = datetime.datetime.now()
@@ -170,41 +170,41 @@ class TestDriver(DriverProtocol, ABC):
 
     async def handle_special_command(self, datapoint_name: str, value: str) -> Optional[str]:
         print(f"[COMMAND] Handling special command: {datapoint_name} = {value}")
-        
+
         if datapoint_name == "TEST_CMD":
             return await self._handle_test_command(value)
-        
+
         if value == "TOGGLE":
             return self._handle_toggle_command(datapoint_name)
-        
+
         return None
 
     async def _handle_test_command(self, value: str) -> Optional[str]:
         if value == "START":
             await self.start_test()
             return "STARTED"
-        
+
         if value == "STOP":
             await self.stop_test()
             return "STOPPED"
-        
+
         if value == "TOGGLE":
             return await self._handle_test_toggle()
-        
+
         return None
 
     async def _handle_test_toggle(self) -> Optional[str]:
         if "TEST" not in self._tags:
             return None
-        
+
         current_value = self._tags["TEST"].value
         new_value = "STARTED" if current_value == "STOPPED" else "STOPPED"
-        
+
         if new_value == "STARTED":
             await self.start_test()
         else:
             await self.stop_test()
-        
+
         return new_value
 
     def _handle_toggle_command(self, datapoint_name: str) -> Optional[str]:
@@ -216,14 +216,14 @@ class TestDriver(DriverProtocol, ABC):
             "LEFT_SWITCH_CONTROL_CMD": lambda v: "STRAIGHT" if v == "TURN" else "TURN",
             "RIGHT_SWITCH_CONTROL_CMD": lambda v: "STRAIGHT" if v == "TURN" else "TURN",
         }
-        
+
         if datapoint_name not in toggle_handlers:
             return None
-        
+
         base_name = datapoint_name[:-4]  # Remove _CMD
         if base_name not in self._tags:
             return None
-        
+
         current_value = self._tags[base_name].value
         return toggle_handlers[datapoint_name](current_value)
 

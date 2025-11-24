@@ -68,9 +68,7 @@ class ConnectionHandler:
             if getattr(entry, "trigger_type", "") != "connection":
                 continue
 
-            attr_changes, text_change, dur = service.process_single_entry(
-                entry, event_value, None
-            )
+            attr_changes, text_change, dur = service.process_single_entry(entry, event_value, None)
             agg_attr.update(attr_changes)
             if text_change:
                 agg_text = text_change
