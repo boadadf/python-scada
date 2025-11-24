@@ -53,11 +53,11 @@ def dummy_event_bus():
         def __init__(self):
             self.published = []
 
-        async def publish(self, event_type, data):
+        def publish(self, event_type, data):
             self.published.append((event_type, data))
 
         def subscribe(self, event_type, handler):
-            pass
+            pass  # To implement if needed by the test
 
     return DummyEventBus()
 
