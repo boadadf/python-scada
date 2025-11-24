@@ -82,5 +82,6 @@ jobs:
             -Dsonar.projectKey=${{ env.SONAR_PROJECT_KEY }}
             -Dsonar.projectName=python-scada
             -Dsonar.sources=.,./openscada_lite/web/scada/static/frontend/src
+            -Dsonar.exclusions=**/node_modules/**,**/__pycache__/**,**/ci.yml
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
