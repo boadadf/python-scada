@@ -74,7 +74,7 @@ jobs:
 
       # SonarCloud analysis
       - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@v2
+        uses: SonarSource/sonarcloud-github-action@2c1b1b7b3b7e6c3b8d2d0b8cbe760e4d0d60e4f6
         with:
           projectBaseDir: .
           args: >

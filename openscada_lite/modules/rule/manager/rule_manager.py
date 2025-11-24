@@ -98,7 +98,7 @@ class RuleEngine:
         This ensures both on/off conditions are considered.
         """
         self.tag_to_rules.clear()
-        tag_pattern = re.compile(r"\w+@\w+")
+        tag_pattern = re.compile(r"^\w{1,64}@\w{1,64}$")
         all_tags = set()
         for rule in self.rules:
             conditions = [rule.on_condition]
