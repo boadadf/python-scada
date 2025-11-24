@@ -29,7 +29,7 @@ from typing import TYPE_CHECKING
 T = TypeVar("T", bound=DTO)  # From bus
 U = TypeVar("U", bound=DTO)  # From controller
 V = TypeVar("V", bound=DTO)  # Stored in model and published to view (processed T)
-# W = TypeVar('W', bound=DTO)  # Published to bus (processed U)
+""" # W = TypeVar('W', bound=DTO)  # Published to bus (processed U) """
 
 if TYPE_CHECKING:
     from .base_controller import BaseController
@@ -46,8 +46,8 @@ class BaseService(ABC, Generic[T, U, V]):
         event_bus: EventBus,
         model: BaseModel,
         controller: "BaseController",
-        T_cls: Union[Type[T], List[Type[T]]],
-        U_cls: Type[U],
+        t_cls: Union[Type[T], List[Type[T]]],
+        u_cls: Type[U],
         V_cls: Type[V] = None,
     ):
         self.event_bus = event_bus
@@ -56,16 +56,16 @@ class BaseService(ABC, Generic[T, U, V]):
         if controller:
             controller.set_service(self)
 
-        # Support single or multiple T_cls
-        if not isinstance(T_cls, list):
-            T_cls = [T_cls]
-        self.T_cls_list = T_cls
-        self.U_cls = U_cls
+        # Support single or multiple t_cls
+        if not isinstance(t_cls, list):
+            t_cls = [t_cls]
+        self.t_cls_list = t_cls
+        self.u_cls = u_cls
         self.V_cls = V_cls
 
         # Subscribe to all event types
-        if T_cls is not None:
-            for t_cls in self.T_cls_list:
+        if t_cls is not None:
+            for t_cls in self.t_cls_list:
                 if t_cls is not None:
                     self.event_bus.subscribe(t_cls.get_event_type(), self.handle_bus_message)
 
@@ -95,7 +95,7 @@ class BaseService(ABC, Generic[T, U, V]):
 
     @publish_data_flow_from_arg_async(status=DataFlowStatus.RECEIVED)
     async def handle_controller_message(self, data: U):
-        await self.event_bus.publish(self.U_cls.get_event_type(), data)
+        await self.event_bus.publish(self.u_cls.get_event_type(), data)
 
     @publish_data_flow_from_return_sync(status=DataFlowStatus.CREATED)
     def process_msg(self, msg: T) -> V:
@@ -122,4 +122,4 @@ class BaseService(ABC, Generic[T, U, V]):
         pass
 
     async def async_init(self):
-        pass
+        pass # Optional async initialization for subclasses

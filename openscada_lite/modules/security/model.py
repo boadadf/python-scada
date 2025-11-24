@@ -38,9 +38,9 @@ class SecurityModel(BaseModel[None]):
     def load_endpoints(self, router: APIRouter):
         """Scan FastAPI app for all registered POST endpoint names."""
         with self._lock:
-            self.endpoints = set(
+            self.endpoints = {
                 route.name for route in router.routes if "POST" in getattr(route, "methods", [])
-            )
+            }
 
     def _load(self):
         if os.path.exists(self.file_path):
@@ -60,7 +60,7 @@ class SecurityModel(BaseModel[None]):
             return copy.deepcopy(self._data["users"])
 
     def get_end_points(self) -> List[str]:
-        return sorted(list(self.endpoints))
+        return list(self.endpoints)
 
     def get_security_config(self) -> dict:
         with self._lock:

@@ -24,12 +24,12 @@ class SendCommandAction(Action):
     def get_event_data(
         self, datapoint_identifier, params, track_id, rule_id
     ) -> tuple[SendCommandMsg, EventType]:
-        datapoint_identifier, value = params
+        command_datapoint_identifier, value = params
         command_id = str(uuid.uuid4())
         return (
             SendCommandMsg(
                 command_id=command_id,
-                datapoint_identifier=datapoint_identifier,
+                datapoint_identifier=command_datapoint_identifier,
                 value=value,
                 track_id=track_id,
             ),

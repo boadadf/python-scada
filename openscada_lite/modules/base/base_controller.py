@@ -45,16 +45,16 @@ class BaseController(ABC, Generic[T, U]):
         self,
         model: BaseModel,
         socketio: AsyncServer,
-        T_cls: Type[T],
-        U_cls: Optional[Type[U]],
+        t_cls: Type[T],
+        u_cls: Optional[Type[U]],
         base_event: str,
         router: APIRouter,
         batch_interval: float = 1.0,  # seconds
     ):
         self.model = model
         self.socketio = socketio
-        self.T_cls = T_cls
-        self.U_cls = U_cls
+        self.t_cls = t_cls
+        self.u_cls = u_cls
         self.base_event = base_event
         self.room = f"{base_event}_room"
         self.service = None
@@ -131,7 +131,7 @@ class BaseController(ABC, Generic[T, U]):
                     self._batch_buffer.clear()
             if buffer_copy:
                 await self.socketio.emit(
-                    f"{self.base_event}_{self.T_cls.__name__.lower()}",
+                    f"{self.base_event}_{self.t_cls.__name__.lower()}",
                     buffer_copy,
                     room=self.room,
                 )
@@ -140,16 +140,16 @@ class BaseController(ABC, Generic[T, U]):
     # HTTP endpoints via APIRouter
     # ---------------------------------------------------------------------
     def _register_generic_routes(self):
-        if self.U_cls is None:
+        if self.u_cls is None:
             return
 
-        endpoint_name = f"{self.base_event}_send_{self.U_cls.__name__.lower()}"
+        endpoint_name = f"{self.base_event}_send_{self.u_cls.__name__.lower()}"
         route_path = f"/{endpoint_name}"
 
         @self.router.post(route_path, name=endpoint_name)
         async def _incoming_handler(request: Request):
             data = await request.json()
-            obj_data = self.U_cls(**data) if isinstance(data, dict) else data
+            obj_data = self.u_cls(**data) if isinstance(data, dict) else data
             result = self.validate_request_data(obj_data)
             if isinstance(result, StatusDTO):
                 return JSONResponse(status_code=400, content=result.to_dict())

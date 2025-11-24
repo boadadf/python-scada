@@ -20,7 +20,7 @@ from openscada_lite.common.models.dtos import DataFlowEventMsg, StatusDTO
 
 class TrackingController(BaseController[DataFlowEventMsg, None]):
     def __init__(self, model, socketio, module_name: str, router: APIRouter):
-        # No incoming requests, so use None as dummy U_cls
+        # No incoming requests, so use None as dummy u_cls
         super().__init__(model, socketio, DataFlowEventMsg, None, module_name, router)
 
     def validate_request_data(self, data):

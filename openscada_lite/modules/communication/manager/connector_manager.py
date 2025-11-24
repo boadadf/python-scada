@@ -176,7 +176,7 @@ class ConnectorManager:
     async def send_command(self, data: SendCommandMsg):
         print(f"[COMMAND] Sending command: {data.datapoint_identifier} = {data.value}")
         config = Config.get_instance()
-        server_id, simple_datapoint_identifier = data.datapoint_identifier.split("@", 1)
+        server_id, _ = data.datapoint_identifier.split("@", 1)
 
         if not config.validate_value(data.datapoint_identifier, data.value):
             # Value is invalid, send NOK feedback immediately

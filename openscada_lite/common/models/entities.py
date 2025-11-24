@@ -48,10 +48,10 @@ class AnimationEntry:
     attribute: str
     quality: Dict[str, Any] = field(default_factory=dict)
     expression: Any = None  # str, dict, or alarm mapping {ACTIVE: ..., INACTIVE: ...}
-    triggerType: str = "datapoint"  # 'datapoint' or 'alarm'
-    alarmEvent: Optional[str] = None  # e.g., 'onAlarmActive', 'onAlarmAck', etc.
+    trigger_type: str = "datapoint"  # 'datapoint' or 'alarm'
+    alarm_event: Optional[str] = None  # e.g., 'onAlarmActive', 'onAlarmAck', etc.
     default: Any = None  # value to revert to
-    revertAfter: float = 0  # seconds after which to revert
+    revert_after: float = 0  # seconds after which to revert
     duration: float = 0.5  # default animation duration in seconds
 
 

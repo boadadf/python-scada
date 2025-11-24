@@ -134,10 +134,10 @@ class OPCUAServerDriver(ServerProtocol):
                 await node.set_writable()
                 # Update masks so UA Expert sees the node as writable
                 await node.write_attribute(
-                    ua.AttributeIds.UserWriteMask, ua.DataValue(ua.UInt32(1))  # 1 = writeable
+                    ua.AttributeIds.UserWriteMask, ua.DataValue(ua.UInt32(1))
                 )
                 await node.write_attribute(
-                    ua.AttributeIds.WriteMask, ua.DataValue(ua.UInt32(1))  # 1 = writeable
+                    ua.AttributeIds.WriteMask, ua.DataValue(ua.UInt32(1))
                 )
 
             self.nodes[datapoint] = node

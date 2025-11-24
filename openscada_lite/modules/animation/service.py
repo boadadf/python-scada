@@ -73,34 +73,45 @@ class AnimationService(
         """Initialize all animations in the model with their default values."""
         for dp_id, mappings in self.datapoint_map.items():
             for svg_name, elem_id, anim_name in mappings:
-                animation = self.animations.get(anim_name)
-                if not animation:
-                    continue
+                self._init_single_animation(svg_name, elem_id, anim_name)
 
-                agg_attr = {}
-                agg_text = None
-                for entry in animation.entries:
-                    if getattr(entry, "default", None) is None:
-                        continue
-                    if entry.attribute == "text":
-                        agg_text = str(entry.default)
-                    else:
-                        agg_attr[entry.attribute] = entry.default
+    def _init_single_animation(self, svg_name: str, elem_id: str, anim_name: str):
+        """Initialize a single animation element with its default values."""
+        animation = self.animations.get(anim_name)
+        if not animation:
+            return
 
-                cfg = {"attr": agg_attr, "duration": self.DURATION_DEFAULT}
-                if agg_text:
-                    cfg["text"] = agg_text
+        agg_attr, agg_text = self._collect_default_values(animation.entries)
+        
+        cfg = {"attr": agg_attr, "duration": self.DURATION_DEFAULT}
+        if agg_text:
+            cfg["text"] = agg_text
 
-                self.model.update(
-                    AnimationUpdateMsg(
-                        svg_name=svg_name,
-                        element_id=elem_id,
-                        animation_type=anim_name,
-                        value=None,
-                        config=cfg,
-                        test=False,
-                    )
-                )
+        self.model.update(
+            AnimationUpdateMsg(
+                svg_name=svg_name,
+                element_id=elem_id,
+                animation_type=anim_name,
+                value=None,
+                config=cfg,
+                test=False,
+            )
+        )
+
+    def _collect_default_values(self, entries):
+        """Collect default attribute and text values from animation entries."""
+        agg_attr = {}
+        agg_text = None
+        
+        for entry in entries:
+            if getattr(entry, "default", None) is None:
+                continue
+            if entry.attribute == "text":
+                agg_text = str(entry.default)
+            else:
+                agg_attr[entry.attribute] = entry.default
+        
+        return agg_attr, agg_text
 
     def process_msg(self, msg):
         """Delegate the processing to the appropriate handler."""
@@ -151,10 +162,10 @@ class AnimationService(
 
     async def schedule_revert(self, svg_name, element_id, animation_name, entry):
         """
-        Revert a single animation entry to its configured default after entry.revertAfter seconds.
+        Revert a single animation entry to its configured default after entry.revert_after seconds.
         The revert uses entry.default, not any quality logic.
         """
-        delay = getattr(entry, "revertAfter", 0) or 0
+        delay = getattr(entry, "revert_after", 0) or 0
         if delay <= 0:
             return
         await asyncio.sleep(delay)

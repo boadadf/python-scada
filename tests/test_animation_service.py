@@ -8,15 +8,15 @@ from openscada_lite.common.config.config import Config
 
 class DummyEventBus:
     async def publish(self, event_type, data):
-        pass
+        pass # Test does not require actual publishing
 
     def subscribe(self, event_type, handler):
-        pass
+        pass # To implement if needed by the test
 
 
 class DummyModel:
     def update(self, msg):
-        pass
+        pass # To implement if needed by the test
 
 
 class DummyController:
@@ -59,9 +59,9 @@ def dummy_config(monkeypatch, tmp_path):
                         "attribute": "height",
                         "quality": {"unknown": 0},
                         "expression": "(value/100)*340",
-                        "triggerType": "datapoint",
+                        "trigger_type": "datapoint",
                         "default": 0,
-                        "revertAfter": 0,
+                        "revert_after": 0,
                         "duration": 0.5,
                     }
                 ),
@@ -70,9 +70,9 @@ def dummy_config(monkeypatch, tmp_path):
                         "attribute": "y",
                         "quality": {"unknown": 390},
                         "expression": "390 - ((value/100)*340)",
-                        "triggerType": "datapoint",
+                        "trigger_type": "datapoint",
                         "default": 390,
-                        "revertAfter": 0,
+                        "revert_after": 0,
                         "duration": 0.5,
                     }
                 ),
@@ -86,9 +86,9 @@ def dummy_config(monkeypatch, tmp_path):
                         "attribute": "text",
                         "quality": {"unknown": "0.0"},
                         "expression": "str(value)",
-                        "triggerType": "datapoint",
+                        "trigger_type": "datapoint",
                         "default": "0.0",
-                        "revertAfter": 0,
+                        "revert_after": 0,
                         "duration": 0.5,
                     }
                 )
@@ -129,7 +129,7 @@ async def test_tag_update_triggers_animation(dummy_config):
     cfg = updates[0].config
     assert "attr" in cfg
     assert "duration" in cfg
-    assert cfg["duration"] == 0.5
+    assert cfg["duration"] == pytest.approx(0.5)
 
     text_update = next(u for u in updates if u.animation_type == "level_text")
     assert str(msg.value) in text_update.config["text"]
@@ -148,10 +148,10 @@ async def test_alarm_update_triggers_alarm_animation(dummy_config):
                 attribute="href",
                 quality={"unknown": "#alert"},
                 expression={"ACTIVE": "#alert", "INACTIVE": "#"},
-                triggerType="alarm",
-                alarmEvent="onAlarmActive",
+                trigger_type="alarm",
+                alarm_event="onAlarmActive",
                 default="#",
-                revertAfter=0,
+                revert_after=0,
                 duration=0.5,
             )
         ],

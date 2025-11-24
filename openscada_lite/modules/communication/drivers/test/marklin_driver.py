@@ -20,4 +20,4 @@ from openscada_lite.modules.communication.drivers.test.test_driver import TestDr
 
 class TrainTestDriver(TestDriver):
     def _simulate_values(self):
-        pass
+        pass # No simulation needed for train driver

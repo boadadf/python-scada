@@ -28,7 +28,7 @@ SyncFunc = Callable[..., Any]
 MaybeDTO = Any
 
 
-def isValidDTO(obj: Any) -> bool:
+def is_valid_dto(obj: Any) -> bool:
     return obj is not None and not isinstance(obj, DataFlowEventMsg)
 
 
@@ -40,7 +40,7 @@ def publish_data_flow_from_arg_async(status: DataFlowStatus, source: Optional[st
             result = await func(self, *args, **kwargs)
             event_source = source or self.__class__.__name__
             dto: MaybeDTO = args[0] if args else None
-            if isValidDTO(dto):
+            if is_valid_dto(dto):
                 publisher.publish_data_flow_event(dto, source=event_source, status=status)
             return result
 
@@ -57,7 +57,7 @@ def publish_data_flow_from_arg_sync(status: DataFlowStatus, source: Optional[str
             result = func(self, *args, **kwargs)
             event_source = source or self.__class__.__name__
             dto: MaybeDTO = args[0] if args else None
-            if isValidDTO(dto):
+            if is_valid_dto(dto):
                 # If publisher is async, schedule it
                 publisher.publish_data_flow_event(dto, source=event_source, status=status)
             return result
@@ -78,7 +78,7 @@ def publish_data_flow_from_return_async(status: DataFlowStatus, source: Optional
             else:
                 dto = result
             event_source = source or self.__class__.__name__
-            if isValidDTO(dto):
+            if is_valid_dto(dto):
                 publisher.publish_data_flow_event(dto, source=event_source, status=status)
             return result
 
@@ -98,7 +98,7 @@ def publish_data_flow_from_return_sync(status: DataFlowStatus, source: Optional[
             else:
                 dto = result
             event_source = source or self.__class__.__name__
-            if isValidDTO(dto):
+            if is_valid_dto(dto):
                 publisher.publish_data_flow_event(dto, source=event_source, status=status)
             return result
 

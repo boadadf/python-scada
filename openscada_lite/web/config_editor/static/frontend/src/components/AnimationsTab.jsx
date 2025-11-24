@@ -4,7 +4,7 @@ import Table from "./Table";
 /**
  * AnimationTab.jsx
  *
- * - triggerType: "datapoint" | "alarm" | "connection"
+ * - trigger_type: "datapoint" | "alarm" | "connection"
  * - Expression for alarm entries is stored as an object:
  *   { "ACTIVE": "<value-for-active>", "INACTIVE": "<value-for-inactive>", "FINISHED": ..., "ACK": ... }
  * - Expression for communication entries: { "ONLINE": "<value>", "OFFLINE": "<value>" }
@@ -20,7 +20,7 @@ export default function AnimationTab({ config, setConfig }) {
     if (!selectedKey) return;
     const newModes = {};
     (animations[selectedKey] || []).forEach((entry, idx) => {
-      if (entry.triggerType === "alarm") {
+      if (entry.trigger_type === "alarm") {
         newModes[idx] = "alarm";
       } else {
         newModes[idx] = typeof entry.expression === "object" ? "mapping" : "eval";
@@ -56,7 +56,7 @@ export default function AnimationTab({ config, setConfig }) {
     if (!selectedKey) return;
     const copy = structuredClone(config);
     const newEntry = {
-      triggerType: "datapoint",
+      trigger_type: "datapoint",
       attribute: "",
       quality: { unknown: "" },
       expression: "",          // string or object
@@ -86,13 +86,13 @@ export default function AnimationTab({ config, setConfig }) {
     const copy = structuredClone(config);
     const entry = copy.animations[selectedKey][idx];
 
-    if (field === "duration" || field === "revertAfter") {
+    if (field === "duration" || field === "revert_after") {
       entry[field] = rawValue === "" ? 0 : Number(rawValue);
     } else if (field === "quality") {
       if (!entry.quality) entry.quality = {};
       entry.quality.unknown = rawValue;
-    } else if (field === "triggerType") {
-      entry.triggerType = rawValue;
+    } else if (field === "trigger_type") {
+      entry.trigger_type = rawValue;
       if (rawValue === "alarm") {
         setExpressionModes(prev => ({ ...prev, [idx]: "alarm" }));
         if (!entry.expression || typeof entry.expression !== "object") {
@@ -175,8 +175,8 @@ export default function AnimationTab({ config, setConfig }) {
                   <tr key={idx}>
                     <td style={{ width: 90, padding: "0 8px" }}>
                       <select
-                        value={entry.triggerType || "datapoint"}
-                        onChange={e => updateEntryField(idx, "triggerType", e.target.value)}
+                        value={entry.trigger_type || "datapoint"}
+                        onChange={e => updateEntryField(idx, "trigger_type", e.target.value)}
                         style={{ width: "100%", boxSizing: "border-box", padding: "2px 6px" }}
                       >
                         <option value="datapoint">Datapoint</option>
@@ -200,7 +200,7 @@ export default function AnimationTab({ config, setConfig }) {
                     </td>
                     <td style={{ width: 420, padding: "0 8px" }}>
                       {/* Expr / Values cell */}
-                      {entry.triggerType === "alarm" ? (
+                      {entry.trigger_type === "alarm" ? (
                         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                           {["ACTIVE", "INACTIVE", "FINISHED", "ACK"].map(f => (
                             <div key={f}>
@@ -214,7 +214,7 @@ export default function AnimationTab({ config, setConfig }) {
                             </div>
                           ))}
                         </div>
-                      ) : entry.triggerType === "connection" ? (
+                      ) : entry.trigger_type === "connection" ? (
                         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                           {["ONLINE", "OFFLINE"].map(f => (
                             <div key={f}>
@@ -267,8 +267,8 @@ export default function AnimationTab({ config, setConfig }) {
                         type="number"
                         min="0"
                         step="0.1"
-                        value={entry.revertAfter || ""}
-                        onChange={e => updateEntryField(idx, "revertAfter", e.target.value)}
+                        value={entry.revert_after || ""}
+                        onChange={e => updateEntryField(idx, "revert_after", e.target.value)}
                         style={{ width: "80px", boxSizing: "border-box", padding: "2px 6px" }}
                       />
                     </td>

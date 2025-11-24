@@ -662,7 +662,7 @@ Handlers are responsible for processing messages and updating SVG elements:
 - **ConnectionHandler:**  
   Triggers on driver connection status. Updates SVG elements to reflect communication health.
 
-Each handler uses the shared animation configuration and can schedule automatic reverts using the `revertAfter` property.
+Each handler uses the shared animation configuration and can schedule automatic reverts using the `revert_after` property.
 
 **To add a new handler:**
 
