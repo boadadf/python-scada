@@ -96,7 +96,7 @@ async def test_connect_driver_valid_status(fastapi_app):
 
     # Use ASGITransport to wrap the FastAPI app
     transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://testserver") as ac:
+    async with AsyncClient(transport=transport, base_url="http://testserver") as ac: # NOSONAR
         data = DriverConnectCommand(driver_name="WaterTank", status="connect")
         response = await ac.post("/communication_send_driverconnectcommand", json=data.to_dict())
 
@@ -112,7 +112,7 @@ async def test_connect_driver_invalid_status(fastapi_app):
 
     # Use ASGITransport to wrap the FastAPI app
     transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://testserver") as ac:
+    async with AsyncClient(transport=transport, base_url="http://testserver") as ac: # NOSONAR
         data = DriverConnectCommand(driver_name="WaterTank", status="bad_status")
         response = await ac.post("/communication_send_driverconnectcommand", json=data.to_dict())
 
