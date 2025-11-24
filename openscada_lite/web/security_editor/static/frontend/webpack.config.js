@@ -11,18 +11,15 @@ module.exports = {
     path: path.resolve(__dirname, "dist"),
     filename: isProd ? "[name].[contenthash].js" : "[name].js",
     chunkFilename: isProd ? "[name].[contenthash].chunk.js" : "[name].chunk.js",
-    clean: true, // deletes old builds automatically
+    clean: true
   },
-
   mode: isProd ? "production" : "development",
 
   module: {
     rules: [
       {
         test: /\.(js|jsx)$/,
-        exclude: (modulePath) => {
-          return /node_modules/.test(modulePath) && !/node_modules[\\/](login)/.test(modulePath);
-        },
+        exclude: /node_modules/,
         use: {
           loader: "babel-loader",
           options: {
@@ -31,7 +28,7 @@ module.exports = {
         },
       },
       {
-        test: /\.css$/i,
+        test: /\.css$/,
         use: ["style-loader", "css-loader"],
       },
     ],
@@ -39,12 +36,21 @@ module.exports = {
 
   resolve: {
     extensions: [".js", ".jsx"],
-    symlinks: true,
     alias: {
       react: path.resolve(__dirname, "node_modules/react"),
       "react-dom": path.resolve(__dirname, "node_modules/react-dom"),
+      login: path.resolve(__dirname, "../../../login/src")
     },
   },
+
+  plugins: [
+    new HtmlWebpackPlugin({
+      template: "./src/index.html",    // YOUR SPA HTML
+      filename: "index.html",
+    }),
+    // Uncomment if you want to analyze your bundles
+    // new BundleAnalyzerPlugin(),
+  ],
 
   optimization: {
     splitChunks: {
@@ -57,15 +63,15 @@ module.exports = {
         },
       },
     },
+    runtimeChunk: "single",
   },
 
-  plugins: [
-    ...(process.env.ANALYZE ? [new BundleAnalyzerPlugin()] : []),
-  ],
-
   devServer: {
-    static: path.join(__dirname, "dist"),
+    static: {
+      directory: path.resolve(__dirname, "dist"),
+    },
     port: 3000,
     hot: true,
+    historyApiFallback: true,  // IMPORTANT for React Router or SPA refresh
   },
 };

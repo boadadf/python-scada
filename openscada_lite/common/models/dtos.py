@@ -25,17 +25,19 @@ from openscada_lite.common.bus.event_types import EventType
 
 from abc import ABC, abstractmethod
 
+
 @dataclass(kw_only=True)
 class DTO(ABC):
     """Base class for Data Transfer Objects (DTOs) used in the system."""
+
     track_id: str = field(default_factory=lambda: str(uuid.uuid4()))
-    
-    #The payload for each DTO
+
+    # The payload for each DTO
     def get_track_payload(self) -> str:
         """Return a serializable representation for tracking."""
         return ""
 
-    @classmethod 
+    @classmethod
     @abstractmethod
     def get_event_type(cls) -> EventType:
         pass
@@ -52,6 +54,7 @@ class DTO(ABC):
         d = asdict(self)
         return make_json_serializable(d)
 
+
 def make_json_serializable(obj):
     if isinstance(obj, uuid.UUID):
         return str(obj)
@@ -65,6 +68,7 @@ def make_json_serializable(obj):
         return [make_json_serializable(v) for v in obj]
     else:
         return obj
+
 
 @dataclass
 class TagUpdateMsg(DTO):
@@ -91,6 +95,7 @@ class TagUpdateMsg(DTO):
             "timestamp": self.timestamp.isoformat() if self.timestamp else None,
         }
 
+
 @dataclass
 class RawTagUpdateMsg(DTO):
     datapoint_identifier: str
@@ -115,6 +120,7 @@ class RawTagUpdateMsg(DTO):
             "timestamp": self.timestamp.isoformat() if self.timestamp else None,
         }
 
+
 @dataclass
 class SendCommandMsg(DTO):
     command_id: str
@@ -135,8 +141,9 @@ class SendCommandMsg(DTO):
         return {
             "command_id": self.command_id,
             "datapoint_identifier": self.datapoint_identifier,
-            "value": self.value
+            "value": self.value,
         }
+
 
 @dataclass
 class CommandFeedbackMsg(DTO):
@@ -158,19 +165,20 @@ class CommandFeedbackMsg(DTO):
 
     def get_track_payload(self):
         return {
-            "command_id": str(self.command_id), 
+            "command_id": str(self.command_id),
             "datapoint_identifier": self.datapoint_identifier,
             "value": self.value,
             "feedback": self.feedback,
-            "timestamp": self.timestamp.isoformat() if self.timestamp else None
-    }
+            "timestamp": self.timestamp.isoformat() if self.timestamp else None,
+        }
+
 
 @dataclass
 class RaiseAlarmMsg(DTO):
     datapoint_identifier: str
     rule_id: str
     timestamp: datetime.datetime = field(default_factory=datetime.datetime.now)
-    
+
     @classmethod
     def get_event_type(cls) -> EventType:
         return EventType.RAISE_ALARM
@@ -187,11 +195,12 @@ class RaiseAlarmMsg(DTO):
             "timestamp": self.timestamp.isoformat(),
         }
 
+
 @dataclass
 class LowerAlarmMsg(DTO):
     datapoint_identifier: str
     rule_id: str
-    timestamp: datetime.datetime = field(default_factory=datetime.datetime.now)    
+    timestamp: datetime.datetime = field(default_factory=datetime.datetime.now)
 
     @classmethod
     def get_event_type(cls) -> EventType:
@@ -208,6 +217,7 @@ class LowerAlarmMsg(DTO):
             "datapoint_identifier": self.datapoint_identifier,
             "timestamp": self.timestamp.isoformat(),
         }
+
 
 @dataclass
 class AckAlarmMsg(DTO):
@@ -230,6 +240,7 @@ class AckAlarmMsg(DTO):
             "timestamp": self.timestamp.isoformat(),
         }
 
+
 @dataclass
 class AlarmUpdateMsg(DTO):
     datapoint_identifier: str
@@ -251,20 +262,27 @@ class AlarmUpdateMsg(DTO):
         return self._default_to_dict()
 
     def get_id(self) -> str:
-        return f'{self.datapoint_identifier}@{self.activation_time.isoformat()}'
-    
+        return f"{self.datapoint_identifier}@{self.activation_time.isoformat()}"
+
     def isFinished(self) -> bool:
-        return self.deactivation_time is not None \
-            and self.acknowledge_time is not None \
+        return (
+            self.deactivation_time is not None
+            and self.acknowledge_time is not None
             and self.activation_time is not None
+        )
 
     def get_track_payload(self):
         return {
             "datapoint_identifier": self.datapoint_identifier,
             "activation_time": self.activation_time.isoformat(),
-            "deactivation_time": self.deactivation_time.isoformat() if self.deactivation_time else None,
-            "acknowledge_time": self.acknowledge_time.isoformat() if self.acknowledge_time else None,
+            "deactivation_time": (
+                self.deactivation_time.isoformat() if self.deactivation_time else None
+            ),
+            "acknowledge_time": (
+                self.acknowledge_time.isoformat() if self.acknowledge_time else None
+            ),
         }
+
 
 @dataclass
 class DriverConnectStatus(DTO):
@@ -280,12 +298,10 @@ class DriverConnectStatus(DTO):
 
     def get_id(self) -> str:
         return self.driver_name
-    
+
     def get_track_payload(self):
-        return {
-            "driver_name": self.driver_name,
-            "status": self.status
-        }
+        return {"driver_name": self.driver_name, "status": self.status}
+
 
 @dataclass
 class DriverConnectCommand(DTO):
@@ -298,30 +314,26 @@ class DriverConnectCommand(DTO):
 
     def to_dict(self):
         return self._default_to_dict()
-    
+
     def get_id(self) -> str:
         return self.driver_name
 
     def get_track_payload(self):
-        return {
-            "driver_name": self.driver_name,
-            "status": self.status
-        }
+        return {"driver_name": self.driver_name, "status": self.status}
+
 
 @dataclass
-class StatusDTO():
+class StatusDTO:
     status: str
     reason: str
 
     def to_dict(self):
-        return {
-            "status": self.status,
-            "reason": self.reason
-        }
+        return {"status": self.status, "reason": self.reason}
 
     def get_id(self) -> str:
         return self.status
-    
+
+
 @dataclass
 class DataFlowEventMsg(DTO):
     event_type: str
@@ -336,9 +348,9 @@ class DataFlowEventMsg(DTO):
 
     def to_dict(self):
         return self._default_to_dict()
-    
+
     def get_id(self) -> str:
-        return f'{self.track_id}@{self.source}@{self.event_type}'
+        return f"{self.track_id}@{self.source}@{self.event_type}"
 
     def get_track_payload(self):
         return {
@@ -347,8 +359,9 @@ class DataFlowEventMsg(DTO):
             "source": self.source,
             "status": self.status.value,
             "timestamp": self.timestamp.isoformat(),
-            "payload": self.payload
+            "payload": self.payload,
         }
+
 
 @dataclass
 class AnimationUpdateMsg(DTO):
@@ -359,14 +372,14 @@ class AnimationUpdateMsg(DTO):
     config: dict
     timestamp: Optional[datetime.datetime] = None
     test: bool = False
-    
+
     @classmethod
     def get_event_type(cls) -> EventType:
         return EventType.ANIMATION_EVENT
 
     def to_dict(self):
         return self._default_to_dict()
-    
+
     def get_id(self) -> str:
         return f"{self.svg_name}:{self.element_id}"
 
@@ -376,8 +389,9 @@ class AnimationUpdateMsg(DTO):
             "animation": self.animation_type,
             "value": self.value,
             "svg_name": self.svg_name,
-            "timestamp": self.timestamp.isoformat() if self.timestamp else None
+            "timestamp": self.timestamp.isoformat() if self.timestamp else None,
         }
+
 
 @dataclass
 class AnimationUpdateRequestMsg(DTO):
@@ -385,14 +399,14 @@ class AnimationUpdateRequestMsg(DTO):
     quality: str
     value: float = 0.09
     alarm_status: str | None = None  # <-- NEW
-    
+
     @classmethod
     def get_event_type(cls) -> EventType:
         return EventType.ANIMATION_REQUEST
 
     def to_dict(self):
         return self._default_to_dict()
-    
+
     def get_id(self) -> str:
         return f"{self.datapoint_identifier}:{self.quality}:{self.value}"
 
@@ -400,8 +414,8 @@ class AnimationUpdateRequestMsg(DTO):
         return {
             "datapoint_identifier": self.datapoint_identifier,
             "quality": self.quality,
-            "value": self.value
-        }                
+            "value": self.value,
+        }
 
     def to_test_update_msg(self) -> Union[AlarmUpdateMsg, TagUpdateMsg]:
         if self.alarm_status:
@@ -426,12 +440,12 @@ class AnimationUpdateRequestMsg(DTO):
                 datapoint_identifier=self.datapoint_identifier,
                 value=self.value,
                 quality=self.quality,
-                test=True
+                test=True,
             )
 
 
 @dataclass
-class ClientAlertMsg(DTO):    
+class ClientAlertMsg(DTO):
     message: str
     alert_type: str
     show: bool = True  # True to show, False to hide
@@ -453,12 +467,13 @@ class ClientAlertMsg(DTO):
         return {
             "message": self.message,
             "command_datapoint": self.command_datapoint,
-            "command_value": self.command_value
+            "command_value": self.command_value,
         }
-    
+
+
 @dataclass
 class ClientAlertFeedbackMsg(DTO):
-    #track_id is inherited from DTO
+    # track_id is inherited from DTO
     feedback: str  # e.g., "confirm" "cancel"
 
     @classmethod
@@ -472,10 +487,9 @@ class ClientAlertFeedbackMsg(DTO):
         return self.track_id
 
     def get_track_payload(self):
-        return {
-            "feedback": self.feedback
-        }    
-    
+        return {"feedback": self.feedback}
+
+
 @dataclass
 class GisUpdateMsg(DTO):
     id: str

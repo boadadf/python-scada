@@ -13,21 +13,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # -----------------------------------------------------------------------------
-
 import re
 import uuid
-import asyncio
-from opcua import Server, ua
+from asyncua import Server, ua
+from asyncua.common.subscription import Subscription
 from openscada_lite.modules.communication.drivers.server_protocol import ServerProtocol
-from openscada_lite.common.models.dtos import DriverConnectStatus, TagUpdateMsg, SendCommandMsg
+from openscada_lite.common.models.dtos import (
+    DriverConnectStatus,
+    TagUpdateMsg,
+    SendCommandMsg,
+)
 
 
 class OPCUAServerDriver(ServerProtocol):
     """
-    OPC UA Server driver that:
+    Async OPC UA Server driver:
       ✅ Exposes datapoints as writable OPC UA variables.
-      ✅ Reacts to *every* client write (even if the value doesn’t change).
-      ✅ Converts all values to string before sending SendCommandMsg.
+      ✅ Captures every client write using subscriptions.
+      ✅ Updates node values asynchronously.
     """
 
     def __init__(self, server_name="OPCUAServer", **kwargs):
@@ -41,56 +44,66 @@ class OPCUAServerDriver(ServerProtocol):
         self._is_connected = False
         self._command_listener = None
         self._communication_status_callback = None
-        self._pending_datapoints = []
-        self._original_write_attribute = None  # hook to restore later
+        self.subscription: Subscription | None = None
+        self._nodes: dict[str, str] = {}
 
     # ----------------------------------------------------------------------
-    # Initialization and connection
+    # Initialization
     # ----------------------------------------------------------------------
     def set_command_listener(self, listener) -> None:
         self._command_listener = listener
 
     def initialize(self, config: dict) -> None:
-        """Prepare OPC UA namespace and config."""
-        self.namespace_url = config.get("namespaceurl", "http://default.namespace")
+        """Prepare OPC UA namespace and regex config (sync)."""
+        self.namespace_url = config.get("namespaceurl", "http://default.namespace")  # NOSONAR
         self.allow_write_regex = re.compile(config.get("allow_write_regex", ".*_CMD$"))
         self.endpoint = config.get("endpoint", self.endpoint)
-        self.namespace_index = self.server.register_namespace(self.namespace_url)
 
     def subscribe(self, datapoints: list) -> None:
-        """Expose all datapoints as variables (before server start)."""
-        self._pending_datapoints = datapoints
-        objects = self.server.get_objects_node()
+        """Store datapoints; actual node creation happens in connect()."""
         for dp in datapoints:
-            writable = bool(self.allow_write_regex.match(dp.name))
-            node = objects.add_variable(self.namespace_index, dp.name, ua.Variant("", ua.VariantType.String))
-            node.set_writable(writable)
-            self.nodes[dp.name] = node
-        print(f"[OPCUA] Exposed {len(datapoints)} nodes in OPC UA server")
+            # Use a unique, hashable attribute of Datapoint as the key
+            self._nodes[dp.name] = None  # Assuming `dp.name` is a unique string
+        print(f"[OPCUA] Will expose {len(datapoints)} nodes on connect()")
 
+    # ----------------------------------------------------------------------
+    # Connection / server lifecycle
+    # ----------------------------------------------------------------------
     async def connect(self) -> None:
-        """Start the OPC UA server and hook into write operations."""
+        """Initialize and start server, create nodes, and set up write monitoring."""
         self.server.set_endpoint(self.endpoint)
         self.server.set_server_name(self._server_name)
 
-
-
+        # Initialize asyncua server
         await self.server.init()
+
+        # Register namespace (async)
+        self.namespace_index = await self.server.register_namespace(self.namespace_url)
+
+        # Create nodes
+        await self._create_nodes()
+
+        # Start server
         await self.server.start()
-        # Patch server’s write handler to detect all client writes
-        self._patch_write_handler()
+
+        # Create subscription for capturing client writes
+        self.subscription = await self.server.create_subscription(100, self)
+        await self._setup_write_monitors()
 
         self._is_connected = True
         if self._communication_status_callback:
             await self.publish_driver_state("online")
 
-        print(f"[OPCUA] Server started at {self.endpoint} (namespace: {self.namespace_url})")
+        print(
+            f"[OPCUA] Server started at {self.endpoint} "
+            f"(namespace: {self.namespace_url}, index: {self.namespace_index})"
+        )
 
     async def disconnect(self) -> None:
-        """Stop the server and restore original handler."""
-        if self._original_write_attribute:
-            self.server.iserver.write_attribute = self._original_write_attribute
-            self._original_write_attribute = None
+        """Stop the server and clean up."""
+        if self.subscription:
+            await self.subscription.delete()
+            self.subscription = None
 
         try:
             await self.server.stop()
@@ -103,16 +116,73 @@ class OPCUAServerDriver(ServerProtocol):
         print("[OPCUA] Server stopped")
 
     # ----------------------------------------------------------------------
-    # Handling incoming tag updates from internal system
+    # Node creation
+    # ----------------------------------------------------------------------
+    async def _create_nodes(self):
+        """Create OPC UA variables for all datapoints."""
+        objects = self.server.get_objects_node()
+
+        for datapoint in self._nodes.keys():
+            writable = bool(self.allow_write_regex.match(datapoint))
+            initial_value = self._nodes.get(datapoint, "")
+
+            node = await objects.add_variable(
+                self.namespace_index, datapoint, ua.Variant(initial_value, ua.VariantType.String)
+            )
+
+            if writable:
+                await node.set_writable()
+                # Update masks so UA Expert sees the node as writable
+                await node.write_attribute(
+                    ua.AttributeIds.UserWriteMask, ua.DataValue(ua.UInt32(1))
+                )
+                await node.write_attribute(ua.AttributeIds.WriteMask, ua.DataValue(ua.UInt32(1)))
+
+            self.nodes[datapoint] = node
+
+        print(f"[OPCUA] Created {len(self._nodes)} nodes")
+
+    # ----------------------------------------------------------------------
+    # Write monitoring
+    # ----------------------------------------------------------------------
+    async def _setup_write_monitors(self):
+        """Attach data change subscriptions to all writable nodes."""
+        if not self.subscription:
+            print("[WARN] Subscription not initialized for write monitoring")
+            return
+
+        for dp_name, node in self.nodes.items():
+            if self.allow_write_regex.match(dp_name):
+                await self.subscription.subscribe_data_change(node)
+        print(f"[OPCUA] Write monitoring enabled for {len(self.nodes)} nodes")
+
+    async def datachange_notification(self, node, val, data):
+        """Called by asyncua subscription when a client writes a node."""
+        dp_name = next((n for n, nd in self.nodes.items() if nd.nodeid == node.nodeid), None)
+        if dp_name:
+            val_str = str(val)
+            print(f"[WRITE] Client wrote {dp_name} -> '{val_str}'")
+            if self._command_listener:
+                msg = SendCommandMsg(
+                    datapoint_identifier=dp_name, value=val_str, command_id=str(uuid.uuid4())
+                )
+                await self._command_listener.on_driver_command(msg)
+
+    # ----------------------------------------------------------------------
+    # Tag updates from internal system
     # ----------------------------------------------------------------------
     async def handle_tag_update(self, msg: TagUpdateMsg) -> None:
-        """Update server node value when internal tag changes."""
+        """Update OPC UA node value asynchronously when internal tag changes."""
         dp_name = msg.datapoint_identifier
+        val_str = str(msg.value)
+        self._nodes[dp_name] = val_str
+
         node = self.nodes.get(dp_name)
         if node:
-            val_str = str(msg.value)
-            node.set_value(ua.Variant(val_str, ua.VariantType.String))
+            await node.set_value(ua.Variant(val_str, ua.VariantType.String))
             print(f"[OPCUA] Updated {dp_name} = {val_str}")
+        else:
+            print(f"[OPCUA] Unknown datapoint {dp_name}, cannot update node")
 
     # ----------------------------------------------------------------------
     # Communication status
@@ -124,43 +194,6 @@ class OPCUAServerDriver(ServerProtocol):
         msg = DriverConnectStatus(driver_name=self._server_name, status=state)
         if callable(self._communication_status_callback):
             await self._communication_status_callback(msg)
-
-    # ----------------------------------------------------------------------
-    # Internal write hook
-    # ----------------------------------------------------------------------
-    def _patch_write_handler(self):
-        """Monkey-patch the internal write method to detect every client write."""
-        if not hasattr(self.server, "iserver") or not hasattr(self.server.iserver, "write_attribute"):
-            print("[WARN] Cannot patch write_attribute (server not started yet?)")
-            return
-
-        self._original_write_attribute = self.server.iserver.write_attribute
-        orig_write = self._original_write_attribute
-
-        def patched_write(nodeid, attributeid, datavalue):
-            try:
-                val = datavalue.Value.Value
-                dp_name = next((n for n, node in self.nodes.items() if node.nodeid == nodeid), None)
-
-                if dp_name and self.allow_write_regex.match(dp_name):
-                    val_str = str(val)
-                    msg = SendCommandMsg(
-                        datapoint_identifier=dp_name,
-                        value=val_str,
-                        command_id=str(uuid.uuid4())
-                    )
-                    print(f"[WRITE] Client wrote {dp_name} -> '{val_str}'")
-
-                    if self._command_listener:
-                        asyncio.create_task(self._command_listener.on_driver_command(msg))
-            except Exception as e:
-                print(f"[ERROR] Intercept write failed: {e}")
-
-            # Always perform the real write
-            return orig_write(nodeid, attributeid, datavalue)
-
-        self.server.iserver.write_attribute = patched_write
-        print("[OPCUA] Write interception active (every client write will be detected)")
 
     # ----------------------------------------------------------------------
     # Properties

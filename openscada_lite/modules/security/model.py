@@ -17,36 +17,30 @@
 # openscada_lite/modules/security/model.py
 import json
 import os
-import threading
 import copy
+import threading
 from typing import List
 
-from flask import Flask, app
-
+from fastapi import APIRouter
+from openscada_lite.modules.base.base_model import BaseModel
 from openscada_lite.common.config.config import Config
 
-class SecurityModel:
-    """
-    Stores users and groups from a config dict and keeps an in-memory copy.
-    """
 
-    def __init__(self, flask_app: Flask = None):
-        self._lock = threading.RLock()
+class SecurityModel(BaseModel[None]):
+
+    def __init__(self):
+        super().__init__()
+        self._lock = threading.RLock()  # Initialize _lock first
         self.file_path = Config.get_instance().get_security_config_path()
-        self._load()
         self.endpoints = set()  # registered endpoint names
-        self.app = flask_app
-        if self.app:
-            self._load_endpoints()
+        self._load()
 
-    def _load_endpoints(self):
-        """Scan Flask app for all registered POST endpoint names."""
+    def load_endpoints(self, router: APIRouter):
+        """Scan FastAPI app for all registered POST endpoint names."""
         with self._lock:
-            self.endpoints = set(
-                rule.endpoint
-                for rule in self.app.url_map.iter_rules()
-                if "POST" in rule.methods
-            )
+            self.endpoints = {
+                route.name for route in router.routes if "POST" in getattr(route, "methods", [])
+            }
 
     def _load(self):
         if os.path.exists(self.file_path):
@@ -57,23 +51,21 @@ class SecurityModel:
             self._save()
 
     def _save(self):
-        with open(self.file_path, "w") as f:
-            json.dump(self._data, f, indent=2)
+        with self._lock:
+            with open(self.file_path, "w") as f:
+                json.dump(self._data, f, indent=2)
 
     def get_all_users_list(self) -> List[dict]:
         with self._lock:
             return copy.deepcopy(self._data["users"])
 
     def get_end_points(self) -> List[str]:
-        """
-        Returns a list of all unique endpoint names from all groups.
-        """
-        return sorted(list(self.endpoints))
-    
+        return list(self.endpoints)
+
     def get_security_config(self) -> dict:
         with self._lock:
-            return copy.deepcopy(self._data)    
-        
+            return copy.deepcopy(self._data)
+
     def save_security_config(self, config: dict):
         with self._lock:
             self._data = copy.deepcopy(config)

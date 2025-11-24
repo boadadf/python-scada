@@ -14,7 +14,7 @@ export default function AnimationTestTab() {
 
   // --- Load list of SVGs on mount ---
   useEffect(() => {
-    fetch("/animation_svgs")
+    fetch("/api/animation/svgs")
       .then((r) => r.json())
       .then((svgs) => {
         setSvgList(svgs);

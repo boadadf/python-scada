@@ -17,13 +17,17 @@ import asyncio
 import datetime
 import inspect
 from abc import ABC, abstractmethod
-import threading
-from typing import Dict, List, Callable, Any
+from typing import Dict, List, Callable, Any, Optional
 
 from openscada_lite.common.config.config import Config
 from openscada_lite.common.tracking.decorators import publish_data_flow_from_arg_async
 from openscada_lite.common.tracking.tracking_types import DataFlowStatus
-from openscada_lite.common.models.dtos import DriverConnectStatus, RawTagUpdateMsg, CommandFeedbackMsg, SendCommandMsg
+from openscada_lite.common.models.dtos import (
+    DriverConnectStatus,
+    RawTagUpdateMsg,
+    CommandFeedbackMsg,
+    SendCommandMsg,
+)
 from openscada_lite.modules.communication.drivers.driver_protocol import DriverProtocol
 from openscada_lite.common.models.entities import Datapoint
 
@@ -63,13 +67,13 @@ class TestDriver(DriverProtocol, ABC):
     async def disconnect(self):
         self._connected = False
         await self.stop_test()
-        print(f"[DISCONNECT] Disconnecting driver {self._server_name}")        
-        await self.publish_driver_state("offline")        
+        print(f"[DISCONNECT] Disconnecting driver {self._server_name}")
+        await self.publish_driver_state("offline")
 
     async def initValues(self):
         now = datetime.datetime.now()
         print(f"[INIT] Initializing values for {self._server_name} tags: {self._tags}")
-        for tag in self._tags.values():            
+        for tag in self._tags.values():
             tag.value = Config.get_instance().get_default_value(tag.datapoint_identifier)
             tag.timestamp = now
             tag.quality = "good"
@@ -108,82 +112,120 @@ class TestDriver(DriverProtocol, ABC):
 
     @publish_data_flow_from_arg_async(status=DataFlowStatus.RECEIVED)
     async def send_command(self, data: SendCommandMsg):
-        if self._command_feedback_callback:
-            # Remove server_name prefix if present
-            if "@" in data.datapoint_identifier:
-                _, dp_name = data.datapoint_identifier.split("@", 1)
-            else:
-                dp_name = data.datapoint_identifier
+        if not self._command_feedback_callback:
+            return
 
-            # Check for _CMD suffix and remove it
-            if dp_name.endswith("_CMD"):
-                dp_name_base = dp_name[:-4]
-            else:
-                dp_name_base = dp_name
+        dp_name = self._extract_datapoint_name(data.datapoint_identifier)
+        dp_name_base = self._remove_cmd_suffix(dp_name)
+        value = await self._process_command_value(dp_name, data.value)
 
-            exists = dp_name_base in self._tags
-            full_tag_id = f"{self._server_name}@{dp_name_base}"
-            value = data.value
-            command_id = data.command_id
-            # Start / Stop the simulation
-            result = await self.handle_special_command(dp_name, value)
-            if result:
-                value = result
+        exists = dp_name_base in self._tags
+        if exists:
+            await self._update_tag_and_publish(dp_name_base, value)
 
-            # If the datapoint exists, publish a RawTagUpdateMsg
-            if exists and self._value_callback:
-                if dp_name_base in self._tags:
-                    self._tags[dp_name_base].value = value
-                    self._tags[dp_name_base].timestamp = datetime.datetime.now()
+        await self._send_command_feedback(data, exists)
 
-                tag_msg = RawTagUpdateMsg(
-                    datapoint_identifier=full_tag_id,
-                    value=value,
-                    quality="good",
-                    timestamp=datetime.datetime.now()
-                )
-                await self._safe_invoke(self._value_callback, tag_msg)
-            
-            feedback = "OK" if exists else "NOK"
-            msg = CommandFeedbackMsg(
-                command_id=command_id,
-                datapoint_identifier=data.datapoint_identifier,
-                feedback=feedback,
-                value=data.value,
-                timestamp=datetime.datetime.now()
-            )
-            await self._safe_invoke(self._command_feedback_callback, msg)            
+    def _extract_datapoint_name(self, identifier: str) -> str:
+        if "@" in identifier:
+            _, dp_name = identifier.split("@", 1)
+            return dp_name
+        return identifier
 
-    async def handle_special_command(self, datapoint_name: str, value: str ) -> str:
+    def _remove_cmd_suffix(self, dp_name: str) -> str:
+        if dp_name.endswith("_CMD"):
+            return dp_name[:-4]
+        return dp_name
+
+    async def _process_command_value(self, dp_name: str, value: str) -> str:
+        result: Optional[str] = await self.handle_special_command(dp_name, value)
+        return result if result is not None else value
+
+    async def _update_tag_and_publish(self, dp_name_base: str, value: str):
+        if not self._value_callback:
+            return
+
+        if dp_name_base in self._tags:
+            self._tags[dp_name_base].value = value
+            self._tags[dp_name_base].timestamp = datetime.datetime.now()
+
+        full_tag_id = f"{self._server_name}@{dp_name_base}"
+        tag_msg = RawTagUpdateMsg(
+            datapoint_identifier=full_tag_id,
+            value=value,
+            quality="good",
+            timestamp=datetime.datetime.now(),
+        )
+        await self._safe_invoke(self._value_callback, tag_msg)
+
+    async def _send_command_feedback(self, data: SendCommandMsg, exists: bool):
+        feedback = "OK" if exists else "NOK"
+        msg = CommandFeedbackMsg(
+            command_id=data.command_id,
+            datapoint_identifier=data.datapoint_identifier,
+            feedback=feedback,
+            value=data.value,
+            timestamp=datetime.datetime.now(),
+        )
+        await self._safe_invoke(self._command_feedback_callback, msg)
+
+    async def handle_special_command(self, datapoint_name: str, value: str) -> Optional[str]:
         print(f"[COMMAND] Handling special command: {datapoint_name} = {value}")
+
         if datapoint_name == "TEST_CMD":
-            if value == "START":
-                await self.start_test()
-                return "STARTED"
-            elif value == "STOP":
-                await self.stop_test()
-                return "STOPPED"
-            elif value == "TOGGLE":
-                if "TEST" in self._tags:
-                    current_value = self._tags["TEST"].value
-                    new_value = "STARTED" if current_value == "STOPPED" else "STOPPED"
-                    if new_value == "STARTED":
-                        await self.start_test()
-                    else:
-                        await self.stop_test()
-                    return new_value
-        elif datapoint_name in ["PUMP_CMD", "DOOR_CMD", "VALVE_CMD", "HEATER_CMD"] and value == "TOGGLE":
-            base_name = datapoint_name[:-4]  # Remove _CMD
-            if base_name in self._tags:
-                current_value = self._tags[base_name].value
-                new_value = "OPENED" if current_value == "CLOSED" else "CLOSED"
-                return new_value
-        elif datapoint_name in ["LEFT_SWITCH_CONTROL_CMD", "RIGHT_SWITCH_CONTROL_CMD"]:
-            base_name = datapoint_name[:-4]  # Remove _CMD
-            if base_name in self._tags:
-                current_value = self._tags[base_name].value
-                new_value = "STRAIGHT" if current_value == "TURN" else "TURN"
-                return new_value
+            return await self._handle_test_command(value)
+
+        if value == "TOGGLE":
+            return self._handle_toggle_command(datapoint_name)
+
+        return None
+
+    async def _handle_test_command(self, value: str) -> Optional[str]:
+        if value == "START":
+            await self.start_test()
+            return "STARTED"
+
+        if value == "STOP":
+            await self.stop_test()
+            return "STOPPED"
+
+        if value == "TOGGLE":
+            return await self._handle_test_toggle()
+
+        return None
+
+    async def _handle_test_toggle(self) -> Optional[str]:
+        if "TEST" not in self._tags:
+            return None
+
+        current_value = self._tags["TEST"].value
+        new_value = "STARTED" if current_value == "STOPPED" else "STOPPED"
+
+        if new_value == "STARTED":
+            await self.start_test()
+        else:
+            await self.stop_test()
+
+        return new_value
+
+    def _handle_toggle_command(self, datapoint_name: str) -> Optional[str]:
+        toggle_handlers = {
+            "PUMP_CMD": lambda v: "OPENED" if v == "CLOSED" else "CLOSED",
+            "DOOR_CMD": lambda v: "OPENED" if v == "CLOSED" else "CLOSED",
+            "VALVE_CMD": lambda v: "OPENED" if v == "CLOSED" else "CLOSED",
+            "HEATER_CMD": lambda v: "OPENED" if v == "CLOSED" else "CLOSED",
+            "LEFT_SWITCH_CONTROL_CMD": lambda v: "STRAIGHT" if v == "TURN" else "TURN",
+            "RIGHT_SWITCH_CONTROL_CMD": lambda v: "STRAIGHT" if v == "TURN" else "TURN",
+        }
+
+        if datapoint_name not in toggle_handlers:
+            return None
+
+        base_name = datapoint_name[:-4]  # Remove _CMD
+        if base_name not in self._tags:
+            return None
+
+        current_value = self._tags[base_name].value
+        return toggle_handlers[datapoint_name](current_value)
 
     async def start_test(self):
         if self._running:
@@ -200,6 +242,7 @@ class TestDriver(DriverProtocol, ABC):
                 await self._task
             except asyncio.CancelledError:
                 print(f"[TEST] Simulation loop canceled for {self._server_name}")
+                raise
 
     async def _publish_loop_async(self):
         print(f"[TEST] Simulation loop started for {self._server_name}")
@@ -213,15 +256,17 @@ class TestDriver(DriverProtocol, ABC):
                 print(f"[TEST] Simulation loop iteration complete for {self._server_name}")
         except asyncio.CancelledError:
             print(f"[DEBUG] Simulation loop canceled for {self._server_name}")
+            raise
         finally:
             print(f"[TEST] Simulation loop stopped for {self._server_name}")
-
 
     # For testing: simulate a value change
     async def simulate_value(self, tag_id: str, value: Any, track_id: str):
         if self._value_callback:
             msg = RawTagUpdateMsg(
-                datapoint_identifier=f"{self._server_name}@{tag_id}", value=value, track_id=track_id
+                datapoint_identifier=f"{self._server_name}@{tag_id}",
+                value=value,
+                track_id=track_id,
             )
             await self._safe_invoke(self._value_callback, msg)
 
@@ -229,7 +274,7 @@ class TestDriver(DriverProtocol, ABC):
     async def _publish_value(self, tag: RawTagUpdateMsg):
         await self._safe_invoke(self._value_callback, tag)
 
-    async def _publish_all(self):   
+    async def _publish_all(self):
         for tag in self._tags.values():
             await self._publish_value(tag)
 

@@ -21,6 +21,7 @@ from typing import Any, Callable, Dict, List
 
 from openscada_lite.common.bus.event_types import EventType
 
+
 class EventBus:
     _instance = None
 

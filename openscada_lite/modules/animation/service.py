@@ -20,8 +20,11 @@ from typing import Union
 from openscada_lite.common.models.entities import AnimationEntry
 from openscada_lite.modules.base.base_service import BaseService
 from openscada_lite.common.models.dtos import (
-    AlarmUpdateMsg, AnimationUpdateMsg, AnimationUpdateRequestMsg,
-    DriverConnectStatus, TagUpdateMsg
+    AlarmUpdateMsg,
+    AnimationUpdateMsg,
+    AnimationUpdateRequestMsg,
+    DriverConnectStatus,
+    TagUpdateMsg,
 )
 from openscada_lite.common.config.config import Config
 from .handlers.tag_handler import TagHandler
@@ -29,22 +32,28 @@ from .handlers.alarm_handler import AlarmHandler
 from .handlers.connection_handler import ConnectionHandler
 
 
-class AnimationService(BaseService[
-    Union[TagUpdateMsg, AlarmUpdateMsg, DriverConnectStatus],
-    AnimationUpdateRequestMsg,
-    AnimationUpdateMsg
-]):
+class AnimationService(
+    BaseService[
+        Union[TagUpdateMsg, AlarmUpdateMsg, DriverConnectStatus],
+        AnimationUpdateRequestMsg,
+        AnimationUpdateMsg,
+    ]
+):
     """
     Central animation orchestration service.
     Delegates to specialized handlers depending on the message type.
     """
+
     DURATION_DEFAULT = 0.5
 
     def __init__(self, event_bus, model, controller):
         super().__init__(
-            event_bus, model, controller,
+            event_bus,
+            model,
+            controller,
             [TagUpdateMsg, AlarmUpdateMsg, DriverConnectStatus],
-            AnimationUpdateRequestMsg, AnimationUpdateMsg
+            AnimationUpdateRequestMsg,
+            AnimationUpdateMsg,
         )
         config = Config.get_instance()
         self.animations = config.get_animations()
@@ -64,32 +73,44 @@ class AnimationService(BaseService[
         """Initialize all animations in the model with their default values."""
         for dp_id, mappings in self.datapoint_map.items():
             for svg_name, elem_id, anim_name in mappings:
-                animation = self.animations.get(anim_name)
-                if not animation:
-                    continue
+                self._init_single_animation(svg_name, elem_id, anim_name)
 
-                agg_attr = {}
-                agg_text = None
-                for entry in animation.entries:
-                    if getattr(entry, "default", None) is None:
-                        continue
-                    if entry.attribute == "text":
-                        agg_text = str(entry.default)
-                    else:
-                        agg_attr[entry.attribute] = entry.default
+    def _init_single_animation(self, svg_name: str, elem_id: str, anim_name: str):
+        """Initialize a single animation element with its default values."""
+        animation = self.animations.get(anim_name)
+        if not animation:
+            return
 
-                cfg = {"attr": agg_attr, "duration": self.DURATION_DEFAULT}
-                if agg_text:
-                    cfg["text"] = agg_text
+        agg_attr, agg_text = self._collect_default_values(animation.entries)
+        cfg = {"attr": agg_attr, "duration": self.DURATION_DEFAULT}
+        if agg_text:
+            cfg["text"] = agg_text
 
-                self.model.update(AnimationUpdateMsg(
-                    svg_name=svg_name,
-                    element_id=elem_id,
-                    animation_type=anim_name,
-                    value=None,
-                    config=cfg,
-                    test=False
-                ))
+        self.model.update(
+            AnimationUpdateMsg(
+                svg_name=svg_name,
+                element_id=elem_id,
+                animation_type=anim_name,
+                value=None,
+                config=cfg,
+                test=False,
+            )
+        )
+
+    def _collect_default_values(self, entries):
+        """Collect default attribute and text values from animation entries."""
+        agg_attr = {}
+        agg_text = None
+
+        for entry in entries:
+            if getattr(entry, "default", None) is None:
+                continue
+            if entry.attribute == "text":
+                agg_text = str(entry.default)
+            else:
+                agg_attr[entry.attribute] = entry.default
+
+        return agg_attr, agg_text
 
     def process_msg(self, msg):
         """Delegate the processing to the appropriate handler."""
@@ -108,7 +129,6 @@ class AnimationService(BaseService[
         if isinstance(msg, TagUpdateMsg):
             return msg.datapoint_identifier in self.datapoint_map
         return True
-    
 
     def process_single_entry(self, entry: AnimationEntry, value, quality):
         """
@@ -141,30 +161,35 @@ class AnimationService(BaseService[
 
     async def schedule_revert(self, svg_name, element_id, animation_name, entry):
         """
-        Revert a single animation entry to its configured default after entry.revertAfter seconds.
+        Revert a single animation entry to its configured default after entry.revert_after seconds.
         The revert uses entry.default, not any quality logic.
         """
-        delay = getattr(entry, "revertAfter", 0) or 0
+        delay = getattr(entry, "revert_after", 0) or 0
         if delay <= 0:
             return
         await asyncio.sleep(delay)
         if not hasattr(entry, "default") or entry.default is None or entry.default == "":
             return
 
-        revert_cfg = {"attr": {}, "duration": getattr(entry, "duration", self.DURATION_DEFAULT)}
+        revert_cfg = {
+            "attr": {},
+            "duration": getattr(entry, "duration", self.DURATION_DEFAULT),
+        }
         if entry.attribute == "text":
             revert_cfg["text"] = str(entry.default)
         else:
             revert_cfg["attr"][entry.attribute] = entry.default
 
-        self.controller.publish(AnimationUpdateMsg(
-            svg_name=svg_name,
-            element_id=element_id,
-            animation_type=animation_name,
-            value=None,
-            config=revert_cfg,
-            test=False
-        ))
+        self.controller.publish(
+            AnimationUpdateMsg(
+                svg_name=svg_name,
+                element_id=element_id,
+                animation_type=animation_name,
+                value=None,
+                config=revert_cfg,
+                test=False,
+            )
+        )
 
     def _evaluate_expression(self, expr, value, quality):
         """

@@ -15,14 +15,17 @@
 # -----------------------------------------------------------------------------
 
 # openscada_lite/modules/security/security_service.py
-from typing import Optional, List
+from typing import Optional
+from openscada_lite.modules.base.base_service import BaseService
 from openscada_lite.modules.security.model import SecurityModel
 from openscada_lite.modules.security import utils
 
-class SecurityService:
+
+class SecurityService(BaseService[None, None, None]):
     _instance: Optional["SecurityService"] = None
 
-    def __init__(self, event_bus, model: SecurityModel):
+    def __init__(self, event_bus, model: SecurityModel, controller):
+        super().__init__(event_bus, model, controller, None, None, None)
         SecurityService._instance = self
         self.model = model
         self._endpoints = set()  # registered endpoint names
@@ -34,8 +37,13 @@ class SecurityService:
     def hash_password(self, password: str) -> str:
         return utils.hash_password(password)
 
-    def authenticate_user(self, username: str, password: str, app_name: Optional[str] = None) -> Optional[str]:
-        user = next((u for u in self.model.get_all_users_list() if u["username"] == username), None)
+    def authenticate_user(
+        self, username: str, password: str, app_name: Optional[str] = None
+    ) -> Optional[str]:
+        user = next(
+            (u for u in self.model.get_all_users_list() if u["username"] == username),
+            None,
+        )
         if not user:
             return None
         if user["password_hash"] != utils.hash_password(password):
@@ -43,24 +51,36 @@ class SecurityService:
         if app_name and not self.can_login_to(username, app_name):
             return None
         return utils.create_jwt(username)
-    
+
     def can_login_to(self, username: str, app_name: str) -> bool:
-        user = next((u for u in self.model.get_all_users_list() if u["username"] == username), None)
+        user = next(
+            (u for u in self.model.get_all_users_list() if u["username"] == username),
+            None,
+        )
         if not user:
             return False
         allowed = user.get("allowed_apps")
         if allowed is None:
             # If not set, allow all apps (or deny, as you prefer)
             return True
-        return app_name in allowed    
+        return app_name in allowed
 
     def is_allowed(self, username: str, endpoint_name: str) -> bool:
         """Check if the given username has permission for the endpoint."""
-        user = next((u for u in self.model.get_all_users_list() if u["username"] == username), None)
+        user = next(
+            (u for u in self.model.get_all_users_list() if u["username"] == username),
+            None,
+        )
         if not user:
             return False
         for group_name in user.get("groups", []):
-            group = next((g for g in self.model.get_all_groups_list() if g["name"] == group_name), None)
+            group = next(
+                (g for g in self.model.get_all_groups_list() if g["name"] == group_name),
+                None,
+            )
             if group and endpoint_name in group.get("permissions", []):
                 return True
+        return False
+
+    def should_accept_update(self, tag: None) -> bool:
         return False

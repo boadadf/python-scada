@@ -29,10 +29,11 @@ from openscada_lite.common.tracking.tracking_types import DataFlowStatus
 class TrackingPublisher:
     def __init__(self):
         config = Config.get_instance()
-        tracking_cfg = config.get_module_config("tracking")        
+        tracking_cfg = config.get_module_config("tracking")
         self.mode = tracking_cfg.get("mode", "none")
         self.file_path = tracking_cfg.get("file_path", "flow_events.log")
-        # Use a queue and a single background worker thread to efficiently handle all tracking events.
+        # Use a queue and a single background worker thread to efficiently handle
+        # all tracking events.
         # This avoids spawning a new thread per event and prevents blocking the main application.
         self.queue = queue.Queue()
         threading.Thread(target=self.worker, daemon=True).start()
@@ -41,7 +42,8 @@ class TrackingPublisher:
         """
         Synchronously enqueue a tracking event for background processing.
         This method is safe to call from any thread or async context and returns immediately.
-        The actual event bus publishing and file writing are handled in the background worker thread.
+        The actual event bus publishing and file writing are handled in the
+        background worker thread.
         """
         if self.mode == "none" or dto is None or not hasattr(dto, "track_id"):
             return
@@ -51,7 +53,7 @@ class TrackingPublisher:
             source=source,
             status=status,
             timestamp=datetime.datetime.now(),
-            payload=dto.get_track_payload()
+            payload=dto.get_track_payload(),
         )
         self.queue.put(flow_event)
 

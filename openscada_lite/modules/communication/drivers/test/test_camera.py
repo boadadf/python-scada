@@ -15,9 +15,9 @@
 # -----------------------------------------------------------------------------
 
 # tank_test_driver.py
-import datetime
 from openscada_lite.modules.communication.drivers.test.test_driver import TestDriver
+
 
 class CameraDriver(TestDriver):
     def _simulate_values(self):
-        pass
+        pass  # No simulation needed for camera driver

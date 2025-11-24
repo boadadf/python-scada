@@ -29,41 +29,54 @@ class TagHandler:
             return updates
 
         for svg_name, elem_id, anim_name in mappings:
-            animation = service.animations.get(anim_name)
-            if not animation:
+            update = self._process_mapping(msg, service, svg_name, elem_id, anim_name)
+            if update:
+                updates.append(update)
+        return updates
+
+    def _process_mapping(self, msg, service, svg_name, elem_id, anim_name):
+        animation = service.animations.get(anim_name)
+        if not animation:
+            return None
+
+        agg_attr, agg_text, duration = self._process_animation_entries(
+            animation, msg, service, svg_name, elem_id, anim_name
+        )
+
+        cfg = {"attr": agg_attr, "duration": duration}
+        if agg_text:
+            cfg["text"] = agg_text
+
+        return AnimationUpdateMsg(
+            svg_name=svg_name,
+            element_id=elem_id,
+            animation_type=anim_name,
+            value=msg.value,
+            config=cfg,
+            test=getattr(msg, "test", False),
+        )
+
+    def _process_animation_entries(self, animation, msg, service, svg_name, elem_id, anim_name):
+        agg_attr = {}
+        agg_text = None
+        duration = service.DURATION_DEFAULT
+
+        for entry in animation.entries:
+            if getattr(entry, "trigger_type", "datapoint") == "alarm":
                 continue
 
-            agg_attr = {}
-            agg_text = None
-            duration = service.DURATION_DEFAULT
+            attr_changes, text_change, dur = service.process_single_entry(
+                entry, msg.value, msg.quality
+            )
+            agg_attr.update(attr_changes)
+            if text_change is not None:
+                agg_text = text_change
+            duration = dur or duration
 
-            for entry in animation.entries:
-                if getattr(entry, "triggerType", "datapoint") == "alarm":
-                    continue
-
-                attr_changes, text_change, dur = service.process_single_entry(
-                    entry, msg.value, msg.quality
+            if getattr(entry, "revert_after", 0):
+                task = asyncio.create_task(
+                    service.schedule_revert(svg_name, elem_id, anim_name, entry)
                 )
-                agg_attr.update(attr_changes)
-                if text_change is not None:
-                    agg_text = text_change
-                duration = dur or duration
+                task.add_done_callback(lambda t: t.exception())
 
-                if getattr(entry, "revertAfter", 0):
-                    asyncio.create_task(
-                        service.schedule_revert(svg_name, elem_id, anim_name, entry)
-                    )
-
-            cfg = {"attr": agg_attr, "duration": duration}
-            if agg_text:
-                cfg["text"] = agg_text
-
-            updates.append(AnimationUpdateMsg(
-                svg_name=svg_name,
-                element_id=elem_id,
-                animation_type=anim_name,
-                value=msg.value,
-                config=cfg,
-                test=getattr(msg, "test", False)
-            ))
-        return updates
+        return agg_attr, agg_text, duration

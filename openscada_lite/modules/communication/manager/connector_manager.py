@@ -16,17 +16,29 @@
 
 from typing import Dict
 from openscada_lite.modules.communication.drivers.test.test_driver import TestDriver
-from openscada_lite.modules.communication.manager.command_listener import CommandListener
-from openscada_lite.modules.communication.manager.communication_listener import CommunicationListener
+from openscada_lite.modules.communication.manager.command_listener import (
+    CommandListener,
+)
+from openscada_lite.modules.communication.manager.communication_listener import (
+    CommunicationListener,
+)
 from openscada_lite.common.tracking.tracking_types import DataFlowStatus
 from openscada_lite.common.tracking.decorators import publish_data_flow_from_arg_async
-from openscada_lite.common.models.dtos import DriverConnectCommand, CommandFeedbackMsg, DriverConnectStatus, RawTagUpdateMsg, SendCommandMsg, TagUpdateMsg
+from openscada_lite.common.models.dtos import (
+    DriverConnectCommand,
+    CommandFeedbackMsg,
+    DriverConnectStatus,
+    RawTagUpdateMsg,
+    SendCommandMsg,
+    TagUpdateMsg,
+)
 from openscada_lite.modules.communication.drivers import DRIVER_REGISTRY
 from openscada_lite.common.models.entities import Datapoint
 from openscada_lite.modules.communication.drivers.driver_protocol import DriverProtocol
 from openscada_lite.modules.communication.drivers.server_protocol import ServerProtocol
 from openscada_lite.common.config.config import Config
 import datetime
+
 
 class ConnectorManager:
     _instance = None
@@ -43,7 +55,7 @@ class ConnectorManager:
             cls._instance = super().__new__(cls)
             cls.__init__(cls._instance)
         return cls._instance
-    
+
     def __init__(self):
         self.config = Config.get_instance()
         self.driver_instances: Dict[str, DriverProtocol] = {}  # key: driver name
@@ -60,13 +72,18 @@ class ConnectorManager:
                 if dp_type:
                     datapoint_objs.append(Datapoint(name=name, type=dp_type))
                 else:
-                    print(f"WARNING: Datapoint type '{type_ref}' for '{name}' not found in dp_types config!")                        
+                    print(
+                        f"WARNING: Datapoint type '{type_ref}' "
+                        f"for '{name}' not found in dp_types config!"
+                    )
             driver_cls = DRIVER_REGISTRY.get(cfg["driver_class"])
             if not driver_cls:
                 raise ValueError(f"Unknown driver class: {cfg['driver_class']}")
             driver_instance: DriverProtocol = driver_cls(**cfg.get("connection_info", {}))
-            driver_instance.initialize(cfg.get("params", {}))  # Pass params if present, else empty dict
-            driver_instance.subscribe(datapoint_objs)        
+            driver_instance.initialize(
+                cfg.get("params", {})
+            )  # Pass params if present, else empty dict
+            driver_instance.subscribe(datapoint_objs)
             # Optionally assign datapoints to driver_instance if needed
             self.driver_instances[cfg["name"]] = driver_instance
             self.driver_status[cfg["name"]] = "offline"
@@ -76,9 +93,9 @@ class ConnectorManager:
             driver.register_value_listener(self.emit_value)
             driver.register_command_feedback(self.emit_command_feedback)
             driver.register_communication_status_listener(self.emit_communication_status)
-            await self.emit_communication_status(DriverConnectStatus(
-                driver_name=driver.server_name, status="offline"
-            ))
+            await self.emit_communication_status(
+                DriverConnectStatus(driver_name=driver.server_name, status="offline")
+            )
 
     async def forward_tag_update(self, msg: TagUpdateMsg):
         for driver in self.driver_instances.values():
@@ -95,13 +112,12 @@ class ConnectorManager:
                 driver.set_command_listener(listener)
 
     @publish_data_flow_from_arg_async(status=DataFlowStatus.RECEIVED)
-    async def handle_driver_connect_command(self, data: DriverConnectCommand):        
+    async def handle_driver_connect_command(self, data: DriverConnectCommand):
         driver_name = data.driver_name
-        status = data.status        
-        driver = self.driver_instances.get(driver_name)        
-        print(f"[CONNECT CMD] Driver '{driver_name}' -> {status} {self.driver_instances}" )
-        if driver:            
-            if status == "connect":                
+        status = data.status
+        driver = self.driver_instances.get(driver_name)
+        if driver:
+            if status == "connect":
                 await driver.connect()
             elif status == "disconnect":
                 await driver.disconnect()
@@ -113,7 +129,7 @@ class ConnectorManager:
 
     @publish_data_flow_from_arg_async(status=DataFlowStatus.RECEIVED)
     async def emit_value(self, data: RawTagUpdateMsg):
-        await self.listener.on_raw_tag_update(data) if self.listener else None        
+        await self.listener.on_raw_tag_update(data) if self.listener else None
 
     @publish_data_flow_from_arg_async(status=DataFlowStatus.RECEIVED)
     async def emit_command_feedback(self, data: CommandFeedbackMsg):
@@ -141,7 +157,7 @@ class ConnectorManager:
                 datapoint_identifier=f"{driver_name}@{tag_name}",
                 value=default_value,
                 quality="unknown",
-                timestamp=now
+                timestamp=now,
             )
             await self.emit_value(tag_msg)
 
@@ -160,7 +176,7 @@ class ConnectorManager:
     async def send_command(self, data: SendCommandMsg):
         print(f"[COMMAND] Sending command: {data.datapoint_identifier} = {data.value}")
         config = Config.get_instance()
-        server_id, simple_datapoint_identifier = data.datapoint_identifier.split("@", 1)
+        server_id, _ = data.datapoint_identifier.split("@", 1)
 
         if not config.validate_value(data.datapoint_identifier, data.value):
             # Value is invalid, send NOK feedback immediately
@@ -169,7 +185,7 @@ class ConnectorManager:
                 datapoint_identifier=data.datapoint_identifier,
                 value=data.value,
                 feedback="NOK-wrong-value",
-                timestamp=datetime.datetime.now()
+                timestamp=datetime.datetime.now(),
             )
             await self.emit_command_feedback(feedback)
             return
@@ -184,7 +200,7 @@ class ConnectorManager:
                     datapoint_identifier=data.datapoint_identifier,
                     value=data.value,
                     feedback="NOK-driver-offline",
-                    timestamp=datetime.datetime.now()
+                    timestamp=datetime.datetime.now(),
                 )
                 await self.emit_command_feedback(feedback)
 

@@ -8,7 +8,12 @@ export function useLiveFeed(endpoint, updateMsgType, getKey) {
   useEffect(() => {
     let socket;
     function setupSocket() {
-      socket = window.io();
+      socket = window.io({
+        path: "/socket.io/",
+        transports: ["websocket", "polling"],
+      });
+
+
       socketRef.current = socket;
 
       socket.on("connect", () => {
@@ -16,6 +21,7 @@ export function useLiveFeed(endpoint, updateMsgType, getKey) {
       });
 
       socket.on(`${endpoint}_initial_state`, (list) => {
+        console.log(`[${endpoint}] Received initial state with ${Array.isArray(list) ? list.length : 0} items.`); 
         const arr = Array.isArray(list) ? list : list ? [list] : [];
         const map = {};
         arr.forEach(item => {

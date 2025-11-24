@@ -16,6 +16,7 @@
 
 from openscada_lite.modules.base.base_model import BaseModel
 
+
 class RuleModel(BaseModel[None]):
     def __init__(self):
         super().__init__()

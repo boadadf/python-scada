@@ -15,10 +15,12 @@
 # -----------------------------------------------------------------------------
 
 from typing import TYPE_CHECKING
+
 if TYPE_CHECKING:
     from openscada_lite.modules.datapoint.model import DatapointModel
 
 from openscada_lite.common.models.dtos import RawTagUpdateMsg
+
 
 class Utils:
     @staticmethod

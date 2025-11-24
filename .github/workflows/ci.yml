@@ -1,0 +1,87 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-and-analyze:
+    name: Build, Test, and Analyze
+    runs-on: ubuntu-latest
+
+    env:
+      SONAR_ORGANIZATION: boadadf
+      SONAR_PROJECT_KEY: boadadf_python-scada
+
+    steps:
+      # Checkout repo
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # Set up Python
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install flake8 pytest
+
+      # Set up Node.js / React
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: Install frontend dependencies
+        working-directory: ./openscada_lite/web/scada/static/frontend
+        run: npm install
+
+      - name: Build React frontend
+        working-directory: ./openscada_lite/web/scada/static/frontend
+        run: npm run build
+
+      - name: Install frontend dependencies
+        working-directory: ./openscada_lite/web/config_editor/static/frontend
+        run: npm install
+
+      - name: Build React frontend
+        working-directory: ./openscada_lite/web/config_editor/static/frontend
+        run: npm run build
+
+      - name: Install frontend dependencies
+        working-directory: ./openscada_lite/web/security_editor/static/frontend
+        run: npm install
+
+      - name: Build React frontend
+        working-directory: ./openscada_lite/web/security_editor/static/frontend
+        run: npm run build
+
+      # Run Python lint
+      - name: Run Python lint
+        run: flake8 .
+
+      # Run Python tests
+      - name: Run Python tests
+        run: pytest
+
+      # SonarCloud analysis
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@v2 # NOSONAR
+        with:
+          projectBaseDir: .
+          args: >
+            -Dsonar.organization=${{ env.SONAR_ORGANIZATION }}
+            -Dsonar.projectKey=${{ env.SONAR_PROJECT_KEY }}
+            -Dsonar.projectName=python-scada
+            -Dsonar.sources=openscada_lite
+            -Dsonar.exclusions=**/node_modules/**,**/__pycache__/**,**/.github/**,**/dist/**,openscada_lite/web/scada/static/frontend/**,openscada_lite/web/config_editor/static/frontend/**,openscada_lite/web/security_editor/static/frontend/**
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

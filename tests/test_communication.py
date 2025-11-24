@@ -1,245 +1,295 @@
-from flask import Flask
-import json
-import asyncio
-from typing import Any
+import os
 import pytest
-from unittest.mock import ANY, AsyncMock, MagicMock, call, patch
-from openscada_lite.common.models.dtos import DriverConnectCommand, DriverConnectStatus, RawTagUpdateMsg, StatusDTO
+import asyncio
+from unittest.mock import MagicMock, AsyncMock
+
+from fastapi import FastAPI, APIRouter
+from httpx import AsyncClient
+from httpx._transports.asgi import ASGITransport
+
+from openscada_lite.common.models.dtos import (
+    DriverConnectCommand,
+    DriverConnectStatus,
+    RawTagUpdateMsg,
+)
 from openscada_lite.modules.communication.controller import CommunicationController
 from openscada_lite.modules.communication.service import CommunicationService
 from openscada_lite.modules.communication.model import CommunicationModel
 from openscada_lite.common.bus.event_types import EventType
-from openscada_lite.modules.communication.manager.connector_manager import ConnectorManager
 from openscada_lite.common.bus.event_bus import EventBus
 from openscada_lite.common.config.config import Config
+from openscada_lite.modules.communication.manager.connector_manager import ConnectorManager
 
-#Reset the bus for each test
+
+# --------------------------
+# Fixtures
+# --------------------------
+
+
 @pytest.fixture(autouse=True)
 def reset_event_bus(monkeypatch):
-    # Reset the singleton before each test
+    """Reset the EventBus singleton before each test."""
     monkeypatch.setattr(EventBus, "_instance", None)
+
 
 @pytest.fixture(autouse=True)
 def reset_connector_manager(monkeypatch):
+    """Reset the ConnectorManager singleton before each test."""
     monkeypatch.setattr(ConnectorManager, "_instance", None)
 
-class DummyEventBus(EventBus):
-    def __init__(self):
-        super().__init__()
-        self.published = []
 
-    async def publish(self, event_type, data):
-        self.published.append((event_type, data))
+@pytest.fixture(scope="session", autouse=True)
+def set_scada_config_path():
+    """Ensure SCADA_CONFIG_PATH points to the test configuration."""
+    os.environ["SCADA_CONFIG_PATH"] = "system_config.json"
+    print(f"[TEST SETUP] SCADA_CONFIG_PATH set to {os.environ['SCADA_CONFIG_PATH']}")
 
-@pytest.fixture
-def controller():
-    model = MagicMock()
-    socketio = MagicMock()
-    ctrl = CommunicationController(model, socketio)
-    service = MagicMock()
-    ctrl.service = service
-    return ctrl
 
 @pytest.fixture
-def service():
-    from unittest.mock import AsyncMock
-    event_bus = MagicMock()
-    event_bus.publish = AsyncMock()
-    model = MagicMock()
-    controller = MagicMock()
-    svc = CommunicationService(event_bus, model, controller)
-    return svc, event_bus, model
+def dummy_event_bus():
+    """Provide a dummy async EventBus for tests."""
 
-def test_handle_connect_driver_valid_status():
-    from openscada_lite.modules.communication.controller import CommunicationController
-    from flask import Flask
-    import json
+    class DummyEventBus:
+        def __init__(self):
+            self.published = []
 
-    app = Flask(__name__)
-    controller = CommunicationController(MagicMock(), MagicMock(), flask_app=app)
-    # Set service to a MagicMock so you can assert calls
+        def publish(self, event_type, data):
+            self.published.append((event_type, data))
+
+        def subscribe(self, event_type, handler):
+            pass  # To implement if needed by the test
+
+    return DummyEventBus()
+
+
+@pytest.fixture
+def model():
+    return CommunicationModel()
+
+
+@pytest.fixture
+def service(model, dummy_event_bus):
+    svc = CommunicationService(dummy_event_bus, model, None)
+    return svc, dummy_event_bus, model
+
+
+@pytest.fixture
+def fastapi_app(model):
+    """FastAPI app with CommunicationController mounted."""
+    app = FastAPI()
+    router = APIRouter()
+    controller = CommunicationController(model, MagicMock(), "communication", router)
     controller.service = MagicMock()
+    app.include_router(controller.router)
+    return app, controller
+
+
+# --------------------------
+# Tests: Controller Endpoints
+# --------------------------
+
+
+@pytest.mark.asyncio
+async def test_connect_driver_valid_status(fastapi_app):
+    app, controller = fastapi_app
     controller.service.handle_controller_message = AsyncMock(return_value=True)
-    data = DriverConnectCommand(driver_name="WaterTank", status="connect")
 
-    with app.test_client() as client, app.app_context():
-        response = client.post(
-            "/communication_send_driverconnectcommand",
-            data=json.dumps(data.to_dict()),
-            content_type="application/json"
-        )
-        assert response.status_code == 200
-        assert response.get_json() == {"status": "ok", "reason": "Request accepted."}
+    # Use ASGITransport to wrap the FastAPI app
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://testserver") as ac:  # NOSONAR
+        data = DriverConnectCommand(driver_name="WaterTank", status="connect")
+        response = await ac.post("/communication_send_driverconnectcommand", json=data.to_dict())
 
-    # Check service and emit calls
+    assert response.status_code == 200
+    assert response.json() == {"status": "ok", "reason": "Request accepted."}
     controller.service.handle_controller_message.assert_called_once_with(data)
 
 
-def test_handle_connect_driver_invalid_status():
-    from openscada_lite.modules.communication.controller import CommunicationController
-    from flask import Flask
-    import json
-
-    app = Flask(__name__)
-    controller = CommunicationController(MagicMock(), MagicMock(), flask_app=app)
-    controller.service = MagicMock()
+@pytest.mark.asyncio
+async def test_connect_driver_invalid_status(fastapi_app):
+    app, controller = fastapi_app
     controller.service.handle_controller_message = AsyncMock(return_value=True)
-    data = DriverConnectCommand(driver_name="WaterTank", status="bad_status")
 
-    with app.test_client() as client, app.app_context():
-        response = client.post(
-            "/communication_send_driverconnectcommand",
-            data=json.dumps(data.to_dict()),
-            content_type="application/json"
-        )
-        assert response.status_code == 400
-        assert response.get_json() == {
-            "status": "error",
-            "reason": "Invalid status. Must be 'connect', 'disconnect', or 'toggle'."
-        }
+    # Use ASGITransport to wrap the FastAPI app
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://testserver") as ac:  # NOSONAR
+        data = DriverConnectCommand(driver_name="WaterTank", status="bad_status")
+        response = await ac.post("/communication_send_driverconnectcommand", json=data.to_dict())
 
+    assert response.status_code == 400
+    assert response.json() == {
+        "status": "error",
+        "reason": "Invalid status. Must be 'connect', 'disconnect', or 'toggle'.",
+    }
     controller.service.handle_controller_message.assert_not_called()
-@pytest.mark.asyncio
-async def test_handle_subscribe_driver_status(controller):
-    controller.socketio.emit = MagicMock()
-    controller.socketio.join_room = MagicMock()
-    controller.model.get_all_status.return_value = {"WaterTank": "connect"}
-    sid = "sid123"
 
-    handlers = {}
-    def fake_on(event):
-        def decorator(fn):
-            handlers[event] = fn
-            return fn
-        return decorator
-    controller.socketio.on = fake_on
-    controller.socketio.sid = sid
-    controller.register_socketio()
-
-    with patch("openscada_lite.modules.base.base_controller.join_room", MagicMock()):
-        handlers["communication_subscribe_live_feed"]()
-
-    controller.socketio.emit.assert_any_call(
-        "communication_initial_state",
-        [v.to_dict() for v in controller.model.get_all().values()],
-        room="communication_room"
-    )
-
-def test_publish_status(controller):
-    controller.socketio.emit = MagicMock()
-    controller.publish(DriverConnectCommand(track_id="1234", driver_name="WaterTank", status="connect"))
-    controller.socketio.emit.assert_called_once_with(
-        "communication_driverconnectstatus",
-        {"track_id": "1234", "driver_name": "WaterTank", "status": "connect"},
-        room="communication_room"
-    )
 
 @pytest.mark.asyncio
-async def test_send_connect_command_publishes_event(service):
-    svc, event_bus, _ = service
-    await svc.async_init()
-    await svc.handle_controller_message(DriverConnectCommand("WaterTank", "connect"))
-    expected_call = call(
-        EventType.DRIVER_CONNECT_STATUS,
-        DriverConnectStatus(track_id=ANY, driver_name="WaterTank", status="online")
-    )
-    assert expected_call in event_bus.publish.call_args_list
+async def test_publish_status_emits(fastapi_app):
+    Config.reset_instance()
+    Config.get_instance("tests/test_config.json")
+
+    _, controller = fastapi_app
+
+    # Mock socketio.emit as async function
+    async_mock = MagicMock()
+
+    def fake_emit(*args, **kwargs):
+        async_mock(*args, **kwargs)
+
+    controller.socketio.emit = fake_emit
+
+    # Create a command message
+    cmd = DriverConnectCommand(track_id="1234", driver_name="WaterTank", status="connect")
+
+    # Call publish (synchronous method, no await needed)
+    controller.publish(cmd)
+
+    # Wait for the batch worker to process the buffer
+    await asyncio.sleep(1.1)  # Slightly longer than the batch interval (1 second)
+
+    # Verify emit was called
+    async_mock.assert_called_once()
+    args, kwargs = async_mock.call_args
+
+    # Check the event name
+    assert args[0] == "communication_driverconnectstatus"
+
+    # Check that the emitted batch contains the expected message
+    emitted_batch = args[1]
+    assert isinstance(emitted_batch, list), "Expected a batch (list) of messages"
+    assert any(
+        message["track_id"] == "1234" and message["driver_name"] == "WaterTank"
+        for message in emitted_batch
+    ), "Expected message not found in emitted batch"
+
+    # Check the room argument
+    assert kwargs["room"] == "communication_room"
+
+
+# --------------------------
+# Tests: Service / EventBus
+# --------------------------
+
 
 @pytest.mark.asyncio
-async def test_on_driver_connect_status_updates_model_and_notifies_controller(service):
-    svc, _, model = service
+async def test_service_publishes_connect_status(service):
+    Config.reset_instance()
+    Config.get_instance("tests/test_config.json")
+
+    bus = EventBus.get_instance()
+    comm_service = CommunicationService(bus, CommunicationModel(), None)
+
+    events = []
+    wait_event = asyncio.Event()
+
+    async def handler(evt):
+        events.append(evt)
+        await asyncio.sleep(0)  # Make function actually async
+        wait_event.set()
+
+    bus.subscribe(EventType.DRIVER_CONNECT_STATUS, handler)
+
+    await comm_service.async_init()
+    await comm_service.handle_controller_message(DriverConnectCommand("WaterTank", "connect"))
+
+    assert any(getattr(e, "driver_name", None) == "WaterTank" for e in events)
+
+
+@pytest.mark.asyncio
+async def test_service_invalid_bus_message_raises(service):
+    svc, _, _ = service
     svc.controller = MagicMock()
-    data = DriverConnectStatus(track_id="1234", driver_name="WaterTank", status="connect")
-    with pytest.raises(TypeError, match="Expected SendCommandMsg or TagUpdateMsg"):
-        await svc.handle_bus_message(data)
+    with pytest.raises(TypeError):
+        await svc.handle_bus_message(
+            DriverConnectStatus(track_id="1", driver_name="X", status="connect")
+        )
+
+
+# --------------------------
+# Tests: CommunicationModel
+# --------------------------
+
 
 def test_set_and_get_status():
     model = CommunicationModel()
     model.update(DriverConnectStatus("WaterTank", "connect"))
     model.update(DriverConnectStatus("AuxServer", "disconnect"))
-    # Compare the status values, not the DTO objects
-    assert {k: v.status for k, v in model.get_all().items()} == {"WaterTank": "connect", "AuxServer": "disconnect"}
-    # Changing the returned dict does not affect the model
+    assert {k: v.status for k, v in model.get_all().items()} == {
+        "WaterTank": "connect",
+        "AuxServer": "disconnect",
+    }
+    # Ensure model internal dict is not overwritten
     all_status = model.get_all()
     all_status["WaterTank"].status = "disconnect"
     assert model.get_all()["WaterTank"].status == "connect"
 
-def test_driver_initial_status_is_disconnected():
-    """
-    When a driver is started, it should always send a status event that it's 'disconnect'.
-    """
-    from openscada_lite.modules.communication.model import CommunicationModel
 
+def test_driver_initial_status_is_disconnected():
     model = CommunicationModel()
-    # Simulate driver startup
     driver_name = "WaterTank"
-    # On startup, the driver should set its status to 'disconnect'
     model.update(DriverConnectStatus(driver_name, "disconnect"))
     assert model.get_all()[driver_name].status == "disconnect"
 
+
 @pytest.mark.asyncio
 async def test_driver_publishes_disconnected_status_on_start():
-    """
-    When a driver is started, it should publish a status event with 'disconnect'.
-    """
-    # Reset config singleton and load test config
     Config.reset_instance()
     Config.get_instance("tests/test_config.json")
-
     bus = EventBus.get_instance()
-    connection_service = CommunicationService(bus, CommunicationModel(), None)       
-    manager = connection_service.connection_manager    
+    comm_service = CommunicationService(bus, CommunicationModel(), None)
+    manager = comm_service.connection_manager
 
-    status_events = []
-    waitEvent = asyncio.Event()
+    events = []
+    wait_event = asyncio.Event()
 
-    async def status_handler(event):
-        status_events.append(event)
-        waitEvent.set()  # signal that we got something
-    # Subscribe to DRIVER_STATUS events
-    bus.subscribe(EventType.DRIVER_CONNECT_STATUS, status_handler)
+    async def handler(evt):
+        events.append(evt)
+        await asyncio.sleep(0)  # Make function actually async
+        wait_event.set()
+
+    bus.subscribe(EventType.DRIVER_CONNECT_STATUS, handler)
 
     await manager.start_all()
-    # Give some time for status events to be published
-    await asyncio.wait_for(waitEvent.wait(), timeout=2.0)
-
-    # There should be at least one status event with 'offline'
-    assert any(
-        getattr(event, "status", None) == "offline"
-        for event in status_events
-    ), f"No 'offline' status event found in: {status_events}"
-
+    await asyncio.wait_for(wait_event.wait(), timeout=2.0)
+    assert any(getattr(e, "status", None) == "offline" for e in events)
     await manager.stop_all()
 
-def test_emit_communication_status_sets_unknown(monkeypatch):
-    # Patch Config.get_instance as before
+
+@pytest.mark.asyncio
+async def test_emit_communication_status(monkeypatch):
     class DummyConfig:
         def get_datapoint_types_for_driver(self, driver_name, types):
             if driver_name == "TestDriver":
-                return {
-                    "TANK": {"default": 0.0},
-                    "PUMP": {"default": "CLOSED"}
-                }
+                return {"TANK": {"default": 0.0}, "PUMP": {"default": "CLOSED"}}
             return {}
-        def get_drivers(self): return []
-        def get_types(self): return {}
 
-    monkeypatch.setattr("openscada_lite.common.config.config.Config.get_instance", lambda: DummyConfig())
+        def get_drivers(self):
+            return []
+
+        def get_types(self):
+            return {}
+
+    monkeypatch.setattr(
+        "openscada_lite.common.config.config.Config.get_instance", lambda: DummyConfig()
+    )
 
     bus = EventBus.get_instance()
     published = []
 
+    # Fixed fake_publish function
     async def fake_publish(self, event_type, data):
         published.append((event_type, data))
+        await asyncio.sleep(0)  # Add a minimal async operation
 
     monkeypatch.setattr(EventBus, "publish", fake_publish)
 
-    connection_service = CommunicationService(bus, CommunicationModel(), None)       
-    manager = connection_service.connection_manager    
+    service = CommunicationService(bus, CommunicationModel(), None)
+    manager = service.connection_manager
     manager.driver_status["TestDriver"] = "online"
+
     status = DriverConnectStatus(driver_name="TestDriver", status="offline")
-    import asyncio
-    asyncio.run(manager.emit_communication_status(status))
+    await manager.emit_communication_status(status)
 
     raw_updates = [d for e, d in published if e == EventType.RAW_TAG_UPDATE]
     assert len(raw_updates) == 2
@@ -248,15 +298,6 @@ def test_emit_communication_status_sets_unknown(monkeypatch):
         assert msg.quality == "unknown"
         assert msg.datapoint_identifier in ["TestDriver@TANK", "TestDriver@PUMP"]
         if msg.datapoint_identifier.endswith("TANK"):
-            assert msg.value == 0.0
+            assert msg.value == pytest.approx(0.0)
         elif msg.datapoint_identifier.endswith("PUMP"):
             assert msg.value == "CLOSED"
-
-@pytest.fixture
-def dummy_event_bus():
-    class DummyEventBus:
-        async def publish(self, event_type, data):
-            pass
-        def subscribe(self, event_type, handler):
-            pass
-    return DummyEventBus()

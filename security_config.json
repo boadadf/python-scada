@@ -1,35 +1,4 @@
 {
-  "groups": [
-    {
-      "name": "g1",
-      "permissions": [
-        "p1",
-        "p2"
-      ]
-    },
-    {
-      "name": "g2",
-      "permissions": [
-        "p3"
-      ]
-    }
-  ],
-  "users": [
-    {
-      "allowed_apps": [],
-      "groups": [
-        "g1"
-      ],
-      "password_hash": "",
-      "username": "u1"
-    },
-    {
-      "allowed_apps": [],
-      "groups": [
-        "g2"
-      ],
-      "password_hash": "",
-      "username": "u2"
-    }
-  ]
+  "users": [],
+  "groups": []
 }

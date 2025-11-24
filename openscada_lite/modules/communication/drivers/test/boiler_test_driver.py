@@ -30,12 +30,15 @@ class BoilerTestDriver(TestDriver):
         heater_tag = self._tags.get("HEATER")
 
         if not (valve_tag and pressure_tag and temp_tag and heater_tag):
-            print("[SIM] Missing tag(s):", {
-                "VALVE": bool(valve_tag),
-                "PRESSURE": bool(pressure_tag),
-                "TEMPERATURE": bool(temp_tag),
-                "HEATER": bool(heater_tag)
-            })
+            print(
+                "[SIM] Missing tag(s):",
+                {
+                    "VALVE": bool(valve_tag),
+                    "PRESSURE": bool(pressure_tag),
+                    "TEMPERATURE": bool(temp_tag),
+                    "HEATER": bool(heater_tag),
+                },
+            )
             return
 
         valve = valve_tag.value if valve_tag.value else "CLOSED"

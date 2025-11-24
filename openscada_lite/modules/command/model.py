@@ -19,6 +19,7 @@ from openscada_lite.common.models.dtos import CommandFeedbackMsg
 from openscada_lite.modules.base.base_model import BaseModel
 import datetime
 
+
 class CommandModel(BaseModel[CommandFeedbackMsg]):
     def __init__(self):
         super().__init__()
@@ -33,5 +34,5 @@ class CommandModel(BaseModel[CommandFeedbackMsg]):
                 datapoint_identifier=cmd_id,
                 value=None,
                 feedback=None,
-                timestamp=now
+                timestamp=now,
             )

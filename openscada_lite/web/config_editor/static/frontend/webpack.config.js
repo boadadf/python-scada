@@ -43,6 +43,7 @@ module.exports = {
     alias: {
       react: path.resolve(__dirname, "node_modules/react"),
       "react-dom": path.resolve(__dirname, "node_modules/react-dom"),
+      login: path.resolve(__dirname, "../../../login/src")
     },
   },
 
@@ -59,11 +60,11 @@ module.exports = {
     },
     runtimeChunk: 'single', // separates webpack runtime into its own file
   },
-
   plugins: [
-    ...(process.env.ANALYZE ? [new BundleAnalyzerPlugin()] : []),
+      new HtmlWebpackPlugin({
+          template: './src/index.html'
+      })
   ],
-
   devServer: {
     static: path.join(__dirname, "dist"),
     port: 3000,

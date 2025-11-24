@@ -30,7 +30,7 @@ export default function ImageView({ selectedSvgProp, onSvgChange }) {
 
   // Load list of available SVGs
   useEffect(() => {
-    fetch("/animation_svgs")
+    fetch("/api/animation/svgs")
       .then((r) => r.json())
       .then((svgs) => {
         setSvgList(svgs);

@@ -19,6 +19,8 @@ from enum import Enum, unique
 """
 Defines all event types used in the EventBus.
 """
+
+
 @unique
 class EventType(Enum):
     RAW_TAG_UPDATE = "raw_tag_update"

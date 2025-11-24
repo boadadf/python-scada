@@ -30,7 +30,6 @@
  * Author: [Your Name or Team]
  * Date: [YYYY-MM-DD]
  */
-
 import React, { useEffect, useState } from "react";
 import "./App.css";
 import TopMenu from "./components/TopMenu";
@@ -38,30 +37,26 @@ import Tabs from "./components/Tabs";
 import UsersTab from "./components/UsersTab";
 import GroupsTab from "./components/GroupsTab";
 
-// Import from your shared login package
+// Shared login package
 import { AuthProvider, useAuth, Login } from "login";
 
-const DEFAULT_CONFIG = { users: [], groups: [],  };
+const DEFAULT_CONFIG = { users: [], groups: [] };
 
 function SecureApp() {
   const [config, setConfig] = useState(DEFAULT_CONFIG);
-  const [activeTab, setActiveTab] = useState('Users');
+  const [activeTab, setActiveTab] = useState("Users");
   const [dirty, setDirty] = useState(false);
 
   async function loadConfig(signal) {
     try {
-      const res = await fetch('/security-editor/api/config', { signal });
+      const res = await fetch("/security-editor/api/config", { signal });
       if (!res.ok) throw new Error(await res.text());
       const data = await res.json();
       setConfig(data);
       setDirty(false);
     } catch (err) {
-      // Ignore expected aborts
-      if (err.name === "AbortError" || err.name === "TypeError") {
-        return; // silently ignore
-      }
-      alert('Failed to load config: ' + err.name);
-      alert('Failed to load config: ' + err.message);
+      if (err.name === "AbortError" || err.name === "TypeError") return;
+      alert("Failed to load config: " + err.message);
     }
   }
 
@@ -73,39 +68,37 @@ function SecureApp() {
 
   async function saveConfig() {
     try {
-      const res = await fetch('/security-editor/api/config', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(config)
+      const res = await fetch("/security-editor/api/config", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(config),
       });
       if (!res.ok) throw new Error(await res.text());
-      alert('Saved');
+      alert("Saved");
       setDirty(false);
     } catch (err) {
-      alert('Failed to save: ' + err.message);
+      alert("Failed to save: " + err.message);
     }
   }
 
   return (
-    <div style={{ fontFamily: 'Arial, sans-serif', height: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <TopMenu
-        onLoad={loadConfig}
-        onSave={saveConfig}
-        dirty={dirty}
-      />
+    <div style={{ fontFamily: "Arial, sans-serif", height: "100vh", display: "flex", flexDirection: "column" }}>
+      <TopMenu onLoad={loadConfig} onSave={saveConfig} dirty={dirty} />
+
       <div style={{ padding: 8 }}>
-        <Tabs tabs={['Users', 'Groups']} active={activeTab} onChange={setActiveTab} />
-        <div style={{ border: '1px solid #ddd', padding: 8, background: '#fff', flex: 1, overflow: 'auto' }}>
-          <div className={activeTab === 'Users' ? 'tab-content active' : 'tab-content'}>
-            <UsersTab config={config} setConfig={c => { setConfig(c); setDirty(true); }} />
-          </div>
-          <div className={activeTab === 'Groups' ? 'tab-content active' : 'tab-content'}>
-            <GroupsTab config={config} setConfig={c => { setConfig(c); setDirty(true); }} />
-          </div>
+        <Tabs tabs={["Users", "Groups"]} active={activeTab} onChange={setActiveTab} />
+        <div style={{ border: "1px solid #ddd", padding: 8, background: "#fff", flex: 1, overflow: "auto" }}>
+          {activeTab === "Users" && (
+            <UsersTab config={config} setConfig={(c) => { setConfig(c); setDirty(true); }} />
+          )}
+          {activeTab === "Groups" && (
+            <GroupsTab config={config} setConfig={(c) => { setConfig(c); setDirty(true); }} />
+          )}
         </div>
       </div>
-      <div style={{ padding: 8, borderTop: '1px solid #ddd', background: '#fafafa' }}>
-        <span>{dirty ? '* Unsaved changes' : 'All changes saved'}</span>
+
+      <div style={{ padding: 8, borderTop: "1px solid #ddd", background: "#fafafa" }}>
+        <span>{dirty ? "* Unsaved changes" : "All changes saved"}</span>
       </div>
     </div>
   );
@@ -121,11 +114,17 @@ export default function App() {
   );
 }
 
-// RequireAuth component
+// ------------------------------
+// Auth Wrapper (fixed)
+// ------------------------------
 function RequireAuth({ children }) {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
+
+  if (loading) return null;
+
   if (!isAuthenticated) {
-    return <Login redirectPath="/security-editor" />;
+    return <Login redirectPath="/security-editor/" />;
   }
+
   return children;
 }

@@ -26,5 +26,5 @@ ACTION_MAP: Dict[str, Action] = {
     "send_command": SendCommandAction(),
     "raise_alarm": RaiseAlarmAction(),
     "lower_alarm": LowerAlarmAction(),
-    "client_alert": ClientAlertAction()
+    "client_alert": ClientAlertAction(),
 }

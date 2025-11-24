@@ -8,17 +8,23 @@ from openscada_lite.modules.alarm.model import AlarmModel
 from openscada_lite.common.bus.event_bus import EventBus
 from openscada_lite.modules.datapoint.model import DatapointModel
 from openscada_lite.modules.datapoint.service import DatapointService
-from openscada_lite.modules.communication.manager.connector_manager import ConnectorManager
 from openscada_lite.modules.rule.manager.rule_manager import RuleEngine
 from openscada_lite.modules.alarm.service import AlarmService
 from openscada_lite.common.bus.event_types import EventType
-from openscada_lite.common.models.dtos import CommandFeedbackMsg, LowerAlarmMsg, RaiseAlarmMsg, SendCommandMsg
+from openscada_lite.common.models.dtos import (
+    CommandFeedbackMsg,
+    LowerAlarmMsg,
+    RaiseAlarmMsg,
+    SendCommandMsg,
+)
 from openscada_lite.common.config.config import Config
+
 
 @pytest.fixture(autouse=True)
 def clear_event_bus():
     EventBus.get_instance().clear_subscribers()
     RuleEngine.reset_instance()
+
 
 @pytest.mark.asyncio
 async def test_full_system_with_recursive_alarms_and_feedback():
@@ -32,8 +38,8 @@ async def test_full_system_with_recursive_alarms_and_feedback():
     DatapointService(bus, datapointModel, controller=None)
 
     # Configuration & Connector
-    connection_service = CommunicationService(bus, CommunicationModel(), None)       
-    manager = connection_service.connection_manager    
+    connection_service = CommunicationService(bus, CommunicationModel(), None)
+    manager = connection_service.connection_manager
     await manager.start_all()
 
     # Rule Engine
@@ -68,7 +74,7 @@ async def test_full_system_with_recursive_alarms_and_feedback():
     driver: TestDriver = manager.driver_instances["AuxServer"]
 
     # --- Simulate driver updates ---
-    # Trigger first alarm    
+    # Trigger first alarm
     await driver.simulate_value("PRESSURE", 120, "123")
 
     # Alarm is deactivated
@@ -98,14 +104,20 @@ async def test_full_system_with_recursive_alarms_and_feedback():
     # --- Alarms captured (recursive) ---
     # Expect at least 2 active occurrences
     high_pressure_alarms = [
-        a for a in alarms_active if hasattr(a, "datapoint_identifier") \
-        and a.datapoint_identifier == "AuxServer@PRESSURE" and a.track_id in ["125","123"]
+        a
+        for a in alarms_active
+        if hasattr(a, "datapoint_identifier")
+        and a.datapoint_identifier == "AuxServer@PRESSURE"
+        and a.track_id in ["125", "123"]
     ]
     assert len(high_pressure_alarms) == 2
 
     # --- Check inactive alarms ---
     inactive_occurrences = [
-        a for a in alarms_inactive if hasattr(a, "datapoint_identifier") \
-        and a.datapoint_identifier == "AuxServer@PRESSURE" and a.track_id in ["124"]
+        a
+        for a in alarms_inactive
+        if hasattr(a, "datapoint_identifier")
+        and a.datapoint_identifier == "AuxServer@PRESSURE"
+        and a.track_id in ["124"]
     ]
     assert len(inactive_occurrences) == 1

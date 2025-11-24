@@ -25,11 +25,10 @@ for root, _, files in os.walk(BASE_DIR):
                 r"^from\s+typing\s+import\s+([^\n]+)",
                 remove_override_from_import,
                 content,
-                flags=re.MULTILINE
+                flags=re.MULTILINE,
             )
 
             with open(path, "w", encoding="utf-8") as f:
                 f.write(content)
 
             print(f"Processed {path}")
-

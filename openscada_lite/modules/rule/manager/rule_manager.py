@@ -33,13 +33,17 @@ from openscada_lite.common.bus.event_bus import EventBus
 from openscada_lite.common.models.dtos import TagUpdateMsg
 from openscada_lite.modules.rule.actioncommands.command_map import ACTION_MAP
 
+
 class RuleEngine:
     """
     RuleEngine evaluates rules on tag updates and executes actions accordingly.
 
-    - If a rule has both on_condition and off_condition, it follows an on/off lifecycle (actions are only triggered on state transitions).
-    - If a rule has no off_condition, its on_actions are executed every time the on_condition is true (no latching).
+    - If a rule has both on_condition and off_condition, it follows an
+      on/off lifecycle (actions are only triggered on state transitions).
+    - If a rule has no off_condition, its on_actions are executed every time
+      the on_condition is true (no latching).
     """
+
     _instance = None
 
     def __new__(cls, *args, **kwargs):
@@ -72,10 +76,10 @@ class RuleEngine:
         self.rules = []
         self.datapoint_state = {}
         self.tag_to_rules = {}  # tag_id -> [rules]
-        self.rule_states = {}   # rule_id -> bool (True=active, False=inactive)
+        self.rule_states = {}  # rule_id -> bool (True=active, False=inactive)
         self.load_rules()
         self.build_tag_to_rules_index()
-        self.subscribe_to_eventbus()    
+        self.subscribe_to_eventbus()
 
     def _safe_key(self, tag_id):
         """Convert tag_id to a safe variable name for asteval."""
@@ -94,7 +98,7 @@ class RuleEngine:
         This ensures both on/off conditions are considered.
         """
         self.tag_to_rules.clear()
-        tag_pattern = re.compile(r"[A-Za-z0-9_]+@[A-Za-z0-9_]+")
+        tag_pattern = re.compile(r"\w+@\w+")  # NOSONAR
         all_tags = set()
         for rule in self.rules:
             conditions = [rule.on_condition]
@@ -124,56 +128,107 @@ class RuleEngine:
         """
         tag_id = msg.datapoint_identifier
         value = msg.value
-        self.datapoint_state[tag_id] = value
-
-        safe_key = self._safe_key(tag_id)
-        # Normalize value to boolean where applicable
-        self.asteval.symtable[safe_key] = value if isinstance(value, (int, float, bool)) else str(value).upper() == "TRUE"
+        self._update_tag_state(tag_id, value)
 
         impacted_rules = self.tag_to_rules.get(tag_id, [])
-        print(f"[RuleEngine] Received tag update: {tag_id} = {value}")
-        print(f"[RuleEngine] Updated asteval symbol table: {safe_key} = {self.asteval.symtable[safe_key]}")
-        print(f"[RuleEngine] Impacted rules: {impacted_rules}")
+        self._log_tag_update(tag_id, value, impacted_rules)
+
         for rule in impacted_rules:
-            rule_id = rule.rule_id
-            on_active = self.rule_states.get(rule_id, False)
-            try:
-                on_result = self.asteval(rule.on_condition.replace("@", "__"))
-                print(f"[RuleEngine] Evaluated on_condition for rule {rule_id}: {on_result}")
-                if self.asteval.error:
-                    print("asteval errors:", self.asteval.error)
-                off_cond = getattr(rule, "off_condition", None)
-                has_off = bool(off_cond and off_cond.strip())
-                off_result = False
-                if has_off:
-                    off_result = self.asteval(rule.off_condition.replace("@", "__"))
-            except Exception as e:
-                print(f"[RuleEngine] Error evaluating rule {rule_id}: {e}")
-                continue
+            await self._process_rule(rule, tag_id, msg.track_id)
+
+    def _update_tag_state(self, tag_id, value):
+        """Update the datapoint state and asteval symbol table."""
+        self.datapoint_state[tag_id] = value
+        safe_key = self._safe_key(tag_id)
+
+        if isinstance(value, str) and value.upper() in ("TRUE", "FALSE"):
+            self.asteval.symtable[safe_key] = value.upper() == "TRUE"
+        else:
+            self.asteval.symtable[safe_key] = value
+
+    def _log_tag_update(self, tag_id, value, impacted_rules):
+        """Log tag update information."""
+        safe_key = self._safe_key(tag_id)
+        print(f"[RuleEngine] Received tag update: {tag_id} = {value}")
+        print(f"[RuleEngine] Updated asteval symbol table: {safe_key} = "
+              f"{self.asteval.symtable[safe_key]}")
+        print(f"[RuleEngine] Impacted rules: {impacted_rules}")
+
+    async def _process_rule(self, rule, tag_id, track_id):
+        """Process a single rule evaluation and execution."""
+        rule_id = rule.rule_id
+        evaluation_result = self._evaluate_rule_conditions(rule, rule_id)
+
+        if evaluation_result is None:
+            return
+
+        on_result, has_off, off_result = evaluation_result
+
+        if has_off:
+            await self._handle_on_off_rule(rule, rule_id, on_result, off_result, tag_id, track_id)
+        else:
+            await self._handle_on_only_rule(rule, rule_id, on_result, tag_id, track_id)
+
+    def _evaluate_rule_conditions(self, rule, rule_id):
+        """Evaluate on and off conditions for a rule."""
+        try:
+            on_result = self.asteval(rule.on_condition.replace("@", "__"))
+            print(f"[RuleEngine] Evaluated on_condition for rule {rule_id}: {on_result}")
+
+            if self.asteval.error:
+                print("asteval errors:", self.asteval.error)
+
+            off_cond = getattr(rule, "off_condition", None)
+            has_off = bool(off_cond and off_cond.strip())
+            off_result = False
+
             if has_off:
-                # ON transition: only if not already active
-                if not on_active and on_result:
-                    self.rule_states[rule_id] = True
-                    for action in getattr(rule, "on_actions", []):
-                        await self.execute_action(action, tag_id, msg.track_id, active=True, rule_id=rule_id)
-                # OFF transition: only if currently active
-                elif on_active and off_result:
-                    self.rule_states[rule_id] = False
-                    for action in getattr(rule, "off_actions", []):
-                        await self.execute_action(action, tag_id, msg.track_id, active=False, rule_id=rule_id)
-            else:
-                # Only trigger on rising edge (transition from false to true)
-                prev_active = self.rule_states.get(rule_id, False)
-                if not prev_active and on_result:
-                    self.rule_states[rule_id] = True
-                    for action in getattr(rule, "on_actions", []):
-                        await self.execute_action(action, tag_id, msg.track_id, active=True, rule_id=rule_id)
-                elif prev_active and not on_result:
-                    # Reset state so next true will trigger again
-                    self.rule_states[rule_id] = False
-                    # If raise_alarm is in on_actions, trigger lower_alarm automatically
-                    if any("raise_alarm" in action for action in getattr(rule, "on_actions", [])):
-                        await self.execute_action("lower_alarm()", tag_id, msg.track_id, active=False, rule_id=rule_id)
+                off_result = self.asteval(rule.off_condition.replace("@", "__"))
+
+            return on_result, has_off, off_result
+        except Exception as e:
+            print(f"[RuleEngine] Error evaluating rule {rule_id}: {e}")
+            return None
+
+    async def _handle_on_off_rule(self, rule, rule_id, on_result, off_result, tag_id, track_id):
+        """Handle rules with both on and off conditions."""
+        on_active = self.rule_states.get(rule_id, False)
+
+        if not on_active and on_result:
+            self.rule_states[rule_id] = True
+            await self._execute_actions(
+                getattr(rule, "on_actions", []), tag_id, track_id, True, rule_id
+            )
+        elif on_active and off_result:
+            self.rule_states[rule_id] = False
+            await self._execute_actions(
+                getattr(rule, "off_actions", []), tag_id, track_id, False, rule_id
+            )
+
+    async def _handle_on_only_rule(self, rule, rule_id, on_result, tag_id, track_id):
+        """Handle rules with only on condition (rising edge detection)."""
+        prev_active = self.rule_states.get(rule_id, False)
+
+        if not prev_active and on_result:
+            self.rule_states[rule_id] = True
+            await self._execute_actions(
+                getattr(rule, "on_actions", []), tag_id, track_id, True, rule_id
+            )
+        elif prev_active and not on_result:
+            self.rule_states[rule_id] = False
+            await self._handle_alarm_lowering(rule, tag_id, track_id, rule_id)
+
+    async def _handle_alarm_lowering(self, rule, tag_id, track_id, rule_id):
+        """Automatically lower alarm if raise_alarm was in on_actions."""
+        if any("raise_alarm" in action for action in getattr(rule, "on_actions", [])):
+            await self.execute_action(
+                "lower_alarm()", tag_id, track_id, active=False, rule_id=rule_id
+            )
+
+    async def _execute_actions(self, actions, tag_id, track_id, active, rule_id):
+        """Execute a list of actions."""
+        for action in actions:
+            await self.execute_action(action, tag_id, track_id, active=active, rule_id=rule_id)
 
     def parse_action(self, action_str):
         """

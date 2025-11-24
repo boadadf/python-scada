@@ -13,22 +13,40 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # -----------------------------------------------------------------------------
-
-from typing import Union
+from pathlib import Path
+from fastapi import APIRouter
+from fastapi.responses import FileResponse, JSONResponse
 from openscada_lite.common.config.config import Config
 from openscada_lite.modules.base.base_controller import BaseController
-from openscada_lite.common.models.dtos import AlarmUpdateMsg, AnimationUpdateRequestMsg, StatusDTO, AnimationUpdateMsg, TagUpdateMsg
+from openscada_lite.common.models.dtos import (
+    AnimationUpdateRequestMsg,
+    AnimationUpdateMsg,
+)
+
 
 class AnimationController(BaseController[AnimationUpdateMsg, AnimationUpdateRequestMsg]):
-    def __init__(self, model, socketio, base_event="animation", flask_app=None):
-        super().__init__(model, socketio, AnimationUpdateMsg, AnimationUpdateRequestMsg, base_event=base_event, flask_app=flask_app)
+    def __init__(self, model, socketio, module_name: str, router: APIRouter):
+        super().__init__(
+            model, socketio, AnimationUpdateMsg, AnimationUpdateRequestMsg, module_name, router
+        )
+
+        # Load SVG files from config
         self.svg_files = Config.get_instance().get_svg_files()
 
-    def register_http(self, flask_app):
-        super().register_http(flask_app)
-        @flask_app.route("/animation_svgs", methods=["GET"], endpoint="animation_svgs_list")
-        def list_svgs():
-            from flask import jsonify
-            return jsonify(self.svg_files)
-    def validate_request_data(self, data:AnimationUpdateRequestMsg) -> AnimationUpdateRequestMsg | StatusDTO:
+    def register_local_routes(self, router: APIRouter):
+        @router.get("/api/animation/svgs")
+        async def list_svgs():
+            """Return the list of SVG files for the animation module."""
+            return JSONResponse(content=self.svg_files)
+
+        @router.get("/svg/{filename:path}")
+        async def svg(filename: str):
+            svg_dir = Path(__file__).parent.parent / "config" / "svg"
+            file = svg_dir / filename
+            if file.exists():
+                return FileResponse(file)
+            return JSONResponse(content={"error": "File not found"}, status_code=404)
+
+    def validate_request_data(self, data: AnimationUpdateRequestMsg) -> AnimationUpdateRequestMsg:
+        # You could also return a StatusDTO if invalid
         return data

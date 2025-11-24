@@ -18,6 +18,7 @@ from collections import OrderedDict
 from openscada_lite.common.models.dtos import DataFlowEventMsg
 from openscada_lite.modules.base.base_model import BaseModel
 
+
 class TrackingModel(BaseModel[DataFlowEventMsg]):
     MAX_ENTRIES = 100
 

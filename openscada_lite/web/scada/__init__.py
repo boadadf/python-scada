@@ -13,17 +13,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # -----------------------------------------------------------------------------
+import os
+from fastapi import APIRouter
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 
-from flask import Blueprint
+# Create router
+scada_router = APIRouter(prefix="/scada", tags=["SCADA"])
 
-scada_bp = Blueprint(
-    "scada_bp",
-    __name__,
-    static_folder="static",
-    static_url_path="/scada/static",   # ensures correct static path
-    template_folder="templates",
-    url_prefix="/scada"
+# Static files (equivalent to Blueprint static folder)
+scada_router.mount(
+    "/static",
+    app=StaticFiles(directory=os.path.join(os.path.dirname(__file__), "static")),
+    name="scada_static",
 )
 
-# Import routes so they attach to this blueprint
-from . import routes
+# Templates
+templates = Jinja2Templates(directory=os.path.join(os.path.dirname(__file__), "templates"))
