@@ -134,7 +134,7 @@ async def test_publish_status_emits(fastapi_app):
     # Mock socketio.emit as async function
     async_mock = MagicMock()
 
-    async def fake_emit(*args, **kwargs):
+    def fake_emit(*args, **kwargs):
         async_mock(*args, **kwargs)
 
     controller.socketio.emit = fake_emit
@@ -178,19 +178,20 @@ async def test_service_publishes_connect_status(service):
     Config.get_instance("tests/test_config.json")
 
     bus = EventBus.get_instance()
-    service = CommunicationService(bus, CommunicationModel(), None)
+    comm_service = CommunicationService(bus, CommunicationModel(), None)
 
     events = []
     wait_event = asyncio.Event()
 
     async def handler(evt):
         events.append(evt)
+        await asyncio.sleep(0)  # Make function actually async
         wait_event.set()
 
     bus.subscribe(EventType.DRIVER_CONNECT_STATUS, handler)
 
-    await service.async_init()
-    await service.handle_controller_message(DriverConnectCommand("WaterTank", "connect"))
+    await comm_service.async_init()
+    await comm_service.handle_controller_message(DriverConnectCommand("WaterTank", "connect"))
 
     assert any(getattr(e, "driver_name", None) == "WaterTank" for e in events)
 
@@ -236,14 +237,15 @@ async def test_driver_publishes_disconnected_status_on_start():
     Config.reset_instance()
     Config.get_instance("tests/test_config.json")
     bus = EventBus.get_instance()
-    service = CommunicationService(bus, CommunicationModel(), None)
-    manager = service.connection_manager
+    comm_service = CommunicationService(bus, CommunicationModel(), None)
+    manager = comm_service.connection_manager
 
     events = []
     wait_event = asyncio.Event()
 
     async def handler(evt):
         events.append(evt)
+        await asyncio.sleep(0)  # Make function actually async
         wait_event.set()
 
     bus.subscribe(EventType.DRIVER_CONNECT_STATUS, handler)
@@ -275,8 +277,10 @@ async def test_emit_communication_status(monkeypatch):
     bus = EventBus.get_instance()
     published = []
 
+    # Fixed fake_publish function
     async def fake_publish(self, event_type, data):
         published.append((event_type, data))
+        await asyncio.sleep(0)  # Add a minimal async operation
 
     monkeypatch.setattr(EventBus, "publish", fake_publish)
 
@@ -294,6 +298,6 @@ async def test_emit_communication_status(monkeypatch):
         assert msg.quality == "unknown"
         assert msg.datapoint_identifier in ["TestDriver@TANK", "TestDriver@PUMP"]
         if msg.datapoint_identifier.endswith("TANK"):
-            assert msg.value == 0.0
+            assert msg.value == pytest.approx(0.0)
         elif msg.datapoint_identifier.endswith("PUMP"):
             assert msg.value == "CLOSED"

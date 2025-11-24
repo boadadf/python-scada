@@ -4,6 +4,7 @@ import json
 import asyncio
 import pytest
 import socketio
+import aiofiles
 from common.models.dtos import RawTagUpdateMsg
 import requests
 
@@ -61,12 +62,16 @@ async def test_live_feed_and_set_tag_real():
     def on_datapoint_update(data):
         received_updates.append(data)
 
-    sio.connect(SERVER_URL)
+    # Connect to the server
+    sio.connect(SERVER_URL)  # Ensure the client connects to the server
+
+    # Emit the subscription event
     sio.emit("datapoint_subscribe_live_feed")
     await asyncio.sleep(1)  # Wait for initial state
 
-    with open(os.path.join(os.path.dirname(__file__), "test_config.json")) as f:
-        config = json.load(f)
+    async with aiofiles.open(os.path.join(os.path.dirname(__file__), "test_config.json")) as f:
+        content = await f.read()
+        config = json.loads(content)
 
     expected_tags = []
     for driver in config["drivers"]:
@@ -95,6 +100,6 @@ async def test_live_feed_and_set_tag_real():
     # Check if the expected update is in the batch
     update = next((u for u in all_updates if u["datapoint_identifier"] == test_tag), None)
     assert update is not None, "Expected update not found in received updates"
-    assert update["value"] == test_value
+    assert update["value"] == pytest.approx(test_value)
 
     sio.disconnect()

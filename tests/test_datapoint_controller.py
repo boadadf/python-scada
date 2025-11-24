@@ -85,7 +85,7 @@ async def test_publish_tag_emits_when_no_initializing(controller):
 
     # Assert that socketio.emit was called
     controller.socketio.emit.assert_called_once()
-    args, kwargs = controller.socketio.emit.call_args
+    args, _ = controller.socketio.emit.call_args
     assert args[0] == "datapoint_tagupdatemsg"
     assert any(tag["datapoint_identifier"] == "Test@TAG" and tag["value"] == 456 for tag in args[1])
 
@@ -136,9 +136,9 @@ async def test_set_tag_calls_service_and_emits_ack(controller):
     # Create the FastAPI app and include the controller's router
     app = FastAPI()
     router = APIRouter()
-    controller = DatapointController(MagicMock(), MagicMock(), "datapoint", router)
-    controller.service = MagicMock()
-    controller.service.handle_controller_message = AsyncMock(return_value=True)
+    test_controller = DatapointController(MagicMock(), MagicMock(), "datapoint", router)
+    test_controller.service = MagicMock()
+    test_controller.service.handle_controller_message = AsyncMock(return_value=True)
     app.include_router(router)
 
     # Create test data
@@ -171,4 +171,4 @@ async def test_set_tag_calls_service_and_emits_ack(controller):
         quality="good",
         timestamp=test_data.timestamp.isoformat(),  # Expect string, not datetime
     )
-    controller.service.handle_controller_message.assert_called_once_with(expected_data)
+    test_controller.service.handle_controller_message.assert_called_once_with(expected_data)
