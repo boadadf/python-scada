@@ -206,7 +206,6 @@ class Config:
 
         return [f for f in os.listdir(svg_folder) if f.endswith(".svg")]
 
-
     def get_animation_datapoint_map(self) -> dict:
         """
         Parses all SVG files and returns a map:
