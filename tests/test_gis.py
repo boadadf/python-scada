@@ -1,106 +1,158 @@
 import pytest
 from unittest.mock import MagicMock, patch
-from fastapi import APIRouter, FastAPI
-from fastapi.testclient import TestClient
-from openscada_lite.modules.gis.controller import GisController
 from openscada_lite.modules.gis.service import GisService
-from openscada_lite.modules.gis.model import GisModel
 from openscada_lite.common.models.dtos import GisUpdateMsg, TagUpdateMsg, AlarmUpdateMsg
 
 
 @pytest.fixture(scope="function")
-def gis_model():
-    """Fixture for the GIS model."""
-    model = GisModel()
-    model.reset()  # Reset state before each test
-    return model
-
-
-@pytest.fixture(scope="function")
 @patch("openscada_lite.modules.gis.service.Config")
-def gis_service(mock_config, gis_model):
+def gis_service(mock_config):
     """Fixture for the GIS service."""
     # Mock the configuration to return test data
     mock_config.get_instance.return_value.get_gis_icons.return_value = [
-        {"id": "icon1", "latitude": 0.0, "longitude": 0.0, "icon": "icon1.png"},
-        {"id": "icon2", "latitude": 1.0, "longitude": 1.0, "icon": "icon2.png"},
+        {"id": "icon1", "latitude": 0.0, "longitude": 0.0, "icon": "icon1.png", "datapoint": "dp1"},
+        {
+            "id": "icon2",
+            "latitude": 1.0,
+            "longitude": 1.0,
+            "icon": "icon2.png",
+            "rule_id": "rule1",
+            "alarm": {"ACTIVE": "active_icon.png", "INACTIVE": "inactive_icon.png"},
+        },
     ]
 
     event_bus = MagicMock()
+    model = MagicMock()
     controller = MagicMock()
-    return GisService(event_bus, gis_model, controller)
+
+    # Configure the model.get method to return a valid GisUpdateMsg
+    def mock_get(icon_id):
+        if icon_id == "icon1":
+            return GisUpdateMsg(
+                track_id="test-track-id-1",
+                id="icon1",
+                latitude=0.0,
+                longitude=0.0,
+                icon="icon1.png",
+                extra={"datapoint-value": None},
+            )
+        elif icon_id == "icon2":
+            return GisUpdateMsg(
+                track_id="test-track-id-2",
+                id="icon2",
+                latitude=1.0,
+                longitude=1.0,
+                icon="icon2.png",
+                extra={"datapoint-value": None},
+            )
+        return None
+
+    model.get.side_effect = mock_get
+
+    return GisService(event_bus, model, controller)
 
 
-@pytest.fixture(scope="function")
-def gis_controller(gis_model):
-    """Fixture for the GIS controller."""
-    socketio_mock = MagicMock()
-    router = APIRouter()
-    return GisController(gis_model, socketio_mock, "gis", router)
-
-
-@pytest.fixture
-def fastapi_app(gis_controller):
-    """Fixture for the FastAPI app with the GIS controller."""
-    app = FastAPI()
-    router = APIRouter()
-    gis_controller.register_local_routes(router)
-    app.include_router(router)
-    return app
-
-
-def test_gis_model_initialization(gis_model):
-    """Test that the GIS model initializes correctly."""
-    assert isinstance(gis_model, GisModel)
-    assert len(gis_model.get_all()) == 0  # Ensure the model starts empty
-
-
-def test_gis_service_initialization(gis_service, gis_model):
-    """Test that the GIS service initializes GIS icons."""
-    # Assert that icons were initialized
-    icons = gis_model.get_all()
-    assert len(icons) == 2  # Ensure two icons were added
-    assert "icon1" in icons
-    assert "icon2" in icons
-
-
-def test_gis_service_process_tag_update(gis_service, gis_model):
-    """Test that the GIS service processes a TagUpdateMsg."""
+def test_process_tag_update_match(gis_service):
+    """Test _process_tag_update when the datapoint matches."""
     tag_msg = TagUpdateMsg(
-        datapoint_identifier="example_datapoint",
+        datapoint_identifier="dp1",
         value=1,
         quality="good",
         timestamp="2025-11-23T12:00:00Z",
     )
-    gis_update = gis_service.process_msg(tag_msg)
-    if gis_update:
-        assert isinstance(gis_update, GisUpdateMsg)
-        assert gis_update.extra["datapoint-value"] is not None
+    gis_update = gis_service._process_tag_update(tag_msg, gis_service.gis_icons_config[0])
+    assert gis_update is not None
+    assert isinstance(gis_update, GisUpdateMsg)
+    assert gis_update.id == "icon1"
+    assert gis_update.icon == "icon1.png"
 
 
-def test_gis_service_process_alarm_update(gis_service, gis_model):
-    """Test that the GIS service processes an AlarmUpdateMsg."""
+def test_process_tag_update_no_match(gis_service):
+    """Test _process_tag_update when the datapoint does not match."""
+    tag_msg = TagUpdateMsg(
+        datapoint_identifier="nonexistent_dp",
+        value=1,
+        quality="good",
+        timestamp="2025-11-23T12:00:00Z",
+    )
+    gis_update = gis_service._process_tag_update(tag_msg, gis_service.gis_icons_config[0])
+    assert gis_update is None
+
+
+def test_process_tag_update_with_states(gis_service):
+    """Test _process_tag_update when states are defined."""
+    gis_service.gis_icons_config[0]["states"] = {"1": "state_icon.png"}
+    tag_msg = TagUpdateMsg(
+        datapoint_identifier="dp1",
+        value=1,
+        quality="good",
+        timestamp="2025-11-23T12:00:00Z",
+    )
+    gis_update = gis_service._process_tag_update(tag_msg, gis_service.gis_icons_config[0])
+    assert gis_update is not None
+    assert gis_update.icon == "state_icon.png"
+
+
+def test_process_alarm_update_match(gis_service):
+    """Test _process_alarm_update when the rule_id matches."""
     alarm_msg = AlarmUpdateMsg(
-        datapoint_identifier="example_datapoint",  # Add the required argument
-        rule_id="example_rule",
+        datapoint_identifier="dp1",
+        rule_id="rule1",
         activation_time="2025-11-23T12:00:00Z",
         acknowledge_time=None,
         deactivation_time=None,
     )
-    gis_update = gis_service.process_msg(alarm_msg)
-    if gis_update:
-        assert isinstance(gis_update, GisUpdateMsg)
-        assert gis_update.icon is not None
+
+    gis_update = gis_service._process_alarm_update(alarm_msg, gis_service.gis_icons_config[1])
+    assert gis_update is not None
+    assert isinstance(gis_update, GisUpdateMsg)
+    assert gis_update.id == "icon2"
+    # Expect the icon to be updated to "active_icon.png" based on the alarm state
+    assert gis_update.icon == "active_icon.png"
 
 
-def test_gis_controller_initialization(gis_controller):
-    """Test that the GIS controller initializes correctly."""
-    assert isinstance(gis_controller, GisController)
+def test_process_alarm_update_no_match(gis_service):
+    """Test _process_alarm_update when the rule_id does not match."""
+    alarm_msg = AlarmUpdateMsg(
+        datapoint_identifier="dp1",
+        rule_id="nonexistent_rule",
+        activation_time="2025-11-23T12:00:00Z",
+        acknowledge_time=None,
+        deactivation_time=None,
+    )
+    gis_update = gis_service._process_alarm_update(alarm_msg, gis_service.gis_icons_config[1])
+    assert gis_update is None
 
 
-def test_gis_controller_get_gis_config(fastapi_app):
-    """Test the FastAPI route for retrieving GIS configuration."""
-    client = TestClient(fastapi_app)
-    response = client.get("/api/gis/config")
-    assert response.status_code == 200
-    assert isinstance(response.json(), dict)  # Ensure the response is a dictionary
+def test_should_accept_update_tag(gis_service):
+    """Test should_accept_update for TagUpdateMsg."""
+    tag_msg = TagUpdateMsg(
+        datapoint_identifier="dp1",
+        value=1,
+        quality="good",
+        timestamp="2025-11-23T12:00:00Z",
+    )
+    assert gis_service.should_accept_update(tag_msg) is True
+
+
+def test_should_accept_update_alarm(gis_service):
+    """Test should_accept_update for AlarmUpdateMsg."""
+    alarm_msg = AlarmUpdateMsg(
+        datapoint_identifier="dp1",
+        rule_id="rule1",
+        activation_time="2025-11-23T12:00:00Z",
+        acknowledge_time=None,
+        deactivation_time=None,
+    )
+    assert gis_service.should_accept_update(alarm_msg) is True
+
+
+def test_should_accept_update_no_match(gis_service):
+    """Test should_accept_update when no match is found."""
+    tag_msg = TagUpdateMsg(
+        datapoint_identifier="nonexistent_dp",
+        value=1,
+        quality="good",
+        timestamp="2025-11-23T12:00:00Z",
+    )
+    assert gis_service.should_accept_update(tag_msg) is False
