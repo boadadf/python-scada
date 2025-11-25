@@ -56,7 +56,7 @@ class OPCUAServerDriver(ServerProtocol):
     # Configuration
     # ----------------------------------------------------------------------
     def initialize(self, config: dict) -> None:
-        self.namespace_url = config.get("namespaceurl", "http://default.namespace") # NOSONAR
+        self.namespace_url = config.get("namespaceurl", "http://default.namespace")  # NOSONAR
         self.allow_write_regex = re.compile(config.get("allow_write_regex", ".*_CMD$"))
         self.endpoint = config.get("endpoint", self.endpoint)
 
