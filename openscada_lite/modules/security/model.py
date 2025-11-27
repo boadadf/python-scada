@@ -58,6 +58,10 @@ class SecurityModel(BaseModel[None]):
     def get_all_users_list(self) -> List[dict]:
         with self._lock:
             return copy.deepcopy(self._data["users"])
+        
+    def get_all_groups_list(self) -> List[dict]:
+        with self._lock:
+            return copy.deepcopy(self._data["groups"])
 
     def get_end_points(self) -> List[str]:
         return list(self.endpoints)

@@ -29,19 +29,19 @@ def hash_password(password: str) -> str:
     return hashlib.sha256(password.encode()).hexdigest()
 
 
-def create_jwt(username: str) -> str:
+def create_jwt(username: str, groups=None) -> str:
     payload = {
         "username": username,
+        "groups": groups or [],
         "exp": datetime.datetime.now() + datetime.timedelta(seconds=JWT_EXP_DELTA_SECONDS),
     }
     token = jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
     return token
 
-
-def verify_jwt(token: str) -> Optional[str]:
+def verify_jwt(token: str) -> Optional[dict]:
     try:
         payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
-        return payload["username"]
+        return payload  # return the whole payload (dict)
     except jwt.ExpiredSignatureError:
         return None
     except jwt.InvalidTokenError:

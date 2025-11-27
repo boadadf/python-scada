@@ -326,9 +326,10 @@ class DriverConnectCommand(DTO):
 class StatusDTO:
     status: str
     reason: str
+    data: Optional[dict] = None
 
     def to_dict(self):
-        return {"status": self.status, "reason": self.reason}
+        return {"status": self.status, "reason": self.reason, "data": self.data}
 
     def get_id(self) -> str:
         return self.status

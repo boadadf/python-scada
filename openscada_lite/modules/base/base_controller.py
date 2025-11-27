@@ -24,8 +24,9 @@ from openscada_lite.modules.security.service import SecurityService
 from openscada_lite.modules.base.base_model import BaseModel
 from openscada_lite.modules.base.base_service import BaseService
 from openscada_lite.common.models.dtos import StatusDTO
-from openscada_lite.common.tracking.decorators import publish_data_flow_from_arg_sync
+from openscada_lite.common.tracking.decorators import publish_data_flow_from_arg_async, publish_data_flow_from_arg_sync
 from openscada_lite.common.tracking.tracking_types import DataFlowStatus
+from openscada_lite.common.utils.utils import verify_jwt
 
 T = TypeVar("T")  # Outgoing message type (to client)
 U = TypeVar("U")  # Request data type (from client)
@@ -107,6 +108,7 @@ class BaseController(ABC, Generic[T, U]):
 
     @publish_data_flow_from_arg_sync(status=DataFlowStatus.FORWARDED)
     def publish(self, msg: T):
+        print(f"[{self.base_event}] Publishing message: {msg}")
         """Buffer messages to be sent in batch."""
         if self._initializing_clients:
             return
@@ -146,8 +148,23 @@ class BaseController(ABC, Generic[T, U]):
         endpoint_name = f"{self.base_event}_send_{self.u_cls.__name__.lower()}"
         route_path = f"/{endpoint_name}"
 
-        @self.router.post(route_path, name=endpoint_name)
+        @self.router.post(route_path, name=endpoint_name)        
         async def _incoming_handler(request: Request):
+            # Extract JWT token from Authorization header
+            auth_header = request.headers.get("Authorization", "")
+            token = auth_header.replace("Bearer ", "")
+            print("Received request with token:", token)
+            user_info = verify_jwt(token) if token else None
+            username = user_info["username"] if user_info else None
+
+            if not SecurityService.get_instance_or_none().is_allowed(username, endpoint_name):
+                return JSONResponse(
+                    status_code=403,
+                    content=StatusDTO(
+                        status="error",
+                        reason="User not authorized for this endpoint.",
+                    ).to_dict(),
+                )
             data = await request.json()
             obj_data = self.u_cls(**data) if isinstance(data, dict) else data
             result = self.validate_request_data(obj_data)
@@ -166,12 +183,3 @@ class BaseController(ABC, Generic[T, U]):
     def validate_request_data(self, data: U) -> Union[U, StatusDTO]:
         """Return validated data or StatusDTO for errors."""
         pass
-
-    # ---------------------------------------------------------------------
-    # Security hook
-    # ---------------------------------------------------------------------
-    @classmethod
-    def is_allowed(cls, username: str, endpoint_name: str) -> bool:
-        return SecurityService.get_instance_or_none().is_user_allowed_for_endpoint(
-            username, endpoint_name
-        )

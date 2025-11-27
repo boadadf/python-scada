@@ -18,7 +18,7 @@
 from typing import Optional
 from openscada_lite.modules.base.base_service import BaseService
 from openscada_lite.modules.security.model import SecurityModel
-from openscada_lite.modules.security import utils
+from openscada_lite.common.utils import utils
 
 
 class SecurityService(BaseService[None, None, None]):
@@ -37,20 +37,15 @@ class SecurityService(BaseService[None, None, None]):
     def hash_password(self, password: str) -> str:
         return utils.hash_password(password)
 
-    def authenticate_user(
-        self, username: str, password: str, app_name: Optional[str] = None
-    ) -> Optional[str]:
-        user = next(
-            (u for u in self.model.get_all_users_list() if u["username"] == username),
-            None,
-        )
+    def authenticate_user(self, username: str, password: str, app_name: Optional[str] = None) -> Optional[str]:
+        user = next((u for u in self.model.get_all_users_list() if u["username"] == username), None)
         if not user:
             return None
         if user["password_hash"] != utils.hash_password(password):
             return None
         if app_name and not self.can_login_to(username, app_name):
             return None
-        return utils.create_jwt(username)
+        return utils.create_jwt(username, user.get("groups", []))
 
     def can_login_to(self, username: str, app_name: str) -> bool:
         user = next(
@@ -66,6 +61,7 @@ class SecurityService(BaseService[None, None, None]):
         return app_name in allowed
 
     def is_allowed(self, username: str, endpoint_name: str) -> bool:
+        print("Checking if user is allowed:", username, endpoint_name)
         """Check if the given username has permission for the endpoint."""
         user = next(
             (u for u in self.model.get_all_users_list() if u["username"] == username),
@@ -74,13 +70,15 @@ class SecurityService(BaseService[None, None, None]):
         if not user:
             return False
         for group_name in user.get("groups", []):
+            print("Checking permissions for group:", group_name)
             group = next(
                 (g for g in self.model.get_all_groups_list() if g["name"] == group_name),
                 None,
             )
+            print("Permissions for the group:", group.get("permissions", []) )
             if group and endpoint_name in group.get("permissions", []):
                 return True
         return False
-
+    
     def should_accept_update(self, tag: None) -> bool:
         return False

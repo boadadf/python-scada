@@ -17,7 +17,7 @@ export default function TopMenu() {
   function handleLogout() {
     setOpen(false);
     logout();
-    window.location.href = "/scada/login";
+    window.location.href = "/scada";
   }
 
 

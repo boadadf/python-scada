@@ -18,7 +18,7 @@ from fastapi.responses import JSONResponse
 from openscada_lite.modules.base.base_controller import BaseController
 from openscada_lite.modules.security.model import SecurityModel
 from openscada_lite.common.models.dtos import StatusDTO
-from openscada_lite.modules.security import utils
+from openscada_lite.common.utils import utils
 
 
 class SecurityController(
@@ -54,7 +54,6 @@ class SecurityController(
         # POST login
         @router.post("/security/login")
         async def login(data: dict, app: str = None):
-            print("[SECURITY] Login attempt:", data)
             username = data.get("username")
             password = data.get("password")
             app_name = app if app is not None else data.get("app")
@@ -65,11 +64,18 @@ class SecurityController(
                     ).to_dict(),
                     status_code=400,
                 )
-            print("[SECURITY] Authenticating user:", username, "for app:", app_name)
             token = self.service.authenticate_user(username, password, app_name)
             if not token:
                 raise HTTPException(status_code=401, detail="Unauthorized")
-            return {"token": token, "user": username}
+            user_info = utils.verify_jwt(token)
+            return JSONResponse(
+                content=StatusDTO(
+                    status="ok",
+                    reason="Login successful",
+                    data={"token": token, "user": user_info},
+                ).to_dict(),
+                status_code=200,
+            )
 
         # GET security config
         @router.get("/security-editor/api/config")

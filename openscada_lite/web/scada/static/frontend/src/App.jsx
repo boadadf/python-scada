@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
 import "./App.css";
 import TopMenu from "./components/TopMenu";
-import { useAuth, AuthProvider, Login } from "login";
+import StatusBar from "./components/StatusBar";
+import { AuthProvider, useAuth, Login } from "login";
 import ImageView from "./components/ImageView";
-import GisView from "./components/GisView";
 import DatapointsView from "./components/DatapointsView";
 import CommunicationsView from "./components/CommunicationsView";
 import AlarmsView from "./components/AlarmsView";
@@ -30,12 +30,12 @@ const TABS = [
 ];
 
 // ---------------------------------------------
-// Main private app (after login)
+// Private SCADA App (shown after login)
 // ---------------------------------------------
 function PrivateApp() {
   const [activeTab, setActiveTab] = useState("main");
   const [alarmActive, setAlarmActive] = useState(false);
-  const [selectedSvg, setSelectedSvg] = useState(null); // for ImageView dropdown
+  const [selectedSvg, setSelectedSvg] = useState(null);
   const alarmBtnRef = useRef();
 
   useEffect(() => {
@@ -47,15 +47,11 @@ function PrivateApp() {
     return () => window.removeEventListener("message", handleMessage);
   }, []);
 
-  // 🔹 Handler for GIS markers that navigate to Image tab
   const handleMarkerClick = (navigatePath) => {
-    // Remove 'image/' or any leading folder from the path
     let svgName = navigatePath;
-    if (svgName && svgName.includes("/")) {
-      svgName = svgName.split("/").pop();
-    }
-    setSelectedSvg(svgName); // tell ImageView which SVG to select
-    setActiveTab("main");   // switch to Image tab
+    if (svgName && svgName.includes("/")) svgName = svgName.split("/").pop();
+    setSelectedSvg(svgName);
+    setActiveTab("main");
   };
 
   return (
@@ -69,18 +65,13 @@ function PrivateApp() {
             className={`tab-btn${activeTab === tab.key ? " active" : ""}`}
             onClick={() => setActiveTab(tab.key)}
             ref={tab.key === "alarms" ? alarmBtnRef : undefined}
-            style={
-              tab.key === "alarms" && alarmActive
-                ? { background: "red", color: "white" }
-                : {}
-            }
+            style={tab.key === "alarms" && alarmActive ? { background: "red", color: "white" } : {}}
           >
             {tab.label}
           </button>
         ))}
       </div>
 
-      {/* Keep all components mounted; only show the active one */}
       {TABS.map(tab => (
         <div
           key={tab.key}
@@ -96,36 +87,31 @@ function PrivateApp() {
           )}
         </div>
       ))}
+
+      <StatusBar />
     </div>
   );
 }
 
 // ---------------------------------------------
-// Authentication wrapper
+// Auth Wrapper (like security-editor)
 // ---------------------------------------------
 function RequireAuth({ children }) {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
+
+  if (loading) return null; // don't render anything until auth is known
+
   if (!isAuthenticated) {
-    window.location.href = "/scada/login";
-    return null;
+    return <Login redirectPath="/scada" />;
   }
+
   return children;
 }
 
 // ---------------------------------------------
-// Root App Component
+// Root SCADA App
 // ---------------------------------------------
 export default function App() {
-  const [route] = useState(window.location.pathname);
-
-  if (route === "/scada/login") {
-    return (
-      <AuthProvider>
-        <Login redirectPath="/scada" />
-      </AuthProvider>
-    );
-  }
-
   return (
     <AuthProvider>
       <RequireAuth>

@@ -10,25 +10,6 @@ export default function GroupsTab({ config, setConfig }) {
     if (selected != null && selected >= groups.length) setSelected(null);
   }, [groups.length]);
 
-  // Fetch endpoints on mount
-  useEffect(() => {
-    async function fetchEndpoints() {
-      try {
-        // If your endpoints require JWT, add the Authorization header here
-        const token = localStorage.getItem("jwt_token");
-        const res = await fetch("/security/endpoints", {
-          headers: token ? { Authorization: `Bearer ${token}` } : {}
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setEndpoints(Array.isArray(data) ? data : []);
-        }
-      } catch (err) {
-        setEndpoints([]);
-      }
-    }
-    fetchEndpoints();
-  }, []);
 
   function add() {
     const name = prompt('Group name:');
