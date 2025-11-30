@@ -40,8 +40,8 @@ class OPCUAServerDriver(ServerProtocol):
         self.server: Server | None = None
         self.namespace_index: int | None = None
         self.namespace_url: str | None = None
-        self.nodes: dict[str, ua.NodeId] = {}           # dp -> node
-        self._nodes_cache: dict[str, str] = {}          # dp -> last value
+        self.nodes: dict[str, ua.NodeId] = {}  # dp -> node
+        self._nodes_cache: dict[str, str] = {}  # dp -> last value
         self.allow_write_regex = None
         self.endpoint = "opc.tcp://0.0.0.0:4840/freeopcua/server/"
         self.subscription: Subscription | None = None
@@ -165,9 +165,7 @@ class OPCUAServerDriver(ServerProtocol):
                 await node.write_attribute(
                     ua.AttributeIds.UserWriteMask, ua.DataValue(ua.UInt32(1))
                 )
-                await node.write_attribute(
-                    ua.AttributeIds.WriteMask, ua.DataValue(ua.UInt32(1))
-                )
+                await node.write_attribute(ua.AttributeIds.WriteMask, ua.DataValue(ua.UInt32(1)))
 
             self.nodes[dp_name] = node
             count += 1

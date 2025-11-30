@@ -60,11 +60,16 @@ export default function Login({ onLoginSuccess, loginEndpoint = "/security/login
         body: JSON.stringify({ username, password })
       });
       if (!res.ok) throw new Error("Login failed");
-      const data = await res.json();
-      login(data.token, data.user);
-      setLoading(false);
-      if (onLoginSuccess) onLoginSuccess();
-      else window.location.href = redirectPath;
+      const result = await res.json();
+      if (result.status === "ok") {
+        login(result.data.token, result.data.user);
+        setLoading(false);
+        if (onLoginSuccess) onLoginSuccess();
+        else window.location.href = redirectPath;
+      } else {
+        setError(result.reason || "Login failed");
+        setLoading(false);
+      }
     } catch (err) {
       setError("Invalid credentials");
       setLoading(false);

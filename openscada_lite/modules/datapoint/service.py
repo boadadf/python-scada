@@ -17,7 +17,7 @@
 # datapoint_service.py
 
 from openscada_lite.common.tracking.tracking_types import DataFlowStatus
-from openscada_lite.common.tracking.decorators import publish_data_flow_from_return_sync
+from openscada_lite.common.tracking.decorators import publish_from_return_sync
 from openscada_lite.modules.datapoint.utils import Utils
 from openscada_lite.common.bus.event_types import EventType
 from openscada_lite.modules.base.base_service import BaseService
@@ -34,7 +34,7 @@ class DatapointService(BaseService[RawTagUpdateMsg, RawTagUpdateMsg, TagUpdateMs
         # Custom logic here
         await self.event_bus.publish(EventType.TAG_UPDATE, msg)
 
-    @publish_data_flow_from_return_sync(status=DataFlowStatus.CREATED)
+    @publish_from_return_sync(status=DataFlowStatus.CREATED)
     def process_msg(self, msg: RawTagUpdateMsg) -> TagUpdateMsg:
         return TagUpdateMsg(
             datapoint_identifier=msg.datapoint_identifier,

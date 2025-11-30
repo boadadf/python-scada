@@ -447,3 +447,44 @@ input[type="text"] {
   cursor: pointer;
 }
 
+.status-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 40px;
+  background: #f7f7f7;
+  border-top: 1px solid #ddd;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  font-size: 14px;
+  color: #333;
+  z-index: 1000;
+}
+
+.status-bar-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.status-bar-label {
+  font-weight: bold;
+}
+
+.status-bar-icon {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.status-bar-icon-online {
+  background: #4caf50; /* Green for online */
+}
+
+.status-bar-icon-offline {
+  background: #f44336; /* Red for offline */
+}

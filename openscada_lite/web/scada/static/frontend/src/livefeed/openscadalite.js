@@ -8,7 +8,7 @@ export function useLiveFeed(endpoint, updateMsgType, getKey) {
   useEffect(() => {
     let socket;
     function setupSocket() {
-      socket = window.io({
+      socket = globalThis.io({
         path: "/socket.io/",
         transports: ["websocket", "polling"],
       });
@@ -44,18 +44,18 @@ export function useLiveFeed(endpoint, updateMsgType, getKey) {
       });
     }
 
-    if (!window.io) {
+    if (globalThis.io) {
+      setupSocket();
+      return () => socketRef.current?.disconnect();
+    } else {
       const script = document.createElement("script");
       script.src = "https://cdn.socket.io/4.7.5/socket.io.min.js";
       script.onload = setupSocket;
       document.body.appendChild(script);
       return () => {
         if (socketRef.current) socketRef.current.disconnect();
-        document.body.removeChild(script);
+        script.remove();
       };
-    } else {
-      setupSocket();
-      return () => socketRef.current?.disconnect();
     }
   }, [endpoint, updateMsgType, getKey]);
 
@@ -65,9 +65,10 @@ export function useLiveFeed(endpoint, updateMsgType, getKey) {
 // POST-only helper (no socket)
 export async function postJson(endpoint, postType, data, extraHeaders = {}) {
   const url = `/${endpoint}_send_${postType}`;
+  const token = localStorage.getItem("jwt_token");
   const headers = {
     "Content-Type": "application/json",
-    "X-User": localStorage.getItem("username") || "",
+    "Authorization": `Bearer ${token}`,
     ...extraHeaders,
   };
   const response = await fetch(url, {

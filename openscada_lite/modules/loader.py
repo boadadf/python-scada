@@ -6,6 +6,9 @@ from openscada_lite.modules.security.controller import SecurityController
 from openscada_lite.modules.security.model import SecurityModel
 from openscada_lite.modules.security.service import SecurityService
 from openscada_lite.modules.base.base_controller import BaseController
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 async def module_loader(config: dict, socketio_obj, event_bus, app) -> dict:
@@ -21,16 +24,22 @@ async def module_loader(config: dict, socketio_obj, event_bus, app) -> dict:
         print(f"[INIT] Loading module: {module_name}")
 
         model_cls = getattr(importlib.import_module(f"{base_path}.model"), f"{class_prefix}Model")
+        print(f"[INIT] Model class loaded: {module_name}")
         controller_cls = getattr(
             importlib.import_module(f"{base_path}.controller"), f"{class_prefix}Controller"
         )
+        print(f"[INIT] Controller class loaded: {module_name}")
         service_cls = getattr(
             importlib.import_module(f"{base_path}.service"), f"{class_prefix}Service"
         )
+        print(f"[INIT] Service class loaded: {module_name}")
 
         model = model_cls()
+        print(f"[INIT] Model initialized: {module_name}")
         controller: BaseController = controller_cls(model, socketio_obj, module_name, app)
+        print(f"[INIT] Controller initialized: {module_name}")
         service = service_cls(event_bus, model, controller)
+        print(f"[INIT] Service initialized: {module_name}")
         controller.set_service(service)
         if hasattr(service, "async_init"):
             print(f"[INIT] async_init: {module_name}")

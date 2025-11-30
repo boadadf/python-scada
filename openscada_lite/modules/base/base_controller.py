@@ -18,14 +18,19 @@ import asyncio
 import threading
 from typing import Generic, TypeVar, Optional, Type, Union
 from fastapi import APIRouter, Request
-from fastapi.responses import JSONResponse
 from socketio import AsyncServer
 from openscada_lite.modules.security.service import SecurityService
 from openscada_lite.modules.base.base_model import BaseModel
 from openscada_lite.modules.base.base_service import BaseService
 from openscada_lite.common.models.dtos import StatusDTO
-from openscada_lite.common.tracking.decorators import publish_data_flow_from_arg_sync
+from openscada_lite.common.tracking.decorators import publish_from_arg_sync, publish_route_async
 from openscada_lite.common.tracking.tracking_types import DataFlowStatus
+from openscada_lite.common.utils.SecurityUtils import verify_jwt
+from openscada_lite.common.utils.ResponseUtils import make_response
+
+import logging
+
+logger = logging.getLogger(__name__)
 
 T = TypeVar("T")  # Outgoing message type (to client)
 U = TypeVar("U")  # Request data type (from client)
@@ -89,11 +94,11 @@ class BaseController(ABC, Generic[T, U]):
             await self.handle_subscribe_live_feed(sid)
 
     async def handle_subscribe_live_feed(self, sid):
-        print(f"[{self.base_event}] ******* Client subscribed to live feed: {sid}")
+        logger.debug(f"[{self.base_event}] ******* Client subscribed to live feed: {sid}")
         self._initializing_clients.add(sid)
         all_msgs = self.model.get_all()
         sorted_msgs = sorted(all_msgs.values(), key=lambda v: v.get_id())
-        print(
+        logger.debug(
             f"[{self.base_event}] Sending initial "
             f"state to {self.base_event}, {len(sorted_msgs)} items."
         )
@@ -105,8 +110,9 @@ class BaseController(ABC, Generic[T, U]):
         )
         self._initializing_clients.discard(sid)
 
-    @publish_data_flow_from_arg_sync(status=DataFlowStatus.FORWARDED)
+    @publish_from_arg_sync(status=DataFlowStatus.FORWARDED)
     def publish(self, msg: T):
+        logger.debug(f"[{self.base_event}] Publishing message: {msg}")
         """Buffer messages to be sent in batch."""
         if self._initializing_clients:
             return
@@ -147,16 +153,49 @@ class BaseController(ABC, Generic[T, U]):
         route_path = f"/{endpoint_name}"
 
         @self.router.post(route_path, name=endpoint_name)
+        @publish_route_async(DataFlowStatus.USER_ACTION, source=endpoint_name)
         async def _incoming_handler(request: Request):
+            # Extract JWT token from Authorization header
+            auth_header = request.headers.get("Authorization", "")
+            token = auth_header.replace("Bearer ", "")
+            logger.debug(f"Received request with token: {token}")
+            user_info = verify_jwt(token) if token else None
+            username = user_info["username"] if user_info else None
+
+            if not SecurityService.get_instance_or_none().is_allowed(username, endpoint_name):
+                # Forbidden
+                return make_response(
+                    status="error",
+                    reason="User not authorized for this endpoint.",
+                    status_code=403,
+                    user=username,
+                    endpoint=endpoint_name,
+                )
+
             data = await request.json()
             obj_data = self.u_cls(**data) if isinstance(data, dict) else data
             result = self.validate_request_data(obj_data)
+
+            # Validation error — use the precise message
             if isinstance(result, StatusDTO):
-                return JSONResponse(status_code=400, content=result.to_dict())
+                return make_response(
+                    status="error",
+                    reason=result.reason or "Invalid request data",
+                    status_code=400,
+                    user=username,
+                    endpoint=endpoint_name,
+                )
+
             if self.service:
                 await self.service.handle_controller_message(result)
-            return JSONResponse(
-                content=StatusDTO(status="ok", reason="Request accepted.").to_dict()
+
+            # OK
+            return make_response(
+                status="ok",
+                reason="Request accepted.",
+                status_code=200,
+                user=username,
+                endpoint=endpoint_name,
             )
 
     # ---------------------------------------------------------------------
@@ -166,12 +205,3 @@ class BaseController(ABC, Generic[T, U]):
     def validate_request_data(self, data: U) -> Union[U, StatusDTO]:
         """Return validated data or StatusDTO for errors."""
         pass
-
-    # ---------------------------------------------------------------------
-    # Security hook
-    # ---------------------------------------------------------------------
-    @classmethod
-    def is_allowed(cls, username: str, endpoint_name: str) -> bool:
-        return SecurityService.get_instance_or_none().is_user_allowed_for_endpoint(
-            username, endpoint_name
-        )

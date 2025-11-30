@@ -15,10 +15,16 @@
 # -----------------------------------------------------------------------------
 from fastapi import APIRouter, Request, HTTPException
 from fastapi.responses import JSONResponse
+from openscada_lite.common.tracking.decorators import publish_route_async
+from openscada_lite.common.tracking.tracking_types import DataFlowStatus
 from openscada_lite.modules.base.base_controller import BaseController
 from openscada_lite.modules.security.model import SecurityModel
 from openscada_lite.common.models.dtos import StatusDTO
-from openscada_lite.modules.security import utils
+from openscada_lite.common.utils import SecurityUtils
+from openscada_lite.common.utils.ResponseUtils import make_response
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class SecurityController(
@@ -33,14 +39,14 @@ class SecurityController(
     async def require_jwt(self, request: Request) -> str:
         auth_header = request.headers.get("Authorization", "")
         token = auth_header.replace("Bearer ", "")
-        username = utils.verify_jwt(token)
+        username = SecurityUtils.verify_jwt(token)
         if not username:
             raise HTTPException(status_code=401, detail="Unauthorized")
         return username
 
     # ---------------- Register Routes ----------------
     def register_local_routes(self, router: APIRouter):
-        print("[SECURITY] Loading security routes")
+        logger.debug("[SECURITY] Loading security routes")
         self.model.load_endpoints(router)
 
         # GET all registered endpoints
@@ -49,27 +55,47 @@ class SecurityController(
             endpoints = self.model.get_end_points()
             return JSONResponse(content=endpoints)
 
-        print("[SECURITY] Registered endpoints route loaded")
+        logger.debug("[SECURITY] Registered endpoints route loaded")
 
         # POST login
         @router.post("/security/login")
+        @publish_route_async(DataFlowStatus.USER_ACTION, source="SecurityController")
         async def login(data: dict, app: str = None):
-            print("[SECURITY] Login attempt:", data)
+            print("[SECURITY] Login request received")
             username = data.get("username")
             password = data.get("password")
             app_name = app if app is not None else data.get("app")
+            logger.debug(f"[SECURITY] Login attempt for user: {username}, app: {app_name}")
             if not username or not password or not app_name:
-                return JSONResponse(
-                    content=StatusDTO(
-                        status="error", reason="username & password & app required"
-                    ).to_dict(),
+                print("[SECURITY] Missing username, password, or app")
+                return make_response(
+                    status="error",
+                    reason="username & password & app required",
                     status_code=400,
+                    user=username,
+                    endpoint="login",
                 )
-            print("[SECURITY] Authenticating user:", username, "for app:", app_name)
+
             token = self.service.authenticate_user(username, password, app_name)
             if not token:
-                raise HTTPException(status_code=401, detail="Unauthorized")
-            return {"token": token, "user": username}
+                print("[SECURITY] Authentication failed")
+                return make_response(
+                    status="error",
+                    reason="Unauthorized",
+                    status_code=401,
+                    user=username,
+                    endpoint="login",
+                )
+
+            print(f"[SECURITY] User authenticated: {username}")
+            return make_response(
+                status="ok",
+                reason="Login successful",
+                status_code=200,
+                data={"token": token},  # keep token here
+                user=username,
+                endpoint="login",
+            )
 
         # GET security config
         @router.get("/security-editor/api/config")

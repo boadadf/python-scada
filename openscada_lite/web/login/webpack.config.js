@@ -1,14 +1,16 @@
 const path = require("path");
+const HtmlWebpackPlugin = require("html-webpack-plugin");
+const isProd = process.env.NODE_ENV === "production";
 
 module.exports = {
   mode: process.env.NODE_ENV === "production" ? "production" : "development",
   entry: "./src/index.js",
   output: {
     path: path.resolve(__dirname, "dist"),
-    filename: "main.js",      // single output file for the library
-    library: "login",
-    libraryTarget: "commonjs2",
-    clean: true,              // cleans dist before building
+    filename: isProd ? "[name].[contenthash].js" : "[name].js",
+    chunkFilename: isProd ? "[name].[contenthash].chunk.js" : "[name].chunk.js",
+    clean: true,
+    publicPath: "/scada/login/",
   },
   resolve: {
     extensions: [".js", ".jsx"],
@@ -35,5 +37,10 @@ module.exports = {
     react: "react",
     "react-dom": "react-dom",
   },
-  // Do NOT add splitChunks or runtimeChunk here — let consuming apps handle it
+  plugins: [
+    new HtmlWebpackPlugin({
+      template: "./src/index.html",
+      filename: "index.html",
+    }),
+  ],
 };

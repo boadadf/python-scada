@@ -13,26 +13,54 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+# Copyright 2025 Daniel&Hector Fernandez
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# -----------------------------------------------------------------------------
 import os
 import sys
 import asyncio
 from contextlib import asynccontextmanager
 from pathlib import Path
 import socketio
-import uvicorn
 from fastapi import FastAPI
+import logging
+import logging.config
+import json
 
+from openscada_lite.common.tracking.publisher import TrackingPublisher
 from openscada_lite.common.bus.event_bus import EventBus
 from openscada_lite.common.config.config import Config
-
 from openscada_lite.modules.loader import module_loader
-
 from openscada_lite.web.config_editor.routes import config_router
 from openscada_lite.web.security_editor.routes import security_router
+from openscada_lite.web.scada.routes import scada_router
 from openscada_lite.web.mounter import mount_enpoints
 
+
 # -----------------------------------------------------------------------------
-# Socket.IO
+# Logging
+# -----------------------------------------------------------------------------
+def get_logging_config_path(args=None):
+    env_var = "LOGGING_CONFIG_PATH"
+    if env_var in os.environ:
+        return os.environ[env_var]
+    cfg = next((arg for arg in (args or []) if arg.startswith("--logging-config=")), None)
+    if cfg:
+        return cfg.split("=", 1)[1]
+    return str(Path(__file__).parent.parent / "config" / "logging_config.json")
+
+
+logging_config_path = get_logging_config_path(sys.argv[1:])
+with open(logging_config_path, "r") as f:
+    config = json.load(f)
+logging.config.dictConfig(config)
+
+logger = logging.getLogger(__name__)
+
+# -----------------------------------------------------------------------------
+# Socket.IO server
 # -----------------------------------------------------------------------------
 sio = socketio.AsyncServer(
     async_mode="asgi",
@@ -41,58 +69,49 @@ sio = socketio.AsyncServer(
     ping_timeout=120,
 )
 
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    print("[LIFESPAN] Startup starting...")
-    task = asyncio.create_task(module_loader(system_config, sio, event_bus, app))
-    await task
-    yield
-    print("[LIFESPAN] Shutdown complete")
-
-
-app = FastAPI(title="OpenSCADA-Lite", version="2.0", lifespan=lifespan)
-app.include_router(config_router)
-app.include_router(security_router)
-mount_enpoints(app)
-
-# Single ASGI entrypoint combining Socket.IO + FastAPI
-asgi_app = socketio.ASGIApp(sio, other_asgi_app=app)
-
 # -----------------------------------------------------------------------------
-# Core Security Module
+# Core singletons
 # -----------------------------------------------------------------------------
 event_bus = EventBus.get_instance()
 system_config = Config.get_instance().load_system_config()
+publisher = TrackingPublisher.get_instance()
 
 
 # -----------------------------------------------------------------------------
-# Entrypoint
+# Lifespan for FastAPI
 # -----------------------------------------------------------------------------
-def main(args=None):
-    if args is None:
-        args = sys.argv[1:]
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    logger.info("[LIFESPAN] Startup starting...")
 
+    # Ensure config path is set
     if "SCADA_CONFIG_PATH" not in os.environ:
-        cfg = next((arg for arg in args if not arg.startswith("-")), None)
-        if cfg and Path(cfg).exists():
-            os.environ["SCADA_CONFIG_PATH"] = str(Path(cfg).resolve())
-        else:
-            os.environ["SCADA_CONFIG_PATH"] = str(
-                Path(__file__).parent.parent / "config" / "system_config.json"
-            )
+        os.environ["SCADA_CONFIG_PATH"] = str(Path(__file__).parent.parent / "config")
 
-    print(f"[APP] SCADA_CONFIG_PATH = {os.environ['SCADA_CONFIG_PATH']}")
-    print("[APP] Starting OpenSCADA-Lite (FastAPI / ASGI / Socket.IO)")
+    loop = asyncio.get_running_loop()
+    publisher.initialize(loop)
 
-    uvicorn.run(
-        "openscada_lite.app:asgi_app",
-        host="0.0.0.0",
-        port=5443,
-        reload=True,
-        ws_max_size=16 * 1024 * 1024,
-    )
+    try:
+        await module_loader(system_config, sio, event_bus, app)
+    except Exception as e:
+        logger.exception("[LIFESPAN] Error loading modules: %s", e)
+    publisher.enable()
+    logger.info("[LIFESPAN] Startup complete")
+    yield
+
+    # Shutdown publisher gracefully
+    publisher.shutdown()
+    logger.info("[LIFESPAN] Shutdown complete")
 
 
-if __name__ == "__main__":
-    main()
+# -----------------------------------------------------------------------------
+# FastAPI app
+# -----------------------------------------------------------------------------
+app = FastAPI(title="OpenSCADA-Lite", version="2.0", lifespan=lifespan, debug=True)
+app.include_router(config_router)
+app.include_router(security_router)
+app.include_router(scada_router)
+mount_enpoints(app)
+
+# ASGI combining Socket.IO + FastAPI
+asgi_app = socketio.ASGIApp(sio, other_asgi_app=app)

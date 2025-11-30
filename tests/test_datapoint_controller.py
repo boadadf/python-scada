@@ -4,6 +4,7 @@ import datetime
 from fastapi.testclient import TestClient
 from unittest.mock import AsyncMock, patch, MagicMock
 from fastapi import APIRouter, FastAPI
+from openscada_lite.modules.security.service import SecurityService
 from openscada_lite.common.models.dtos import TagUpdateMsg
 from openscada_lite.common.config.config import Config
 from openscada_lite.modules.datapoint.model import DatapointModel
@@ -13,7 +14,7 @@ from openscada_lite.modules.datapoint.controller import DatapointController
 @pytest.fixture(autouse=True)
 def reset_config_singleton():
     Config.reset_instance()
-    Config.get_instance("tests/test_config.json")
+    Config.get_instance("tests/config/test_config.json")
 
 
 def setup_function():
@@ -151,6 +152,10 @@ async def test_set_tag_calls_service_and_emits_ack(controller):
         timestamp=now,
     )
 
+    mock_security_service = MagicMock()
+    mock_security_service.is_allowed.return_value = True
+    SecurityService._instance = mock_security_service
+
     # Use FastAPI's TestClient to simulate requests
     client = TestClient(app)
     response = client.post(
@@ -161,7 +166,9 @@ async def test_set_tag_calls_service_and_emits_ack(controller):
 
     # Assert the response
     assert response.status_code == 200
-    assert response.json() == {"status": "ok", "reason": "Request accepted."}
+    assert response.json()["status"] == "ok"
+    assert response.json()["reason"] == "Request accepted."
+    assert "data" in response.json()  # Optionally check for data key
 
     # Verify that the service's handle_controller_message method was called
     expected_data = RawTagUpdateMsg(

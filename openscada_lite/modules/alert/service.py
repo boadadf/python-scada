@@ -16,7 +16,7 @@
 
 # communications_service.py
 from openscada_lite.modules.alert.controller import AlertController
-from openscada_lite.common.tracking.decorators import publish_data_flow_from_arg_async
+from openscada_lite.common.tracking.decorators import publish_from_arg_async
 from openscada_lite.common.tracking.tracking_types import DataFlowStatus
 from openscada_lite.modules.alert.model import AlertModel
 from openscada_lite.modules.base.base_service import BaseService
@@ -41,7 +41,7 @@ class AlertService(BaseService[ClientAlertMsg, ClientAlertFeedbackMsg, ClientAle
     def should_accept_update(self, msg: ClientAlertMsg) -> bool:
         return True
 
-    @publish_data_flow_from_arg_async(status=DataFlowStatus.RECEIVED)
+    @publish_from_arg_async(status=DataFlowStatus.RECEIVED)
     async def handle_controller_message(self, data: ClientAlertFeedbackMsg):
         # Remove the ClientAlertMsg with the same get_id
         alert_id = data.get_id()

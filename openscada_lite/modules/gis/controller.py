@@ -18,6 +18,9 @@ from fastapi.responses import JSONResponse
 from openscada_lite.modules.base.base_controller import BaseController
 from openscada_lite.common.models.dtos import GisUpdateMsg
 from openscada_lite.common.config.config import Config
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class GisController(BaseController[GisUpdateMsg, None]):
@@ -35,7 +38,7 @@ class GisController(BaseController[GisUpdateMsg, None]):
         async def get_gis_config():
             """Expose the GIS configuration from system_config.json."""
             config = Config.get_instance().get_module_config("gis")
-            print(f"[GIS] Returning GIS config: {config}")
+            logger.debug(f"[GIS] Returning GIS config: {config}")
             return JSONResponse(content=config)
 
     # Required abstract method from BaseController

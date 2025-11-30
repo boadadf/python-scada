@@ -326,9 +326,10 @@ class DriverConnectCommand(DTO):
 class StatusDTO:
     status: str
     reason: str
+    data: Optional[dict] = None
 
     def to_dict(self):
-        return {"status": self.status, "reason": self.reason}
+        return {"status": self.status, "reason": self.reason, "data": self.data}
 
     def get_id(self) -> str:
         return self.status
@@ -344,7 +345,7 @@ class DataFlowEventMsg(DTO):
 
     @classmethod
     def get_event_type(cls) -> EventType:
-        return EventType.FLOW_EVENT
+        return EventType.TRACKING_EVENT
 
     def to_dict(self):
         return self._default_to_dict()

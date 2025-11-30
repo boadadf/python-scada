@@ -13,7 +13,7 @@ from openscada_lite.common.models.dtos import RawTagUpdateMsg, TagUpdateMsg
 @pytest.fixture(autouse=True)
 def reset_config_singleton():
     Config.reset_instance()
-    Config.get_instance("tests/test_config.json")
+    Config.get_instance("tests/config/test_config.json")
 
 
 def setup_function():

@@ -21,7 +21,7 @@ def reset_event_bus(monkeypatch):
 @pytest.fixture(autouse=True)
 def reset_config_singleton():
     Config.reset_instance()
-    Config.get_instance("tests/test_config.json")
+    Config.get_instance("tests/config/test_config.json")
 
 
 def setup_function():

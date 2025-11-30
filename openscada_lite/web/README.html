@@ -958,27 +958,27 @@ These decorators can be applied to methods to publish tracking events based on a
 <ul>
 <li><strong>Async function, DTO as first argument:</strong>
   ```python
-  from openscada_lite.common.tracking.decorators import publish_data_flow_from_arg_async
+  from openscada_lite.common.tracking.decorators import publish_from_arg_async
   from openscada_lite.common.tracking.tracking_types import DataFlowStatus</li>
 </ul>
-<p>@publish_data_flow_from_arg_async(DataFlowStatus.RECEIVED)
+<p>@publish_from_arg_async(DataFlowStatus.RECEIVED)
   async def process_dto(self, dto):
       ...
   ```</p>
 <ul>
 <li><strong>Sync function, DTO as return value:</strong>
   ```python
-  from openscada_lite.common.tracking.decorators import publish_data_flow_from_return_sync
+  from openscada_lite.common.tracking.decorators import publish_from_return_sync
   from openscada_lite.common.tracking.tracking_types import DataFlowStatus</li>
 </ul>
-<p>@publish_data_flow_from_return_sync(DataFlowStatus.SUCCESS)
+<p>@publish_from_return_sync(DataFlowStatus.SUCCESS)
   def handle_result(self, ...):
       ...
   ```</p>
 <ul>
 <li><strong>Decorator options:</strong>  </li>
-<li><code>publish_data_flow_from_arg_async</code> / <code>publish_data_flow_from_arg_sync</code></li>
-<li><code>publish_data_flow_from_return_async</code> / <code>publish_data_flow_from_return_sync</code></li>
+<li><code>publish_from_arg_async</code> / <code>publish_from_arg_sync</code></li>
+<li><code>publish_from_return_async</code> / <code>publish_from_return_sync</code></li>
 <li>Specify <code>status</code> and optionally <code>source</code> for each event.</li>
 </ul>
 <p>These decorators ensure that tracking events are published automatically whenever the decorated function is called, reducing manual tracking code and improving consistency.</p>

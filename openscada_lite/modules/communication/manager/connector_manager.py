@@ -23,7 +23,7 @@ from openscada_lite.modules.communication.manager.communication_listener import 
     CommunicationListener,
 )
 from openscada_lite.common.tracking.tracking_types import DataFlowStatus
-from openscada_lite.common.tracking.decorators import publish_data_flow_from_arg_async
+from openscada_lite.common.tracking.decorators import publish_from_arg_async
 from openscada_lite.common.models.dtos import (
     DriverConnectCommand,
     CommandFeedbackMsg,
@@ -111,7 +111,7 @@ class ConnectorManager:
             if isinstance(driver, ServerProtocol):
                 driver.set_command_listener(listener)
 
-    @publish_data_flow_from_arg_async(status=DataFlowStatus.RECEIVED)
+    @publish_from_arg_async(status=DataFlowStatus.RECEIVED)
     async def handle_driver_connect_command(self, data: DriverConnectCommand):
         driver_name = data.driver_name
         status = data.status
@@ -127,15 +127,15 @@ class ConnectorManager:
                 else:
                     await driver.connect()
 
-    @publish_data_flow_from_arg_async(status=DataFlowStatus.RECEIVED)
+    @publish_from_arg_async(status=DataFlowStatus.RECEIVED)
     async def emit_value(self, data: RawTagUpdateMsg):
         await self.listener.on_raw_tag_update(data) if self.listener else None
 
-    @publish_data_flow_from_arg_async(status=DataFlowStatus.RECEIVED)
+    @publish_from_arg_async(status=DataFlowStatus.RECEIVED)
     async def emit_command_feedback(self, data: CommandFeedbackMsg):
         await self.listener.on_command_feedback(data) if self.listener else None
 
-    @publish_data_flow_from_arg_async(status=DataFlowStatus.RECEIVED)
+    @publish_from_arg_async(status=DataFlowStatus.RECEIVED)
     async def emit_communication_status(self, data: DriverConnectStatus):
         await self.listener.on_driver_connect_status(data) if self.listener else None
         # If the driver went offline, publish all tags as unknown
@@ -172,7 +172,7 @@ class ConnectorManager:
             if isinstance(driver, TestDriver):
                 await driver.disconnect()
 
-    @publish_data_flow_from_arg_async(status=DataFlowStatus.FORWARDED)
+    @publish_from_arg_async(status=DataFlowStatus.FORWARDED)
     async def send_command(self, data: SendCommandMsg):
         print(f"[COMMAND] Sending command: {data.datapoint_identifier} = {data.value}")
         config = Config.get_instance()

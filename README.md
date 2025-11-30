@@ -2,7 +2,6 @@
 
 OpenSCADA Lite is a modular, extensible, and modern SCADA (Supervisory Control and Data Acquisition) + GIS platform written in Python.  
 Following the principle of keeping things simple, it is designed for rapid prototyping, research, and small-to-medium automation projects, with a focus on clarity, testability, and real-time feedback via WebSockets.
-OpenSCADA Lite is offered free for testing purposes and licensed for commercial use. Open is referred to its capability to be extended by anyone with Python knowledge.
 
 ---
 
@@ -993,27 +992,27 @@ These decorators can be applied to methods to publish tracking events based on a
 
 - **Async function, DTO as first argument:**
   ```python
-  from openscada_lite.common.tracking.decorators import publish_data_flow_from_arg_async
+  from openscada_lite.common.tracking.decorators import publish_from_arg_async
   from openscada_lite.common.tracking.tracking_types import DataFlowStatus
 
-  @publish_data_flow_from_arg_async(DataFlowStatus.RECEIVED)
+  @publish_from_arg_async(DataFlowStatus.RECEIVED)
   async def process_dto(self, dto):
       ...
   ```
 
 - **Sync function, DTO as return value:**
   ```python
-  from openscada_lite.common.tracking.decorators import publish_data_flow_from_return_sync
+  from openscada_lite.common.tracking.decorators import publish_from_return_sync
   from openscada_lite.common.tracking.tracking_types import DataFlowStatus
 
-  @publish_data_flow_from_return_sync(DataFlowStatus.SUCCESS)
+  @publish_from_return_sync(DataFlowStatus.SUCCESS)
   def handle_result(self, ...):
       ...
   ```
 
 - **Decorator options:**  
-  - `publish_data_flow_from_arg_async` / `publish_data_flow_from_arg_sync`
-  - `publish_data_flow_from_return_async` / `publish_data_flow_from_return_sync`
+  - `publish_from_arg_async` / `publish_from_arg_sync`
+  - `publish_from_return_async` / `publish_from_return_sync`
   - Specify `status` and optionally `source` for each event.
 
 These decorators ensure that tracking events are published automatically whenever the decorated function is called, reducing manual tracking code and improving consistency.
@@ -1177,3 +1176,42 @@ You can run specific tests or integration suites as needed.
 
 ## Copyright
 All rights reserved to DFB Services LTD.
+
+---
+
+## Contributing
+
+- Fork the repo and submit pull requests.
+- Please add or update tests for any new features or bugfixes.
+- For questions or suggestions, open an issue.
+
+---
+
+## Roadmap
+
+See the `TODO` file for upcoming features and ideas, including:
+- Alarm and rule modules
+- SVG/Canvas animations
+- Feedback reasons and tracking IDs
+- Logging service
+- Raw-to-non-raw conversion
+- Railway deployment
+
+---
+
+## License
+
+This project is licensed under the [Apache License 2.0](LICENSE).
+
+---
+
+## Support the Project
+
+Keeping the demo server and OPC UA instance online has some running costs.  
+If you find **OpenSCADA Lite** useful and would like to support development or hosting, you can contribute here:
+
+[Buy Me a Coffee](https://buymeacoffee.com/boadadf)  
+[GitHub Sponsors](https://github.com/sponsors/boadadf)  
+[PayPal](https://paypal.me/boadadf)
+
+Your help keeps the demo server running and allows me to keep improving the project. Thank you!

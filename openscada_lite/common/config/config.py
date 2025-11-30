@@ -18,6 +18,9 @@ import os
 import json
 import xml.etree.ElementTree as ET
 from openscada_lite.common.models.entities import Animation, AnimationEntry, Rule
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class Config:
@@ -29,15 +32,18 @@ class Config:
         return super().__new__(cls)
 
     def __init__(self, config_path: str):
-        # config_path is the directory containing system_config.json
-        if os.path.isdir(config_path):
-            config_file = os.path.join(config_path, "system_config.json")
-        else:
-            # If a file is given, use it directly
+        print(f"Config path received: {config_path}")
+        # Always treat config_path as a directory
+        config_file = ""
+        if os.path.isfile(config_path):
             config_file = config_path
+        else:
+            config_file = os.path.join(config_path, "system_config.json")
         with open(config_file) as f:
             self._config = json.load(f)
-        self._config_path = config_path  # Save the config directory path for later use
+        self._config_path = os.path.dirname(
+            config_file
+        )  # Save the config directory path for later use
 
     @classmethod
     def get_instance(cls, config_path=None):
@@ -237,17 +243,26 @@ class Config:
                     datapoint_map.setdefault(dp, []).append((fname, elem.attrib.get("id"), anim))
         return datapoint_map
 
-    def get_security_config_path(self) -> str:
-        """
-        Returns the absolute path to security_config.json in the config folder.
-        """
-        config_dir = (
-            os.path.dirname(self._config_path) if hasattr(self, "_config_path") else os.getcwd()
-        )
-        return os.path.join(config_dir, "security_config.json")
-
     def get_gis_icons(self) -> list:
         """
         Returns the list of GIS icon configs from system_config.json.
         """
         return self._config.get("gis_icons", [])
+
+    def get_security_config_path(self) -> str:
+        """
+        Returns the absolute path to security_config.json in the config folder.
+        If SCADA_CONFIG_PATH points to a file, use its parent directory.
+        """
+        raw_path = os.environ.get("SCADA_CONFIG_PATH", "config")
+        print(f"Getting security config path from: {raw_path}")
+        if os.path.isfile(raw_path):
+            print(f"SCADA_CONFIG_PATH is a file. Using its directory: {os.path.dirname(raw_path)}")
+            base_dir = os.path.dirname(raw_path)
+        else:
+            print(f"SCADA_CONFIG_PATH is a directory. Using it directly: {raw_path}")
+            base_dir = raw_path
+        print(f"Security config will be at: {os.path.join(base_dir, 'security_config.json')}")
+        self.config_path = base_dir
+        print(f"Config path set to: {self.config_path}")
+        return os.path.join(base_dir, "security_config.json")

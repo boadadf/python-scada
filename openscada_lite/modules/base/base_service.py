@@ -17,8 +17,8 @@
 from abc import ABC, abstractmethod
 from typing import List, TypeVar, Generic, Type, Union
 from openscada_lite.common.tracking.decorators import (
-    publish_data_flow_from_arg_async,
-    publish_data_flow_from_return_sync,
+    publish_from_arg_async,
+    publish_from_return_sync,
 )
 from openscada_lite.common.tracking.tracking_types import DataFlowStatus
 from openscada_lite.common.models.dtos import DTO
@@ -50,6 +50,7 @@ class BaseService(ABC, Generic[T, U, V]):
         u_cls: Type[U],
         V_cls: Type[V] = None,
     ):
+        print("BaseService initialized")
         self.event_bus = event_bus
         self.model = model
         self.controller = controller
@@ -69,7 +70,7 @@ class BaseService(ABC, Generic[T, U, V]):
                 if t_cls is not None:
                     self.event_bus.subscribe(t_cls.get_event_type(), self.handle_bus_message)
 
-    @publish_data_flow_from_arg_async(status=DataFlowStatus.RECEIVED)
+    # @publish_from_arg_async(status=DataFlowStatus.RECEIVED)
     async def handle_bus_message(self, data: T):
         accept_update = self.should_accept_update(data)
         if not accept_update:
@@ -93,11 +94,11 @@ class BaseService(ABC, Generic[T, U, V]):
             else:
                 print(f"No controller to publish {processed_msg} to view")
 
-    @publish_data_flow_from_arg_async(status=DataFlowStatus.RECEIVED)
+    @publish_from_arg_async(status=DataFlowStatus.RECEIVED)
     async def handle_controller_message(self, data: U):
         await self.event_bus.publish(self.u_cls.get_event_type(), data)
 
-    @publish_data_flow_from_return_sync(status=DataFlowStatus.CREATED)
+    @publish_from_return_sync(status=DataFlowStatus.CREATED)
     def process_msg(self, msg: T) -> V:
         """
         Convert the incoming bus message to the type the model expects.
