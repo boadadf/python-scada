@@ -176,7 +176,7 @@ class TrackingPublisher:
             except queue.Empty:
                 continue
             logging.debug("[TrackingPublisher] worker got item from queue: %s", item)
-            
+
             if item is None:
                 logger.debug("[TrackingPublisher] worker received shutdown sentinel")
                 break
