@@ -17,7 +17,7 @@ COPY openscada_lite/web/scada/static/frontend/ ./
 
 # FIX: install custom login module
 COPY openscada_lite/web/login ./node_modules/login
-
+RUN npm install
 RUN npm run build
 
 # ------------------------------
@@ -29,7 +29,7 @@ RUN npm ci
 
 COPY openscada_lite/web/config_editor/static/frontend/ ./
 COPY openscada_lite/web/login ./node_modules/login
-
+RUN npm install
 RUN npm run build
 
 # ------------------------------
@@ -41,7 +41,7 @@ RUN npm ci
 
 COPY openscada_lite/web/security_editor/static/frontend/ ./
 COPY openscada_lite/web/login ./node_modules/login
-
+RUN npm install
 RUN npm run build
 
 # ==============================
