@@ -1,6 +1,4 @@
-import os
 import pytest
-from unittest.mock import patch
 from fastapi.testclient import TestClient
 from openscada_lite.app import app, sio
 
