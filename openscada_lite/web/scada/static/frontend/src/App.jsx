@@ -16,28 +16,34 @@ import StreamView from "./components/StreamView";
 import MainView from "./components/MainView";
 import "leaflet/dist/leaflet.css";
 
-// ---------------------------------------------
-// Tab definitions
-// ---------------------------------------------
-const TABS = [
-  { key: "main", label: "Main", Component: MainView },
-  { key: "image", label: "Image", Component: ImageView },
-  { key: "datapoints", label: "Datapoints", Component: DatapointsView },
-  { key: "communications", label: "Communications", Component: CommunicationsView },
-  { key: "alarms", label: "Alarms", Component: AlarmsView },
-  { key: "commands", label: "Commands", Component: CommandsView },
-  { key: "tracking", label: "Tracking", Component: TrackingView },
-  { key: "streams", label: "Streams", Component: StreamView }
-];
+// Map tab names to components
+const TAB_COMPONENTS = {
+  Main: MainView,
+  Image: ImageView,
+  Datapoints: DatapointsView,
+  Communications: CommunicationsView,
+  Alarms: AlarmsView,
+  Commands: CommandsView,
+  Tracking: TrackingView,
+  Streams: StreamView
+};
 
 // ---------------------------------------------
 // Private SCADA App (shown after login)
 // ---------------------------------------------
 function PrivateApp() {
-  const [activeTab, setActiveTab] = useState("main");
+  const [activeTab, setActiveTab] = useState("Main");
   const [alarmActive, setAlarmActive] = useState(false);
   const [selectedSvg, setSelectedSvg] = useState(null);
+  const [tabs, setTabs] = useState([]);
   const alarmBtnRef = useRef();
+
+  useEffect(() => {
+    // Fetch tabs from backend
+    fetch("/frontend/api/tabs")
+      .then(res => res.json())
+      .then(setTabs);
+  }, []);
 
   useEffect(() => {
     function handleMessage(event) {
@@ -52,7 +58,7 @@ function PrivateApp() {
     let svgName = navigatePath;
     if (svgName && svgName.includes("/")) svgName = svgName.split("/").pop();
     setSelectedSvg(svgName);
-    setActiveTab("main");
+    setActiveTab("Main");
   };
 
   return (
@@ -60,34 +66,38 @@ function PrivateApp() {
       <TopMenu />
 
       <div className="tabs">
-        {TABS.map(tab => (
+        {tabs.map(tab => (
           <button
-            key={tab.key}
-            className={`tab-btn${activeTab === tab.key ? " active" : ""}`}
-            onClick={() => setActiveTab(tab.key)}
-            ref={tab.key === "alarms" ? alarmBtnRef : undefined}
-            style={tab.key === "alarms" && alarmActive ? { background: "red", color: "white" } : {}}
+            key={tab}
+            className={`tab-btn${activeTab === tab ? " active" : ""}`}
+            onClick={() => setActiveTab(tab)}
+            ref={tab === "Alarms" ? alarmBtnRef : undefined}
+            style={tab === "Alarms" && alarmActive ? { background: "red", color: "white" } : {}}
           >
-            {tab.label}
+            {tab}
           </button>
         ))}
       </div>
 
-      {TABS.map(tab => (
-        <div
-          key={tab.key}
-          className="tab-content"
-          style={{ display: activeTab === tab.key ? "block" : "none" }}
-        >
-          {tab.key === "gis" ? (
-            <tab.Component active={activeTab === "gis"} onMarkerClick={handleMarkerClick} />
-          ) : tab.key === "image" ? (
-            <tab.Component selectedSvgProp={selectedSvg} />
-          ) : (
-            <tab.Component />
-          )}
-        </div>
-      ))}
+      {tabs.map(tab => {
+        const Component = TAB_COMPONENTS[tab];
+        if (!Component) return null;
+        return (
+          <div
+            key={tab}
+            className="tab-content"
+            style={{ display: activeTab === tab ? "block" : "none" }}
+          >
+            {tab === "Image" ? (
+              <Component selectedSvgProp={selectedSvg} />
+            ) : tab === "Main" ? (
+              <Component active={activeTab === "Main"} onMarkerClick={handleMarkerClick} />
+            ) : (
+              <Component />
+            )}
+          </div>
+        );
+      })}
 
       <StatusBar />
     </div>

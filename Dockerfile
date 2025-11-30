@@ -10,9 +10,14 @@ WORKDIR /app
 # ------------------------------
 WORKDIR /app/openscada_lite/web/scada/static/frontend
 COPY openscada_lite/web/scada/static/frontend/package*.json ./
-RUN npm install
+RUN npm ci
+
+# Copy the source code
 COPY openscada_lite/web/scada/static/frontend/ ./
+
+# FIX: install custom login module
 COPY openscada_lite/web/login ./node_modules/login
+
 RUN npm run build
 
 # ------------------------------
@@ -20,9 +25,11 @@ RUN npm run build
 # ------------------------------
 WORKDIR /app/openscada_lite/web/config_editor/static/frontend
 COPY openscada_lite/web/config_editor/static/frontend/package*.json ./
-RUN npm install
+RUN npm ci
+
 COPY openscada_lite/web/config_editor/static/frontend/ ./
 COPY openscada_lite/web/login ./node_modules/login
+
 RUN npm run build
 
 # ------------------------------
@@ -30,9 +37,11 @@ RUN npm run build
 # ------------------------------
 WORKDIR /app/openscada_lite/web/security_editor/static/frontend
 COPY openscada_lite/web/security_editor/static/frontend/package*.json ./
-RUN npm install
+RUN npm ci
+
 COPY openscada_lite/web/security_editor/static/frontend/ ./
 COPY openscada_lite/web/login ./node_modules/login
+
 RUN npm run build
 
 # ==============================

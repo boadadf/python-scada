@@ -195,6 +195,20 @@
     },
     {
       "name": "stream"
+    },
+    {
+      "name": "frontend",
+      "config": {
+        "tabs": [
+          "Main",
+          "Datapoints",
+          "Communications",
+          "Alarms",
+          "Commands",
+          "Tracking",
+          "Streams"
+        ]
+      }
     }
   ],
   "rules": [

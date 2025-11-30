@@ -161,9 +161,7 @@ class TrackingPublisher:
         if self.mode == "file":
             try:
                 with open(self.file_path, "a") as f:
-                    f.write(
-                        json.dumps(item.get_track_payload(), default=safe_serialize) + "\n"
-                    )
+                    f.write(json.dumps(item.get_track_payload(), default=safe_serialize) + "\n")
             except Exception:
                 logger.exception("[TrackingPublisher] failed writing event to file")
 
