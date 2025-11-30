@@ -24,3 +24,4 @@ class DataFlowStatus(Enum):
     BLOCKED = "blocked"
     FORWARDED = "forwarded"
     CREATED = "created"
+    USER_ACTION = "user_action"

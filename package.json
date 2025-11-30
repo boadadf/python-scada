@@ -1,5 +1,6 @@
 {
   "dependencies": {
-    "eventlet": "^0.1.0"
+    "eventlet": "^0.1.0",
+    "jwt-decode": "^4.0.0"
   }
 }

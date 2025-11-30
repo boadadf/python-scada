@@ -28,7 +28,7 @@ def clear_event_bus():
 
 @pytest.mark.asyncio
 async def test_full_system_with_recursive_alarms_and_feedback():
-    Config.get_instance("tests/test_config.json")
+    Config.get_instance("tests/config/test_config.json")
     # EventBus
     bus = EventBus.get_instance()
     model = AlarmModel()

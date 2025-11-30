@@ -7,7 +7,7 @@ from openscada_lite.common.config.config import Config
 @pytest.fixture
 def sample_config_file():
     # Path to test_config.json in the tests directory
-    return os.path.join(os.path.dirname(__file__), "test_config.json")
+    return os.path.join(os.path.dirname(__file__), "config/test_config.json")
 
 
 def test_validate_value(sample_config_file):

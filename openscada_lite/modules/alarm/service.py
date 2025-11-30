@@ -17,7 +17,7 @@
 import copy
 from typing import Union
 from openscada_lite.common.tracking.tracking_types import DataFlowStatus
-from openscada_lite.common.tracking.decorators import publish_data_flow_from_return_sync
+from openscada_lite.common.tracking.decorators import publish_from_return_sync
 from openscada_lite.modules.alarm.controller import AlarmController
 from openscada_lite.modules.alarm.model import AlarmModel
 from openscada_lite.modules.alarm.utils import Utils
@@ -59,7 +59,7 @@ class AlarmService(BaseService[Union[RaiseAlarmMsg, LowerAlarmMsg], AckAlarmMsg,
         # Other cases, the alarm cannot be accepted
         return False
 
-    @publish_data_flow_from_return_sync(status=DataFlowStatus.CREATED)
+    @publish_from_return_sync(status=DataFlowStatus.CREATED)
     def process_msg(self, msg) -> AlarmUpdateMsg:
         # Raise can one mean reset deactivation and acknowledge to None
         if isinstance(msg, RaiseAlarmMsg):

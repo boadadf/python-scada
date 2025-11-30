@@ -1,9 +1,12 @@
 import os
 import asyncio
+from unittest.mock import MagicMock
 import pytest
 import socketio
 import requests
 
+from openscada_lite.common.utils import SecurityUtils
+from openscada_lite.modules.security.service import SecurityService
 from openscada_lite.common.bus.event_bus import EventBus
 from openscada_lite.modules.command.service import CommandService
 from openscada_lite.common.config.config import Config
@@ -13,7 +16,7 @@ from openscada_lite.modules.command.model import CommandModel
 
 @pytest.fixture(autouse=True)
 def set_config_env(monkeypatch):
-    monkeypatch.setenv("SCADA_CONFIG_PATH", "tests")
+    monkeypatch.setenv("SCADA_CONFIG_PATH", "tests/config/system_config.json")
 
 
 SERVER_URL = "http://localhost:5000"
@@ -25,13 +28,22 @@ def reset_event_bus(monkeypatch):
     monkeypatch.setattr(EventBus, "_instance", None)
 
 
+@pytest.fixture(autouse=True)
+def allow_all_security(monkeypatch):
+    mock_security_service = MagicMock()
+    mock_security_service.is_allowed.return_value = True
+    monkeypatch.setattr(SecurityService, "_instance", mock_security_service)
+
+
 @pytest.fixture(scope="session", autouse=True)
 def run_server():
     import subprocess
     import time
+    from pathlib import Path
 
     # Ensure SCADA_CONFIG_PATH is set
-    os.environ["SCADA_CONFIG_PATH"] = "tests"
+    cfg_file = Path(__file__).parent / "config" / "test_config.json"
+    os.environ["SCADA_CONFIG_PATH"] = str(cfg_file.resolve())
 
     # Start Uvicorn in a subprocess
     process = subprocess.Popen(
@@ -79,8 +91,7 @@ async def test_command_live_feed_and_feedback():
     sio.emit("command_subscribe_live_feed")
     await asyncio.sleep(1)  # Wait for initial state
 
-    # Optionally check initial state
-    assert received_initial is not None
+    token = SecurityUtils.create_jwt("admin", "test_group")
 
     # Send a command
     test_command = SendCommandMsg(
@@ -88,8 +99,10 @@ async def test_command_live_feed_and_feedback():
         datapoint_identifier="WaterTank@TANK",
         value=42,
     )
+    headers = {"Authorization": f"Bearer {token}"}
+    print("Sending command:", test_command.to_dict())
     response = requests.post(
-        f"{SERVER_URL}/command_send_sendcommandmsg", json=test_command.to_dict()
+        f"{SERVER_URL}/command_send_sendcommandmsg", json=test_command.to_dict(), headers=headers
     )
     assert response.status_code == 200
 

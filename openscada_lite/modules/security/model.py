@@ -22,8 +22,11 @@ import threading
 from typing import List
 
 from fastapi import APIRouter
-from openscada_lite.modules.base.base_model import BaseModel
 from openscada_lite.common.config.config import Config
+from openscada_lite.modules.base.base_model import BaseModel
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class SecurityModel(BaseModel[None]):
@@ -32,6 +35,7 @@ class SecurityModel(BaseModel[None]):
         super().__init__()
         self._lock = threading.RLock()  # Initialize _lock first
         self.file_path = Config.get_instance().get_security_config_path()
+        print(f"Security config file path: {self.file_path}")
         self.endpoints = set()  # registered endpoint names
         self._load()
 
@@ -58,7 +62,7 @@ class SecurityModel(BaseModel[None]):
     def get_all_users_list(self) -> List[dict]:
         with self._lock:
             return copy.deepcopy(self._data["users"])
-        
+
     def get_all_groups_list(self) -> List[dict]:
         with self._lock:
             return copy.deepcopy(self._data["groups"])

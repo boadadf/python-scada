@@ -345,7 +345,7 @@ class DataFlowEventMsg(DTO):
 
     @classmethod
     def get_event_type(cls) -> EventType:
-        return EventType.FLOW_EVENT
+        return EventType.TRACKING_EVENT
 
     def to_dict(self):
         return self._default_to_dict()

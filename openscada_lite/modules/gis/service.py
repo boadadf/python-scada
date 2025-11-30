@@ -18,6 +18,10 @@ from openscada_lite.modules.base.base_service import BaseService
 from openscada_lite.common.models.dtos import AlarmUpdateMsg, GisUpdateMsg, TagUpdateMsg
 from typing import Union
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 class GisService(BaseService[Union[TagUpdateMsg, AlarmUpdateMsg], None, GisUpdateMsg]):
     def __init__(self, event_bus, model, controller):
@@ -44,11 +48,11 @@ class GisService(BaseService[Union[TagUpdateMsg, AlarmUpdateMsg], None, GisUpdat
                 navigation_type=icon_cfg.get("navigation_type"),
                 extra={"datapoint-value": None},
             )
-            print(f"Initializing GIS icon: {gis_msg}")
+            logger.debug(f"Initializing GIS icon: {gis_msg}")
             self.model.update(gis_msg)
 
     def process_msg(self, msg: TagUpdateMsg | AlarmUpdateMsg) -> GisUpdateMsg | None:
-        print(f"=================================GisService processing message: {msg}")
+        logger.debug(f"=================================GisService processing message: {msg}")
         for icon_cfg in self.gis_icons_config:
             if isinstance(msg, TagUpdateMsg):
                 result = self._process_tag_update(msg, icon_cfg)

@@ -7,6 +7,7 @@ from fastapi import FastAPI, APIRouter
 from httpx import AsyncClient
 from httpx._transports.asgi import ASGITransport
 
+from openscada_lite.modules.security.service import SecurityService
 from openscada_lite.common.models.dtos import (
     DriverConnectCommand,
     DriverConnectStatus,
@@ -41,7 +42,7 @@ def reset_connector_manager(monkeypatch):
 @pytest.fixture(scope="session", autouse=True)
 def set_scada_config_path():
     """Ensure SCADA_CONFIG_PATH points to the test configuration."""
-    os.environ["SCADA_CONFIG_PATH"] = "system_config.json"
+    os.environ["SCADA_CONFIG_PATH"] = "tests/system_config.json"
     print(f"[TEST SETUP] SCADA_CONFIG_PATH set to {os.environ['SCADA_CONFIG_PATH']}")
 
 
@@ -60,6 +61,13 @@ def dummy_event_bus():
             pass  # To implement if needed by the test
 
     return DummyEventBus()
+
+
+@pytest.fixture(autouse=True)
+def allow_all_security(monkeypatch):
+    mock_security_service = MagicMock()
+    mock_security_service.is_allowed.return_value = True
+    monkeypatch.setattr(SecurityService, "_instance", mock_security_service)
 
 
 @pytest.fixture
@@ -101,7 +109,9 @@ async def test_connect_driver_valid_status(fastapi_app):
         response = await ac.post("/communication_send_driverconnectcommand", json=data.to_dict())
 
     assert response.status_code == 200
-    assert response.json() == {"status": "ok", "reason": "Request accepted."}
+    assert response.json()["status"] == "ok"
+    assert response.json()["reason"] == "Request accepted."
+    assert "data" in response.json()  # Optionally check for data key
     controller.service.handle_controller_message.assert_called_once_with(data)
 
 
@@ -110,6 +120,10 @@ async def test_connect_driver_invalid_status(fastapi_app):
     app, controller = fastapi_app
     controller.service.handle_controller_message = AsyncMock(return_value=True)
 
+    mock_security_service = MagicMock()
+    mock_security_service.is_allowed.return_value = True
+    SecurityService._instance = mock_security_service
+
     # Use ASGITransport to wrap the FastAPI app
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://testserver") as ac:  # NOSONAR
@@ -117,17 +131,18 @@ async def test_connect_driver_invalid_status(fastapi_app):
         response = await ac.post("/communication_send_driverconnectcommand", json=data.to_dict())
 
     assert response.status_code == 400
-    assert response.json() == {
-        "status": "error",
-        "reason": "Invalid status. Must be 'connect', 'disconnect', or 'toggle'.",
-    }
+    assert response.json()["status"] == "error"
+    assert (
+        response.json()["reason"] == "Invalid status. Must be 'connect', 'disconnect', or 'toggle'."
+    )
+    assert "data" in response.json()  # Optionally check for data key
     controller.service.handle_controller_message.assert_not_called()
 
 
 @pytest.mark.asyncio
 async def test_publish_status_emits(fastapi_app):
     Config.reset_instance()
-    Config.get_instance("tests/test_config.json")
+    Config.get_instance("tests/config/test_config.json")
 
     _, controller = fastapi_app
 
@@ -175,7 +190,7 @@ async def test_publish_status_emits(fastapi_app):
 @pytest.mark.asyncio
 async def test_service_publishes_connect_status(service):
     Config.reset_instance()
-    Config.get_instance("tests/test_config.json")
+    Config.get_instance("tests/config/test_config.json")
 
     bus = EventBus.get_instance()
     comm_service = CommunicationService(bus, CommunicationModel(), None)
@@ -235,7 +250,7 @@ def test_driver_initial_status_is_disconnected():
 @pytest.mark.asyncio
 async def test_driver_publishes_disconnected_status_on_start():
     Config.reset_instance()
-    Config.get_instance("tests/test_config.json")
+    Config.get_instance("tests/config/test_config.json")
     bus = EventBus.get_instance()
     comm_service = CommunicationService(bus, CommunicationModel(), None)
     manager = comm_service.connection_manager

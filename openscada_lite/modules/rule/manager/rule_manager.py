@@ -24,7 +24,7 @@ the lifecycle state for each rule.
 
 import re
 from asteval import Interpreter
-from openscada_lite.common.tracking.decorators import publish_data_flow_from_arg_async
+from openscada_lite.common.tracking.decorators import publish_from_arg_async
 from openscada_lite.modules.rule.actioncommands.action import Action
 from openscada_lite.common.tracking.tracking_types import DataFlowStatus
 from openscada_lite.common.bus.event_types import EventType
@@ -121,7 +121,7 @@ class RuleEngine:
         """
         self.event_bus.subscribe(EventType.TAG_UPDATE, self.on_tag_update)
 
-    @publish_data_flow_from_arg_async(status=DataFlowStatus.RECEIVED)
+    @publish_from_arg_async(status=DataFlowStatus.RECEIVED)
     async def on_tag_update(self, msg: TagUpdateMsg):
         """
         Callback for tag update events. Evaluates rules impacted by the tag and executes actions.
@@ -150,8 +150,10 @@ class RuleEngine:
         """Log tag update information."""
         safe_key = self._safe_key(tag_id)
         print(f"[RuleEngine] Received tag update: {tag_id} = {value}")
-        print(f"[RuleEngine] Updated asteval symbol table: {safe_key} = "
-              f"{self.asteval.symtable[safe_key]}")
+        print(
+            f"[RuleEngine] Updated asteval symbol table: {safe_key} = "
+            f"{self.asteval.symtable[safe_key]}"
+        )
         print(f"[RuleEngine] Impacted rules: {impacted_rules}")
 
     async def _process_rule(self, rule, tag_id, track_id):

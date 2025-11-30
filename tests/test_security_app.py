@@ -46,30 +46,23 @@ def client(app):
 
 
 def test_full_config_roundtrip(client):
-    # Prepare full config JSON
+    # Prepare full config JSON (simplified unified test setup)
     config = {
         "groups": [
             {
-                "name": "all_group",
+                "name": "test_group",
                 "permissions": [
-                    "alarm_send_ackalarmmsg",
+                    "security_editor_access",
                     "command_send_sendcommandmsg",
-                    "communication_send_driverconnectcommand",
-                    "config_bp.reload_modules",
-                    "config_bp.save_config",
                     "datapoint_send_rawtagupdatemsg",
-                    "security_bp.reload_security",
-                    "security_bp.save_config",
-                    "animation_send_animationupdaterequestmsg",
                 ],
             }
         ],
         "users": [
             {
-                "allowed_apps": ["security_editor", "config_editor", "scada"],
-                "groups": ["all_group"],
-                "password_hash": "8c6976e5b5410415bde908bd4dee15dfb167a9"  # NOSONAR
-                "c873fc4bb8a81f6f2ab448a918",  # NOSONAR
+                "allowed_apps": ["security_editor"],
+                "groups": ["test_group"],
+                "password_hash": "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918",
                 "username": "admin",
             }
         ],
@@ -85,10 +78,11 @@ def test_full_config_roundtrip(client):
     loaded = resp.json()
     assert loaded == config
 
-    # Check users/groups structure
+    # Check structure
     assert "users" in loaded and "groups" in loaded
     assert loaded["users"][0]["username"] == "admin"
-    assert loaded["groups"][0]["name"] == "all_group"
+    assert loaded["groups"][0]["name"] == "test_group"
+    assert "security_editor_access" in loaded["groups"][0]["permissions"]
 
 
 def test_login_admin(client):
@@ -114,8 +108,8 @@ def test_login_admin(client):
     )
     assert resp.status_code == 200
     data = resp.json()
-    assert "token" in data
-    assert data["user"] == "admin"
+    assert "token" in data["data"]
+    assert data["data"]["user"] == "admin"
 
 
 def test_invalid_login(client):
@@ -186,3 +180,45 @@ def test_permissions_structure(client):
     assert len(loaded["users"]) == 2
     assert loaded["groups"][0]["permissions"] == ["p1", "p2"]
     assert loaded["groups"][1]["permissions"] == ["p3"]
+
+
+def test_admin_permissions(client):
+    # Prepare config with admin user and specific permissions
+    config = {
+        "groups": [
+            {
+                "name": "test_group",
+                "permissions": [
+                    "security_editor_access",
+                    "command_send_sendcommandmsg",
+                    "datapoint_send_rawtagupdatemsg",
+                ],
+            }
+        ],
+        "users": [
+            {
+                "allowed_apps": ["security_editor"],
+                "groups": ["test_group"],
+                "password_hash": "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918",
+                "username": "admin",
+            }
+        ],
+    }
+    resp = client.post("/security-editor/api/config", json=config)
+    assert resp.status_code == 200
+
+    # Test login
+    resp = client.post(
+        "/security/login",
+        json={"username": "admin", "password": "admin", "app": "security_editor"},  # NOSONAR
+    )
+    assert resp.status_code == 200
+
+    # Verify permissions in config
+    resp = client.get("/security-editor/api/config")
+    assert resp.status_code == 200
+    loaded = resp.json()
+    perms = loaded["groups"][0]["permissions"]
+    assert "security_editor_access" in perms
+    assert "command_send_sendcommandmsg" in perms
+    assert "datapoint_send_rawtagupdatemsg" in perms

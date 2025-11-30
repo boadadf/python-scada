@@ -5,6 +5,7 @@ from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 
+
 def mount_enpoints(app):
     web_dir = Path(__file__).parent
 

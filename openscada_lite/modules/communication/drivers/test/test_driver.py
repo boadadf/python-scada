@@ -20,7 +20,7 @@ from abc import ABC, abstractmethod
 from typing import Dict, List, Callable, Any, Optional
 
 from openscada_lite.common.config.config import Config
-from openscada_lite.common.tracking.decorators import publish_data_flow_from_arg_async
+from openscada_lite.common.tracking.decorators import publish_from_arg_async
 from openscada_lite.common.tracking.tracking_types import DataFlowStatus
 from openscada_lite.common.models.dtos import (
     DriverConnectStatus,
@@ -110,7 +110,7 @@ class TestDriver(DriverProtocol, ABC):
         msg = DriverConnectStatus(driver_name=self._server_name, status=state)
         await self._safe_invoke(self._communication_status_callback, msg)
 
-    @publish_data_flow_from_arg_async(status=DataFlowStatus.RECEIVED)
+    @publish_from_arg_async(status=DataFlowStatus.RECEIVED)
     async def send_command(self, data: SendCommandMsg):
         if not self._command_feedback_callback:
             return
@@ -270,7 +270,7 @@ class TestDriver(DriverProtocol, ABC):
             )
             await self._safe_invoke(self._value_callback, msg)
 
-    @publish_data_flow_from_arg_async(status=DataFlowStatus.CREATED)
+    @publish_from_arg_async(status=DataFlowStatus.CREATED)
     async def _publish_value(self, tag: RawTagUpdateMsg):
         await self._safe_invoke(self._value_callback, tag)
 

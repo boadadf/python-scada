@@ -16,7 +16,7 @@
 
 # communications_service.py
 from typing import Union
-from openscada_lite.common.tracking.decorators import publish_data_flow_from_arg_async
+from openscada_lite.common.tracking.decorators import publish_from_arg_async
 from openscada_lite.common.tracking.tracking_types import DataFlowStatus
 from openscada_lite.common.bus.event_types import EventType
 from openscada_lite.modules.communication.manager.connector_manager import (
@@ -58,7 +58,7 @@ class CommunicationService(
         # We accept the update that is coming from the on_driver_connect_status calling super
         return True
 
-    @publish_data_flow_from_arg_async(status=DataFlowStatus.RECEIVED)
+    @publish_from_arg_async(status=DataFlowStatus.RECEIVED)
     async def handle_bus_message(self, data):
         if isinstance(data, SendCommandMsg):
             # Forward command to connection manager
@@ -82,6 +82,6 @@ class CommunicationService(
     async def handle_controller_message(self, data: DriverConnectCommand):
         await self.connection_manager.handle_driver_connect_command(data)
 
-    @publish_data_flow_from_arg_async(status=DataFlowStatus.RECEIVED)
+    @publish_from_arg_async(status=DataFlowStatus.RECEIVED)
     async def on_driver_command(self, msg: SendCommandMsg):
         await self.event_bus.publish(EventType.SEND_COMMAND, msg)

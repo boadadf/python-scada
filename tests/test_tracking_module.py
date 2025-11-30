@@ -53,7 +53,7 @@ async def test_service_bus_mode_adds_event(model, controller, sample_event):
                 asyncio.create_task(self.subscribed[event_type](event))
 
     event_bus = DummyBus()
-    config = Config.get_instance("tests/test_config.json")
+    config = Config.get_instance("tests/config/test_config.json")
     config.get_module_config("tracking")["mode"] = "bus"
     service = TrackingService(event_bus, model, controller)
     # Simulate event bus publishing

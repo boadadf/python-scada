@@ -5,8 +5,9 @@ import asyncio
 import pytest
 import socketio
 import aiofiles
-from common.models.dtos import RawTagUpdateMsg
+from openscada_lite.common.models.dtos import RawTagUpdateMsg
 import requests
+from openscada_lite.common.utils import SecurityUtils
 
 SERVER_URL = "http://localhost:5001"
 
@@ -18,7 +19,7 @@ def run_server():
     import os
 
     # Ensure SCADA_CONFIG_PATH is set
-    os.environ["SCADA_CONFIG_PATH"] = "tests"
+    os.environ["SCADA_CONFIG_PATH"] = "tests/config/test_config.json"
 
     # Start Uvicorn in a subprocess
     process = subprocess.Popen(
@@ -69,7 +70,9 @@ async def test_live_feed_and_set_tag_real():
     sio.emit("datapoint_subscribe_live_feed")
     await asyncio.sleep(1)  # Wait for initial state
 
-    async with aiofiles.open(os.path.join(os.path.dirname(__file__), "test_config.json")) as f:
+    async with aiofiles.open(
+        os.path.join(os.path.dirname(__file__), "config", "test_config.json")
+    ) as f:
         content = await f.read()
         config = json.loads(content)
 
@@ -82,6 +85,8 @@ async def test_live_feed_and_set_tag_real():
     initial_tags = {dp["datapoint_identifier"] for dp in received_initial[0]}
     for tag in expected_tags:
         assert tag in initial_tags
+    token = SecurityUtils.create_jwt("admin", "test_group")
+    headers = {"Authorization": f"Bearer {token}"}
 
     # Set a value for one tag using HTTP POST (if you have a REST endpoint), or via WebSocket
     test_tag = expected_tags[0]
@@ -89,6 +94,7 @@ async def test_live_feed_and_set_tag_real():
     requests.post(
         f"{SERVER_URL}/datapoint_send_rawtagupdatemsg",
         json=RawTagUpdateMsg(test_tag, test_value, "good", None).to_dict(),
+        headers=headers,
     )
     await asyncio.sleep(1.1)  # Wait for update
 
