@@ -1,5 +1,7 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useLiveFeed } from "../livefeed/openscadalite";
+import { useUserAction } from "../contexts/UserActionContext"; // <-- import
+
 
 const MAX_EVENTS = 100;
 
@@ -15,10 +17,21 @@ function eventKey(event) {
 
 export default function TrackingView() {
   const [eventsObj] = useLiveFeed("tracking", "datafloweventmsg", eventKey);
+  const {setPayload } = useUserAction(); // <-- get setter
 
   const [trackIdFilter, setTrackIdFilter] = useState("");
   const [eventTypeFilter, setEventTypeFilter] = useState("");
   const [sourceFilter, setSourceFilter] = useState("");
+
+  useEffect(() => {
+    // Find the latest user_action event
+    const userActionEvent = Object.values(eventsObj)
+      .filter(e => e.event_type === "user_action")
+      .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))[0];
+    if (userActionEvent) {
+      setPayload(userActionEvent.payload);
+    }
+  }, [eventsObj, setPayload]);
 
   // Convert to array and prepare filtered/sorted list
   const filteredEvents = useMemo(() => {

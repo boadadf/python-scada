@@ -10,6 +10,7 @@ import AlarmsView from "./components/AlarmsView";
 import CommandsView from "./components/CommandsView";
 import TrackingView from "./components/TrackingView";
 import { AlertProvider } from "./contexts/AlertContext";
+import { UserActionProvider } from "./contexts/UserActionContext";
 import AlertPopup from "./components/AlertPopup";
 import StreamView from "./components/StreamView";
 import MainView from "./components/MainView";
@@ -116,8 +117,10 @@ export default function App() {
     <AuthProvider>
       <RequireAuth>
         <AlertProvider>
-          <PrivateApp />
-          <AlertPopup />
+          <UserActionProvider>
+            <PrivateApp />
+            <AlertPopup />
+          </UserActionProvider>
         </AlertProvider>
       </RequireAuth>
     </AuthProvider>
