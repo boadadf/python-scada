@@ -125,6 +125,48 @@ class TrackingPublisher:
         self.queue.put(event)
         logging.debug("[TrackingPublisher] queued event %s %s", event.track_id, status)
 
+    def _is_ready_to_publish(self) -> bool:
+        """Check if the publisher is ready to publish events."""
+        return (
+            self._enabled
+            and self.loop is not None
+            and getattr(self.loop, "is_running", lambda: False)()
+        )
+
+    def _requeue_event(self, item: DataFlowEventMsg):
+        """Requeue an event when not ready to publish."""
+        logging.debug(
+            "[TrackingPublisher] not enabled or loop not ready, requeuing event %s",
+            item.track_id,
+        )
+        try:
+            self.queue.put(item)
+        except Exception:
+            logger.exception("[TrackingPublisher] failed to requeue event")
+        self._stop_event.wait(0.2)
+
+    def _publish_to_event_bus(self, item: DataFlowEventMsg):
+        """Publish event to the event bus."""
+        try:
+            logging.debug("[TrackingPublisher] scheduling publish for %s", item.track_id)
+            asyncio.run_coroutine_threadsafe(
+                EventBus.get_instance().publish(EventType.TRACKING_EVENT, item),
+                self.loop,
+            )
+        except Exception:
+            logger.exception("[TrackingPublisher] failed scheduling publish for event")
+
+    def _persist_to_file(self, item: DataFlowEventMsg):
+        """Persist event to file if mode is 'file'."""
+        if self.mode == "file":
+            try:
+                with open(self.file_path, "a") as f:
+                    f.write(
+                        json.dumps(item.get_track_payload(), default=safe_serialize) + "\n"
+                    )
+            except Exception:
+                logger.exception("[TrackingPublisher] failed writing event to file")
+
     def _worker(self):
         """Background worker that drains buffer and attempts delivery when enabled."""
         logging.debug("[TrackingPublisher] worker started, waiting for events...")
@@ -134,50 +176,17 @@ class TrackingPublisher:
             except queue.Empty:
                 continue
             logging.debug("[TrackingPublisher] worker got item from queue: %s", item)
-            # Shutdown sentinel
+            
             if item is None:
                 logger.debug("[TrackingPublisher] worker received shutdown sentinel")
                 break
 
-            # If not enabled or loop missing, requeue and sleep briefly
-            if (
-                not self._enabled
-                or not self.loop
-                or not getattr(self.loop, "is_running", lambda: False)()
-            ):
-                logging.debug(
-                    "[TrackingPublisher] not enabled or loop not ready, requeuing event %s",
-                    item.track_id,
-                )
-                # Push back (simple strategy): sleep then requeue end-of-line
-                try:
-                    self.queue.put(item)
-                except Exception:
-                    logger.exception("[TrackingPublisher] failed to requeue event")
-                # avoid a tight spin
-                self._stop_event.wait(0.2)
+            if not self._is_ready_to_publish():
+                self._requeue_event(item)
                 continue
 
-            # schedule publish (fire-and-forget)
-            try:
-                logging.debug("[TrackingPublisher] scheduling publish for %s", item.track_id)
-                # schedule coroutine on the running loop (do NOT call result())
-                asyncio.run_coroutine_threadsafe(
-                    EventBus.get_instance().publish(EventType.TRACKING_EVENT, item),
-                    self.loop,
-                )
-            except Exception:
-                logger.exception("[TrackingPublisher] failed scheduling publish for event")
-            finally:
-                # persist to file if requested — performed by worker thread (sync)
-                if self.mode == "file":
-                    try:
-                        with open(self.file_path, "a") as f:
-                            f.write(
-                                json.dumps(item.get_track_payload(), default=safe_serialize) + "\n"
-                            )
-                    except Exception:
-                        logger.exception("[TrackingPublisher] failed writing event to file")
+            self._publish_to_event_bus(item)
+            self._persist_to_file(item)
 
         logger.debug("[TrackingPublisher] worker exiting")
 
