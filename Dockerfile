@@ -5,43 +5,34 @@ FROM node:20 AS frontend
 
 WORKDIR /app
 
-# ------------------------------
+# Make login module available
+COPY openscada_lite/web/login /app/openscada_lite/web/login
+
+#
 # SCADA frontend
-# ------------------------------
+#
 WORKDIR /app/openscada_lite/web/scada/static/frontend
 COPY openscada_lite/web/scada/static/frontend/package*.json ./
 RUN npm install
-
-# Copy the source code
 COPY openscada_lite/web/scada/static/frontend/ ./
-
-# FIX: install custom login module
-COPY openscada_lite/web/login ./node_modules/login
-
 RUN npm run build
 
-# ------------------------------
+#
 # Config Editor frontend
-# ------------------------------
+#
 WORKDIR /app/openscada_lite/web/config_editor/static/frontend
 COPY openscada_lite/web/config_editor/static/frontend/package*.json ./
 RUN npm install
-
 COPY openscada_lite/web/config_editor/static/frontend/ ./
-COPY openscada_lite/web/login ./node_modules/login
-
 RUN npm run build
 
-# ------------------------------
+#
 # Security Editor frontend
-# ------------------------------
+#
 WORKDIR /app/openscada_lite/web/security_editor/static/frontend
 COPY openscada_lite/web/security_editor/static/frontend/package*.json ./
 RUN npm install
-
 COPY openscada_lite/web/security_editor/static/frontend/ ./
-COPY openscada_lite/web/login ./node_modules/login
-
 RUN npm run build
 
 # ==============================
