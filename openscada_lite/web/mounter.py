@@ -4,6 +4,9 @@
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def mount_enpoints(app):
@@ -12,9 +15,9 @@ def mount_enpoints(app):
     def safe_mount(path: str, directory: Path, name: str):
         if directory.exists():
             app.mount(path, StaticFiles(directory=directory, html=True), name=name)
-            print(f"Mounted '{name}' at '{path}'")
+            logger.debug(f"Mounted '{name}' at '{path}'")
         else:
-            print(f"Skipping mount '{name}': {directory} does not exist")
+            logger.warning(f"Skipping mount '{name}': {directory} does not exist")
 
     # -------------------------
     # SCADA SPA
@@ -50,6 +53,15 @@ def mount_enpoints(app):
         "/static/icons",
         web_dir / "icons",
         "icons",
+    )
+
+    # -------------------------
+    # Config SVGs
+    # -------------------------
+    safe_mount(
+        "/config/svg",
+        web_dir.parent.parent / "config" / "svg",
+        "config_svg",
     )
 
     # -------------------------

@@ -26,6 +26,10 @@ from openscada_lite.modules.base.base_model import BaseModel
 from openscada_lite.common.bus.event_bus import EventBus
 from typing import TYPE_CHECKING
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 T = TypeVar("T", bound=DTO)  # From bus
 U = TypeVar("U", bound=DTO)  # From controller
 V = TypeVar("V", bound=DTO)  # Stored in model and published to view (processed T)
@@ -50,14 +54,14 @@ class BaseService(ABC, Generic[T, U, V]):
         u_cls: Type[U],
         V_cls: Type[V] = None,
     ):
-        print("BaseService initialized")
+        logger.debug("BaseService initialized")
         self.event_bus = event_bus
         self.model = model
         self.controller = controller
         if controller:
             controller.set_service(self)
 
-        # Support single or multiple t_cls
+        logger.debug("BaseService initialized")
         if not isinstance(t_cls, list):
             t_cls = [t_cls]
         self.t_cls_list = t_cls
@@ -85,14 +89,14 @@ class BaseService(ABC, Generic[T, U, V]):
                 if self.controller:
                     self.controller.publish(msg)
                 else:
-                    print(f"No controller to publish {msg} to view")
+                    logger.warning(f"No controller to publish {msg} to view")
         else:
             self.model.update(processed_msg)
             await self.on_model_accepted_bus_update(processed_msg)
             if self.controller:
                 self.controller.publish(processed_msg)
             else:
-                print(f"No controller to publish {processed_msg} to view")
+                logger.warning(f"No controller to publish {processed_msg} to view")
 
     @publish_from_arg_async(status=DataFlowStatus.RECEIVED)
     async def handle_controller_message(self, data: U):

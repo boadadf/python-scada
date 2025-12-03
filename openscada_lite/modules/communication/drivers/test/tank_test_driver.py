@@ -17,6 +17,9 @@
 # tank_test_driver.py
 import datetime
 from openscada_lite.modules.communication.drivers.test.test_driver import TestDriver
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class TankTestDriver(TestDriver):
@@ -29,8 +32,8 @@ class TankTestDriver(TestDriver):
         door_tag = self._tags.get("DOOR")
 
         if not (level_tag and pump_tag and door_tag):
-            print(
-                "[SIM] Missing tag(s):",
+            logger.warning(
+                "[SIM] Missing tag(s): %s",
                 {
                     "TANK": bool(level_tag),
                     "PUMP": bool(pump_tag),

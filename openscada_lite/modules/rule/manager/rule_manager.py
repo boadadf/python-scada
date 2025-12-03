@@ -32,6 +32,9 @@ from openscada_lite.common.config.config import Config
 from openscada_lite.common.bus.event_bus import EventBus
 from openscada_lite.common.models.dtos import TagUpdateMsg
 from openscada_lite.modules.rule.actioncommands.command_map import ACTION_MAP
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class RuleEngine:
@@ -73,6 +76,16 @@ class RuleEngine:
         self.asteval = Interpreter()
         self.asteval.symtable["TRUE"] = True
         self.asteval.symtable["FALSE"] = False
+        config = Config.get_instance()
+        dp_types = config.get_types()
+        logger.info(f"Initializing RuleEngine with datapoint types: {list(dp_types.keys())}")
+        for dp in dp_types.values():
+            values = dp.get("values", [])
+            for val in values:
+                # Add raw and upper-case (to avoid case mismatch)
+                if isinstance(val, str):
+                    self.asteval.symtable[val] = val
+                    self.asteval.symtable[val.upper()] = val
         self.rules = []
         self.datapoint_state = {}
         self.tag_to_rules = {}  # tag_id -> [rules]
@@ -149,12 +162,12 @@ class RuleEngine:
     def _log_tag_update(self, tag_id, value, impacted_rules):
         """Log tag update information."""
         safe_key = self._safe_key(tag_id)
-        print(f"[RuleEngine] Received tag update: {tag_id} = {value}")
-        print(
+        logger.debug(f"[RuleEngine] Received tag update: {tag_id} = {value}")
+        logger.debug(
             f"[RuleEngine] Updated asteval symbol table: {safe_key} = "
             f"{self.asteval.symtable[safe_key]}"
         )
-        print(f"[RuleEngine] Impacted rules: {impacted_rules}")
+        logger.debug(f"[RuleEngine] Impacted rules: {impacted_rules}")
 
     async def _process_rule(self, rule, tag_id, track_id):
         """Process a single rule evaluation and execution."""
@@ -175,10 +188,10 @@ class RuleEngine:
         """Evaluate on and off conditions for a rule."""
         try:
             on_result = self.asteval(rule.on_condition.replace("@", "__"))
-            print(f"[RuleEngine] Evaluated on_condition for rule {rule_id}: {on_result}")
+            logger.debug(f"[RuleEngine] Evaluated on_condition for rule {rule_id}: {on_result}")
 
             if self.asteval.error:
-                print("asteval errors:", self.asteval.error)
+                logger.error(f"asteval errors: {self.asteval.error}")
 
             off_cond = getattr(rule, "off_condition", None)
             has_off = bool(off_cond and off_cond.strip())
@@ -189,7 +202,7 @@ class RuleEngine:
 
             return on_result, has_off, off_result
         except Exception as e:
-            print(f"[RuleEngine] Error evaluating rule {rule_id}: {e}")
+            logger.error(f"[RuleEngine] Error evaluating rule {rule_id}: {e}")
             return None
 
     async def _handle_on_off_rule(self, rule, rule_id, on_result, off_result, tag_id, track_id):

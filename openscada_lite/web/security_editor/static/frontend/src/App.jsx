@@ -42,6 +42,9 @@ import { AuthProvider, useAuth, Login } from "login";
 
 const DEFAULT_CONFIG = { users: [], groups: [] };
 
+// Always use this constant for backend operations
+const CONFIG_FILENAME = "system_config.json";
+
 function SecureApp() {
   const [config, setConfig] = useState(DEFAULT_CONFIG);
   const [activeTab, setActiveTab] = useState("Users");
@@ -78,6 +81,21 @@ function SecureApp() {
       setDirty(false);
     } catch (err) {
       alert("Failed to save: " + err.message);
+    }
+  }
+
+  // When saving/uploading:
+  async function saveConfigToBackend() {
+    try {
+      const res = await fetch(`/api/config/save`, {
+        method: "POST",
+        body: JSON.stringify({ filename: CONFIG_FILENAME, content: config }),
+        headers: { "Content-Type": "application/json" },
+      });
+      if (!res.ok) throw new Error(await res.text());
+      console.log("Config saved to backend");
+    } catch (err) {
+      console.error("Failed to save config to backend: " + err.message);
     }
   }
 

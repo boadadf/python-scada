@@ -1,0 +1,8 @@
+[run]
+source = openscada_lite
+relative_files = true
+branch = True
+
+[report]
+omit =
+    */__init__.py

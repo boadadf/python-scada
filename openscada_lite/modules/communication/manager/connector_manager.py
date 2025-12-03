@@ -38,6 +38,10 @@ from openscada_lite.modules.communication.drivers.driver_protocol import DriverP
 from openscada_lite.modules.communication.drivers.server_protocol import ServerProtocol
 from openscada_lite.common.config.config import Config
 import datetime
+import logging
+from collections import defaultdict
+
+logger = logging.getLogger(__name__)
 
 
 class ConnectorManager:
@@ -58,10 +62,11 @@ class ConnectorManager:
 
     def __init__(self):
         self.config = Config.get_instance()
-        self.driver_instances: Dict[str, DriverProtocol] = {}  # key: driver name
+        self.driver_instances: Dict[str, DriverProtocol] = {}
         self.types = self.config.get_types()
-        self.driver_status: Dict[str, str] = {}  # key: driver name, value: last status
+        self.driver_status: Dict[str, str] = {}
         self.listener: CommunicationListener = None
+        self.datapoint_to_drivers: Dict[str, set] = defaultdict(set)
 
         for cfg in self.config.get_drivers():
             datapoint_objs = []
@@ -72,21 +77,24 @@ class ConnectorManager:
                 if dp_type:
                     datapoint_objs.append(Datapoint(name=name, type=dp_type))
                 else:
-                    print(
-                        f"WARNING: Datapoint type '{type_ref}' "
+                    logger.warning(
+                        f"Datapoint type '{type_ref}' "
                         f"for '{name}' not found in dp_types config!"
                     )
             driver_cls = DRIVER_REGISTRY.get(cfg["driver_class"])
             if not driver_cls:
                 raise ValueError(f"Unknown driver class: {cfg['driver_class']}")
             driver_instance: DriverProtocol = driver_cls(**cfg.get("connection_info", {}))
-            driver_instance.initialize(
-                cfg.get("params", {})
-            )  # Pass params if present, else empty dict
+            driver_instance.initialize(cfg.get("params", {}))
             driver_instance.subscribe(datapoint_objs)
-            # Optionally assign datapoints to driver_instance if needed
             self.driver_instances[cfg["name"]] = driver_instance
             self.driver_status[cfg["name"]] = "offline"
+
+            # Register datapoints for this driver
+            for dp in datapoint_objs:
+                # Use full identifier: driver_name@datapoint_name
+                full_id = f"{cfg['name']}@{dp.name}"
+                self.datapoint_to_drivers[full_id].add(driver_instance)
 
     async def init_drivers(self):
         for driver in self.driver_instances.values():
@@ -98,7 +106,8 @@ class ConnectorManager:
             )
 
     async def forward_tag_update(self, msg: TagUpdateMsg):
-        for driver in self.driver_instances.values():
+        # Notify only drivers interested in this datapoint
+        for driver in self.datapoint_to_drivers.get(msg.datapoint_identifier, []):
             if isinstance(driver, ServerProtocol):
                 await driver.handle_tag_update(msg)
 
@@ -174,7 +183,7 @@ class ConnectorManager:
 
     @publish_from_arg_async(status=DataFlowStatus.FORWARDED)
     async def send_command(self, data: SendCommandMsg):
-        print(f"[COMMAND] Sending command: {data.datapoint_identifier} = {data.value}")
+        logger.info(f"[COMMAND] Sending command: {data.datapoint_identifier} = {data.value}")
         config = Config.get_instance()
         server_id, _ = data.datapoint_identifier.split("@", 1)
 
@@ -194,7 +203,7 @@ class ConnectorManager:
             if driver.is_connected:
                 await driver.send_command(data)
             else:
-                print(f"Driver '{server_id}' is not connected. Cannot send command.")
+                logger.warning(f"Driver '{server_id}' is not connected. Cannot send command.")
                 feedback = CommandFeedbackMsg(
                     command_id=data.command_id,
                     datapoint_identifier=data.datapoint_identifier,

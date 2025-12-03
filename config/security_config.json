@@ -3,14 +3,26 @@
     {
       "name": "test_group",
       "permissions": [
-        "security_editor_access"
+        "security_editor_access",
+        "communication_send_driverconnectcommand",
+        "datapoint_send_rawtagupdatemsg",
+        "save_config_as",
+        "animation_send_animationupdaterequestmsg",
+        "save_config",
+        "save_security_config",
+        "restart_app",
+        "command_send_sendcommandmsg",
+        "alarm_send_ackalarmmsg",
+        "alert_send_clientalertfeedbackmsg"
       ]
     }
   ],
   "users": [
     {
       "allowed_apps": [
-        "security_editor"
+        "security_editor",
+        "scada",
+        "config_editor"
       ],
       "groups": [
         "test_group"

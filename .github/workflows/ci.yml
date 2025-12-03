@@ -68,9 +68,17 @@ jobs:
       - name: Run Python lint
         run: flake8 .
 
-      # Run Python tests
-      - name: Run Python tests
-        run: pytest
+      - name: Run tests with coverage
+        run: |
+          pip install pytest pytest-cov
+          coverage run -m pytest
+          coverage xml
+
+      - name: Upload coverage.xml
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage.xml
 
       # SonarCloud analysis
       - name: SonarCloud Scan
@@ -82,6 +90,7 @@ jobs:
             -Dsonar.projectKey=${{ env.SONAR_PROJECT_KEY }}
             -Dsonar.projectName=python-scada
             -Dsonar.sources=openscada_lite
+            -Dsonar.python.coverage.reportPaths=coverage.xml
             -Dsonar.exclusions=**/node_modules/**,**/__pycache__/**,**/.github/**,**/dist/**,openscada_lite/web/scada/static/frontend/**,openscada_lite/web/config_editor/static/frontend/**,openscada_lite/web/security_editor/static/frontend/**
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

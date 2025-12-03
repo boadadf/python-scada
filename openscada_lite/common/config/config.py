@@ -16,6 +16,7 @@
 
 import os
 import json
+from pathlib import Path
 import xml.etree.ElementTree as ET
 from openscada_lite.common.models.entities import Animation, AnimationEntry, Rule
 import logging
@@ -32,7 +33,7 @@ class Config:
         return super().__new__(cls)
 
     def __init__(self, config_path: str):
-        print(f"Config path received: {config_path}")
+        logger.debug(f"Config path received: {config_path}")
         # Always treat config_path as a directory
         config_file = ""
         if os.path.isfile(config_path):
@@ -199,27 +200,25 @@ class Config:
         """
         Internal: Returns the SVG folder path from config or defaults to './svg'.
         """
-        config_dir = (
-            os.path.dirname(self._config_path) if hasattr(self, "_config_path") else os.getcwd()
-        )
-        svg_folder = self._config.get("svg_folder", None)
-        if svg_folder:
-            return os.path.join(config_dir, svg_folder)
-        return os.path.join(config_dir, "svg")
+        logger.debug(f"Config path for SVGs: {self._config_path}")
+        config_dir = Path(self._config_path) / "svg"
+        return str(config_dir)
 
     def get_svg_files(self) -> list:
         """
         Returns SVG file names from config or scans the svg folder.
         """
         svg_files = self._config.get("svg_files", [])
+        logger.debug(f"SVG files from config: {svg_files}")
         if svg_files:
             return svg_files
-
+        logger.debug("No svg_files in config, scanning folder.")
         svg_folder = self._get_svg_folder()
         if not os.path.exists(svg_folder):
+            logger.debug(f"SVG folder does not exist: {svg_folder}")
             # folder missing — return empty list instead of crashing
             return []
-
+        logger.debug(f"Scanning SVG folder: {svg_folder}")
         return [f for f in os.listdir(svg_folder) if f.endswith(".svg")]
 
     def get_animation_datapoint_map(self) -> dict:
@@ -255,14 +254,18 @@ class Config:
         If SCADA_CONFIG_PATH points to a file, use its parent directory.
         """
         raw_path = os.environ.get("SCADA_CONFIG_PATH", "config")
-        print(f"Getting security config path from: {raw_path}")
+        logger.debug(f"Getting security config path from: {raw_path}")
         if os.path.isfile(raw_path):
-            print(f"SCADA_CONFIG_PATH is a file. Using its directory: {os.path.dirname(raw_path)}")
+            logger.debug(
+                f"SCADA_CONFIG_PATH is a file. Using its directory: {os.path.dirname(raw_path)}"
+            )
             base_dir = os.path.dirname(raw_path)
         else:
-            print(f"SCADA_CONFIG_PATH is a directory. Using it directly: {raw_path}")
+            logger.debug(f"SCADA_CONFIG_PATH is a directory. Using it directly: {raw_path}")
             base_dir = raw_path
-        print(f"Security config will be at: {os.path.join(base_dir, 'security_config.json')}")
+        logger.debug(
+            f"Security config will be at: {os.path.join(base_dir, 'security_config.json')}"
+        )
         self.config_path = base_dir
-        print(f"Config path set to: {self.config_path}")
+        logger.debug(f"Config path set to: {self.config_path}")
         return os.path.join(base_dir, "security_config.json")

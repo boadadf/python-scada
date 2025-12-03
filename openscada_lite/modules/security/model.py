@@ -35,7 +35,7 @@ class SecurityModel(BaseModel[None]):
         super().__init__()
         self._lock = threading.RLock()  # Initialize _lock first
         self.file_path = Config.get_instance().get_security_config_path()
-        print(f"Security config file path: {self.file_path}")
+        logger.debug(f"Security config file path: {self.file_path}")
         self.endpoints = set()  # registered endpoint names
         self._load()
 

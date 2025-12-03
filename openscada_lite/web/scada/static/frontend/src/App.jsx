@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import "./App.css";
 import TopMenu from "./components/TopMenu";
 import StatusBar from "./components/StatusBar";
@@ -16,7 +16,6 @@ import StreamView from "./components/StreamView";
 import MainView from "./components/MainView";
 import "leaflet/dist/leaflet.css";
 
-// Map tab names to components
 const TAB_COMPONENTS = {
   Main: MainView,
   Image: ImageView,
@@ -25,103 +24,9 @@ const TAB_COMPONENTS = {
   Alarms: AlarmsView,
   Commands: CommandsView,
   Tracking: TrackingView,
-  Streams: StreamView
+  Streams: StreamView,
 };
 
-// ---------------------------------------------
-// Private SCADA App (shown after login)
-// ---------------------------------------------
-function PrivateApp() {
-  const [activeTab, setActiveTab] = useState("Main");
-  const [alarmActive, setAlarmActive] = useState(false);
-  const [selectedSvg, setSelectedSvg] = useState(null);
-  const [tabs, setTabs] = useState([]);
-  const alarmBtnRef = useRef();
-
-  useEffect(() => {
-    // Fetch tabs from backend
-    fetch("/frontend/api/tabs")
-      .then(res => res.json())
-      .then(setTabs);
-  }, []);
-
-  useEffect(() => {
-    function handleMessage(event) {
-      if (event.data === "RaiseAlert:Alarms") setAlarmActive(true);
-      if (event.data === "LowerAlert:Alarms") setAlarmActive(false);
-    }
-    window.addEventListener("message", handleMessage);
-    return () => window.removeEventListener("message", handleMessage);
-  }, []);
-
-  const handleMarkerClick = (navigatePath) => {
-    let svgName = navigatePath;
-    if (svgName && svgName.includes("/")) svgName = svgName.split("/").pop();
-    setSelectedSvg(svgName);
-    setActiveTab("Main");
-  };
-
-  return (
-    <div className="app-container">
-      <TopMenu />
-
-      <div className="tabs">
-        {tabs.map(tab => (
-          <button
-            key={tab}
-            className={`tab-btn${activeTab === tab ? " active" : ""}`}
-            onClick={() => setActiveTab(tab)}
-            ref={tab === "Alarms" ? alarmBtnRef : undefined}
-            style={tab === "Alarms" && alarmActive ? { background: "red", color: "white" } : {}}
-          >
-            {tab}
-          </button>
-        ))}
-      </div>
-
-      {tabs.map(tab => {
-        const Component = TAB_COMPONENTS[tab];
-        if (!Component) return null;
-        return (
-          <div
-            key={tab}
-            className="tab-content"
-            style={{ display: activeTab === tab ? "block" : "none" }}
-          >
-            {tab === "Image" ? (
-              <Component selectedSvgProp={selectedSvg} />
-            ) : tab === "Main" ? (
-              <Component active={activeTab === "Main"} onMarkerClick={handleMarkerClick} />
-            ) : (
-              <Component />
-            )}
-          </div>
-        );
-      })}
-
-      <StatusBar />
-    </div>
-  );
-}
-
-// ---------------------------------------------
-// Auth Wrapper (like security-editor)
-// ---------------------------------------------
-function RequireAuth({ children }) {
-  const { isAuthenticated, loading } = useAuth();
-
-  if (loading) return null; // don't render anything until auth is known
-
-  if (!isAuthenticated) {
-    return <Login redirectPath="/scada" />;
-  }
-
-  return children;
-}
-
-// ---------------------------------------------
-// Root SCADA App
-// ---------------------------------------------
 export default function App() {
   return (
     <AuthProvider>
@@ -134,5 +39,125 @@ export default function App() {
         </AlertProvider>
       </RequireAuth>
     </AuthProvider>
+  );
+}
+
+function RequireAuth({ children }) {
+  const { isAuthenticated, loading } = useAuth();
+  if (loading) return null;
+  if (!isAuthenticated) return <Login redirectPath="/scada" />;
+  return children;
+}
+
+function PrivateApp() {
+  const [activeTabKey, setActiveTabKey] = useState(null);
+  const [alarmActive, setAlarmActive] = useState(false);
+  const [selectedSvg, setSelectedSvg] = useState(null); // for ImageView when using dropdown mode
+  const [tabs, setTabs] = useState([]); // normalized tab objects
+  const alarmBtnRef = useRef();
+
+  useEffect(() => {
+    // fetch tab array from backend
+    fetch("/frontend/api/tabs")
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error("no tabs"))))
+      .then((fetched) => {
+        // fetched is expected to be array of strings like ["Main","Image","Image(stress_test)"]
+        const normalized = fetched.map((t, idx) => {
+          if (typeof t !== "string") return { key: `tab_${idx}`, label: String(t), raw: t };
+          const imageMatch = /^Image\(([^)]+)\)$/i.exec(t.trim());
+          if (imageMatch) {
+            const svgName = imageMatch[1];
+            // key unique per forced image tab
+            return { key: `Image:${svgName}`, label: "Image", forcedSvg: svgName, raw: t };
+          }
+          // plain Image without forced svg
+          if (t.trim().toLowerCase() === "image") {
+            return { key: `Image:all`, label: "Image", forcedSvg: null, raw: t };
+          }
+          // other tabs
+          return { key: t, label: t, forcedSvg: null, raw: t };
+        });
+
+        setTabs(normalized);
+
+        // determine initial active tab: prefer first tab, otherwise Main
+        const initial = normalized[0] || { key: "Main", label: "Main" };
+        setActiveTabKey(initial.key);
+      })
+      .catch(() => {
+        // fallback to default tabs
+        const defaults = [
+          { key: "Main", label: "Main", forcedSvg: null },
+          { key: "Image:all", label: "Image", forcedSvg: null },
+        ];
+        setTabs(defaults);
+        setActiveTabKey(defaults[0].key);
+      });
+  }, []);
+
+  useEffect(() => {
+    function handleMessage(event) {
+      if (event.data === "RaiseAlert:Alarms") setAlarmActive(true);
+      if (event.data === "LowerAlert:Alarms") setAlarmActive(false);
+    }
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
+  }, []);
+
+  // Called by MainView markers when user wants to navigate to an SVG
+  const handleMarkerClick = (navigatePath) => {
+    let svgName = navigatePath;
+    if (svgName && svgName.includes("/")) svgName = svgName.split("/").pop();
+    // set selection for dropdown-mode ImageView
+    setSelectedSvg(svgName);
+    // if there's a plain Image tab, switch to that; otherwise switch to first Image tab
+    const plainImage = tabs.find((t) => t.label === "Image" && t.forcedSvg === null);
+    const anyImage = tabs.find((t) => t.label === "Image");
+    const targetKey = plainImage ? plainImage.key : anyImage ? anyImage.key : activeTabKey;
+    setActiveTabKey(targetKey);
+  };
+
+  return (
+    <div className="app-container">
+      <TopMenu />
+
+      <div className="tabs">
+        {tabs.map((t) => (
+          <button
+            key={t.key}
+            className={`tab-btn${activeTabKey === t.key ? " active" : ""}`}
+            onClick={() => setActiveTabKey(t.key)}
+            ref={t.label === "Alarms" ? alarmBtnRef : undefined}
+            style={t.label === "Alarms" && alarmActive ? { background: "red", color: "white" } : {}}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {tabs.map((t) => {
+        const Component = TAB_COMPONENTS[t.label];
+        if (!Component) return null;
+
+        return (
+          <div
+            key={t.key + "_content"}
+            className="tab-content"
+            style={{ display: activeTabKey === t.key ? "block" : "none" }}
+          >
+            {t.label === "Image" ? (
+              // pass forcedSvg when present, also pass selectedSvgProp for dropdown-mode
+              <ImageView forcedSvg={t.forcedSvg} selectedSvgProp={t.forcedSvg ? t.forcedSvg : selectedSvg} onSvgChange={(s) => { /* no-op or store if needed */ }} />
+            ) : t.label === "Main" ? (
+              <Component active={activeTabKey === t.key} onMarkerClick={handleMarkerClick} />
+            ) : (
+              <Component />
+            )}
+          </div>
+        );
+      })}
+
+      <StatusBar />
+    </div>
   );
 }

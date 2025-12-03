@@ -43,7 +43,7 @@ class SecurityService(BaseService[None, None, None]):
     def authenticate_user(
         self, username: str, password: str, app_name: Optional[str] = None
     ) -> Optional[str]:
-        print(
+        logger.debug(
             f"Authenticating user: {username} with app: {app_name} "
             f"against {self.model.get_all_users_list()}"
         )
@@ -62,15 +62,15 @@ class SecurityService(BaseService[None, None, None]):
             None,
         )
         if not user:
-            print(f"User not found: {username}")
+            logger.warning(f"User not found: {username}")
             return False
         allowed = user.get("allowed_apps")
         logger.debug("User %s allowed apps: %s", username, allowed)
         if allowed is None:
-            print(f"User {username} has no app restrictions.")
+            logger.debug(f"User {username} has no app restrictions.")
             # If not set, allow all apps (or deny, as you prefer)
             return True
-        print(f"User {username} allowed apps: {allowed}")
+        logger.debug(f"User {username} allowed apps: {allowed}")
         return app_name in allowed
 
     def is_allowed(self, username: str, endpoint_name: str) -> bool:

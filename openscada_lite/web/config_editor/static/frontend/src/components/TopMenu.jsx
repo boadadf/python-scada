@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect } from "react";
 import { useAuth } from "login";
 
-export default function TopMenu({ onLoad, onSave, dirty }) {
+export default function TopMenu({ onLoad, onSave, onSaveAs, onUpload, dirty }) {
   const [open, setOpen] = useState(false);
   const menuRef = useRef();
   const { logout } = useAuth();
@@ -63,7 +63,7 @@ export default function TopMenu({ onLoad, onSave, dirty }) {
             borderRadius: 4,
             boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
             zIndex: 10,
-            minWidth: 140
+            minWidth: 160
           }}>
             <div
               style={{ padding: '8px 16px', cursor: 'pointer' }}
@@ -73,6 +73,14 @@ export default function TopMenu({ onLoad, onSave, dirty }) {
               style={{ padding: '8px 16px', cursor: 'pointer' }}
               onClick={() => { setOpen(false); onSave(); }}
             >Save</div>
+            <div
+              style={{ padding: '8px 16px', cursor: 'pointer' }}
+              onClick={() => { setOpen(false); onSaveAs(); }}
+            >Save As</div>
+            <div
+              style={{ padding: '8px 16px', cursor: 'pointer' }}
+              onClick={() => { setOpen(false); onUpload(); }}
+            >Upload</div>
             <div
               style={{ padding: '8px 16px', cursor: 'pointer', color: '#e53935', borderTop: '1px solid #eee' }}
               onClick={() => { setOpen(false); handleLogout(); }}

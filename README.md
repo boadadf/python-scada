@@ -23,40 +23,45 @@ Following the principle of keeping things simple, it is designed for rapid proto
 
 ```text
 openscada_lite/
-  app.py                  # Main Flask app and SocketIO server
+  app.py                  # Main FastAPI app and SocketIO server
   common/                 # Common folder of shared resources by all modules
     config/               # Configuration loader and validator
     models/               # DTOs, entities, and event types
     bus/                  # Event bus implementation
     tracking/             # Dataflow tracability utilities     
+    utils/                # General utils
   modules/                # Modules folder
-    alarm/                # In charge of alarm life cycle                
-    alert/                # In charge of alerting with popups the front end
-    animation/            # In charge of generating animations on SVGs
-    base/                 # Base cimplementation for all modules following the MSC (Model, Service, Controller) architecture
-    command/              # In charge of handling the command life cycle, including feedback
-    communication/        # In charge of starting/stopping communications through drivers
-      drivers/            # Driver implementations (simulated, real, etc.)
-      manager/            # Manages driver instances and routing  
-    datapoint/            # In charge of ensuring datapoint integrity
-    rule/                 # Automatic actions based in datapoint values (alarms, alerts, commands,...)
-    security/             # In charge of login and security of endpoints
-    tracking/             # In charge of tracking of data flow inside of the SCADA system
-  web/                    # Folder for the frontend application
+    alarm/                # Alarm life cycle management
+    alert/                # Alerting with popups for the frontend
+    animation/            # SVG animation generation
+    base/                 # Base implementation for all modules (MSC pattern)
+    command/              # Command life cycle and feedback
+    communication/        # Driver management and communications
+    datapoint/            # Datapoint integrity and updates
+    frontend/             # Frontend tab configuration and dynamic UI
+    gis/                  # Geospatial asset and icon management
+    rule/                 # Automatic actions based on datapoint values
+    security/             # Login and endpoint security
+    stream/               # Video/data stream configuration and endpoints
+    tracking/             # Data flow tracking inside the SCADA system
+    loader.py             # Module loader and registration
+  web/                    # Frontend applications
     config_editor/        # System configuration editor
     login/                # Common login view
     scada/                # SCADA application views
     security_editor/      # Security configuration editor
-config/                   # Folder for the configuration files
-    svg/                  # Folder for the SVG files
-    system_config.json    # Defines datapoint types, ranges, enums, systems, rules...
-    security_config.json  # Defines the users and user groups
-tests/                    # Folder for unit and integration tests  
+config/                   # Configuration files
+    logging_config.json   # Loggin configuration
+    svg/                  # SVG files for process graphics
+    system_config.json    # Datapoint types, ranges, enums, system, rules...
+    security_config.json  # Users and user groups
+tests/                    # Unit and integration tests
+Dockerfile                # Dockerfile configuration to run in a docker container
 ```
 
 ---
 
-## Getting Started
+## Getting Started in your local env
 
 ## 1. Install dependencies
 
@@ -66,10 +71,11 @@ pip install -r requirements.txt
 ## 2. Run the server
 
 ```bash
-python -m openscada_lite.app
+$env:SCADA_CONFIG_PATH="config"
+uvicorn openscada_lite.app:asgi_app --host 0.0.0.0 --port 5443
 ```
 
-The server will start on `http://localhost:5443`.
+The server will be ready on `http://localhost:5443`.
 
 ---
 
@@ -1026,6 +1032,214 @@ These decorators ensure that tracking events are published automatically wheneve
 - Efficient background publishing and optional file logging.
 - Read-only API for retrieving recent tracking events.
 
+---
+
+### 5.9 GIS Module
+
+The **GIS module** in OpenSCADA Lite provides geospatial visualization and management of assets, alarms, and datapoints on a map.  
+It integrates with the system configuration to display icons, states, and navigation links for each asset, and updates in real time as datapoint or alarm values change.
+
+---
+
+#### 5.9.1 How GIS Works
+
+- GIS icons and their properties (location, icon, label, states, alarms) are defined in `system_config.json` under `gis_icons`.
+- The GIS module listens for updates to relevant datapoints and alarms, updating icon states and visuals accordingly.
+- The frontend can fetch GIS configuration via the `/api/gis/config` endpoint.
+
+---
+
+#### 5.9.2 Adding or Editing GIS Icons
+
+- Edit the `gis_icons` array in your `system_config.json` to add new assets or update existing ones.
+- Each icon can have:
+  - `id`: Unique identifier
+  - `icon`: Default icon path
+  - `label`: Display name
+  - `latitude`, `longitude`: Map coordinates
+  - `states`: Mapping of datapoint values to icon paths
+  - `alarm`: Mapping of alarm states to icon paths
+  - `navigation`: Optional link or path for navigation
+  - `rule_id`: Associated alarm rule
+
+---
+
+#### 5.9.3 Example GIS Icon Entry
+
+```json
+{
+  "id": "camera1",
+  "icon": "/static/icons/camera.png",
+  "label": "Camera 1",
+  "latitude": 47.4328,
+  "longitude": 8.2384,
+  "datapoint": "CameraDriver@CAMERA_1_POSITION",
+  "states": {
+    "LEFT": "/static/icons/camera_left.png",
+    "RIGHT": "/static/icons/camera_right.png"
+  },
+  "alarm": {
+    "ACTIVE": "/static/icons/camera_ko.png"
+  },
+  "navigation": "stream/feed1",
+  "navigation_type": "popup",
+  "rule_id": "camera_1_alarm"
+}
+```
+
+---
+
+#### 5.9.4 GIS Module Structure
+
+- **Model:**  
+  `GisModel` stores the current state of all GIS icons and their properties.
+
+- **Service:**  
+  `GisService` processes incoming datapoint and alarm updates, determines icon state, and updates the model.
+
+- **Controller:**  
+  `GisController` exposes HTTP endpoints (e.g., `/api/gis/config`) and manages frontend-backend communication.
+
+---
+
+#### 5.9.5 How to Use
+
+- Configure GIS icons in `system_config.json`.
+- The frontend map view fetches icon configuration and displays assets at their coordinates.
+- Datapoint states and alarms update in real time as the system runs.
+
+---
+
+#### Example Workflow
+
+- Add a new GIS icon for a camera or camera in `system_config.json`.
+- Configure a stream camerat to display for viewing in the right view or use the navigation_type="popup" to open the camera stream in a floating window
+- Assign a datapoint and alarm rule to the icon.
+- Save and reload the system.
+- View the asset on the map; its icon and state update automatically as values change.
+
+### 5.10 Stream Module
+
+The **stream module** in OpenSCADA Lite manages video and data streams for integration with cameras, sensors, and other real-time sources.  
+It allows you to define streams in your system configuration and exposes them to the frontend for visualization and control.
+
+---
+
+#### 5.10.1 How Streams Work
+
+- Streams are defined in the `streams` array of your `system_config.json`.
+- Each stream entry includes properties such as `id`, `description`, `server`, `port`, `protocol`, and `path`.
+- The backend exposes a `/streams` endpoint to list all configured streams.
+- The frontend can use this endpoint to display available streams and connect to them.
+
+---
+
+#### 5.10.2 Example Stream Entry
+
+```json
+{
+  "id": "feed1",
+  "description": "Feed 1 - 1080p",
+  "server": "www.openscadalite.com",
+  "port": "8444",
+  "protocol": "https",
+  "path": "feed1/feed1.m3u8"
+}
+```
+
+---
+
+#### 5.10.3 Stream Module Structure
+
+- **Model:**  
+  `StreamModel` (inherits from `BaseModel`) — stores stream configuration and state.
+
+- **Service:**  
+  `StreamService` (inherits from `BaseService`) — handles business logic for stream updates (currently minimal).
+
+- **Controller:**  
+  `StreamController` (inherits from `BaseController`) — exposes the `/streams` endpoint to return the list of streams from config.
+
+---
+
+#### 5.10.4 How to Use
+
+- Add or edit stream entries in `system_config.json` under the `streams` array.
+- The frontend fetches the list of streams from `/streams` and displays them for user selection or monitoring.
+- Integrate with video players or data consumers in the frontend as needed.
+
+---
+
+#### Example Workflow
+
+- Add a new camera stream to `system_config.json`.
+- Save and reload the system.
+- The frontend lists the new stream and allows users to view or interact with it.
+
+### 5.11 Frontend Module
+
+The **frontend module** in OpenSCADA Lite manages the configuration of tabs and views for the main SCADA web interface.  
+It allows you to define which tabs are available in the frontend, making the UI structure dynamic and easily configurable.
+
+---
+
+#### 5.11.1 How Frontend Works
+
+- Tabs are defined in the `frontend` module entry in your `system_config.json` under the `modules` array.
+- The backend exposes a `/frontend/api/tabs` endpoint that returns the list of configured tabs.
+- The frontend fetches this list and renders the corresponding tab buttons and views dynamically.
+
+---
+
+#### 5.11.2 Example Frontend Module Entry
+
+```json
+{
+  "name": "frontend",
+  "config": {
+    "tabs": [
+      "Main",
+      "Image",
+      "Datapoints",
+      "Communications",
+      "Alarms",
+      "Commands",
+      "Tracking",
+      "Streams"
+    ]
+  }
+}
+```
+
+---
+
+#### 5.11.3 Frontend Module Structure
+
+- **Model:**  
+  `FrontendModel` (inherits from `BaseModel`) — stores frontend configuration state.
+
+- **Service:**  
+  `FrontendService` (inherits from `BaseService`) — currently minimal, reserved for future business logic.
+
+- **Controller:**  
+  `FrontendController` (inherits from `BaseController`) — exposes the `/frontend/api/tabs` endpoint to return the list of tabs from config.
+
+---
+
+#### 5.11.4 How to Use
+
+- Edit the `tabs` array in the `frontend` module config in `system_config.json` to add, remove, or reorder tabs.
+- The frontend automatically updates to reflect the new tab configuration after reload.
+- Use the Config Editor to manage the frontend module config visually.
+
+---
+
+#### Example Workflow
+
+- Add a new tab name to the `tabs` array in `system_config.json`.
+- Save and reload the system.
+- The SCADA frontend displays the new tab and view automatically.
+
 
 ## 6 Creating Views with openscadalite.js
 
@@ -1215,3 +1429,6 @@ If you find **OpenSCADA Lite** useful and would like to support development or h
 [PayPal](https://paypal.me/boadadf)
 
 Your help keeps the demo server running and allows me to keep improving the project. Thank you!
+
+---
+
