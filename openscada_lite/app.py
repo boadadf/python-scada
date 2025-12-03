@@ -107,7 +107,7 @@ async def lifespan(app: FastAPI):
 # -----------------------------------------------------------------------------
 # FastAPI app
 # -----------------------------------------------------------------------------
-app = FastAPI(title="OpenSCADA-Lite", version="2.0", lifespan=lifespan, debug=True)
+app = FastAPI(title="OpenSCADA-Lite", version="0.0.1", lifespan=lifespan, debug=True)
 app.include_router(config_router)
 app.include_router(security_router)
 app.include_router(scada_router)

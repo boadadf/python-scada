@@ -61,13 +61,13 @@ class SecurityController(
         @router.post("/security/login")
         @publish_route_async(DataFlowStatus.USER_ACTION, source="SecurityController")
         async def login(data: dict, app: str = None):
-            print("[SECURITY] Login request received")
+            logger.debug("[SECURITY] Login request received")
             username = data.get("username")
             password = data.get("password")
             app_name = app if app is not None else data.get("app")
             logger.debug(f"[SECURITY] Login attempt for user: {username}, app: {app_name}")
             if not username or not password or not app_name:
-                print("[SECURITY] Missing username, password, or app")
+                logger.warning("[SECURITY] Missing username, password, or app")
                 return make_response(
                     status="error",
                     reason="username & password & app required",
@@ -78,7 +78,7 @@ class SecurityController(
 
             token = self.service.authenticate_user(username, password, app_name)
             if not token:
-                print("[SECURITY] Authentication failed")
+                logger.warning("[SECURITY] Authentication failed")
                 return make_response(
                     status="error",
                     reason="Unauthorized",
@@ -87,7 +87,7 @@ class SecurityController(
                     endpoint="login",
                 )
 
-            print(f"[SECURITY] User authenticated: {username}")
+            logger.info(f"[SECURITY] User authenticated: {username}")
             return make_response(
                 status="ok",
                 reason="Login successful",

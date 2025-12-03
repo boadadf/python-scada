@@ -19,8 +19,10 @@ import json
 import anyio
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
-import sys
-import threading
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 CONFIG_FILE = os.path.join(
     os.path.dirname(__file__), "..", "..", "..", "config", "system_config.json"
@@ -29,11 +31,34 @@ CONFIG_FILE = os.path.join(
 config_router = APIRouter(prefix="/config-editor/api", tags=["ConfigEditor"])
 
 
-@config_router.get("/config", response_class=JSONResponse)
-async def get_config():
-    async with await anyio.open_file(CONFIG_FILE, "r") as file:
+def normalize_config_filename(name: str) -> str:
+    # Always return a valid config filename
+    if name.endswith("system_config.json"):
+        return name
+    if name.endswith(".json"):
+        return name
+    return f"{name}_system_config.json"
+
+
+@config_router.get("/config/{name}", response_class=JSONResponse)
+async def get_config_by_name(name: str):
+    config_dir = os.path.dirname(CONFIG_FILE)
+    filename = normalize_config_filename(name)
+    path = os.path.join(config_dir, filename)
+    if not os.path.isfile(path):
+        return JSONResponse({"error": "File not found"}, status_code=404)
+    async with await anyio.open_file(path, "r") as file:
         data = await file.read()
     return json.loads(data)
+
+
+@config_router.get("/configs", response_class=JSONResponse)
+async def list_configs():
+    config_dir = os.path.dirname(CONFIG_FILE)
+    files = [f for f in os.listdir(config_dir) if f.endswith("_system_config.json")]
+    # Strip suffix for user display
+    display_names = [f.replace("_system_config.json", "") for f in files]
+    return display_names
 
 
 @config_router.post("/config", response_class=JSONResponse)
@@ -44,15 +69,27 @@ async def save_config(request: Request):
     return {"status": "ok"}
 
 
+@config_router.post("/saveas", response_class=JSONResponse)
+async def save_config_as(request: Request):
+    payload = await request.json()
+    config = payload.get("config")
+    name = payload.get("filename")
+    if not name:
+        return JSONResponse({"error": "Invalid filename"}, status_code=400)
+    filename = normalize_config_filename(name)
+    config_dir = os.path.dirname(CONFIG_FILE)
+    path = os.path.join(config_dir, filename)
+    async with await anyio.open_file(path, "w") as file:
+        await file.write(json.dumps(config, indent=2))
+    return {"status": "ok", "filename": filename}
+
+
 @config_router.post("/restart", response_class=JSONResponse)
 async def restart_app():
+    async def delayed_exit():
+        await anyio.sleep(0.5)  # Let HTTP response complete
+        print("[RESTART] Exiting process to trigger Docker restart...")
+        os._exit(1)  # Immediately kill the container
 
-    def do_restart():
-        print("[RESTART] Restarting OpenSCADA-Lite process...")
-        project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../.."))
-        os.chdir(project_root)
-        python = sys.executable
-        os.execl(python, python, "-m", "openscada_lite.app", *sys.argv[1:])
-
-    threading.Thread(target=do_restart).start()
-    return {"message": "Restarting OpenSCADA-Lite..."}
+    anyio.create_task(delayed_exit())
+    return {"message": "Restarting OpenSCADA-Lite container..."}

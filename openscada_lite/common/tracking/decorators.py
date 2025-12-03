@@ -132,13 +132,13 @@ def publish_route_async(status: DataFlowStatus, source: Optional[str] = None):
     def decorator(func):
         @wraps(func)
         async def wrapper(*args, **kwargs):
-            print(f"[TRACKING] Calling {func.__name__}")
+            logger.debug(f"[TRACKING] Calling {func.__name__}")
             result = await func(*args, **kwargs)
 
             dto = None
-            print(f"[TRACKING] Tape {type(result)} returned from {func.__name__}")
+            logger.debug(f"[TRACKING] Tape {type(result)} returned from {func.__name__}")
             if isinstance(result, JSONResponse):
-                print(f"[TRACKING] JSONResponse detected with body: {result.body}")
+                logger.debug(f"[TRACKING] JSONResponse detected with body: {result.body}")
                 try:
                     content_dict = json.loads(result.body.decode())
                     dto = DataFlowEventMsg(
@@ -149,13 +149,13 @@ def publish_route_async(status: DataFlowStatus, source: Optional[str] = None):
                         source=source or func.__name__,
                         payload=content_dict.get("data", None),
                     )
-                    print(f"[TRACKING] Created DataFlowEventMsg: {dto}")
+                    logger.debug(f"[TRACKING] Created DataFlowEventMsg: {dto}")
                 except Exception as e:
-                    print(f"[TRACKING] Failed to create DataFlowEventMsg: {e}")
+                    logger.debug(f"[TRACKING] Failed to create DataFlowEventMsg: {e}")
             # Only publish if dto is a DataFlowEventMsg
             if isinstance(dto, DataFlowEventMsg):
                 pub = TrackingPublisher.get_instance()
-                print(
+                logger.debug(
                     f"[TRACKING] Publishing event from route {func.__name__} with status {status}"
                 )
                 pub.publish_data_flow_event(dto, source=source or func.__name__, status=status)

@@ -68,9 +68,10 @@ jobs:
       - name: Run Python lint
         run: flake8 .
 
-      # Run Python tests
-      - name: Run Python tests
-        run: pytest
+      - name: Run tests with coverage
+        run: |
+          pip install pytest pytest-cov
+          pytest --cov=openscada_lite --cov-report xml
 
       # SonarCloud analysis
       - name: SonarCloud Scan

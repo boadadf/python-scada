@@ -9,7 +9,7 @@
     "console": {
       "class": "logging.StreamHandler",
       "formatter": "default",
-      "level": "DEBUG"
+      "level": "INFO"
     },
     "file": {
       "class": "logging.FileHandler",
@@ -19,12 +19,12 @@
     }
   },
   "root": {
-    "level": "DEBUG",
+    "level": "INFO",
     "handlers": ["console", "file"]
   },
   "loggers": {
     "openscada_lite.modules.security.service": {
-      "level": "DEBUG",
+      "level": "INFO",
       "handlers": ["console", "file"],
       "propagate": false
     }

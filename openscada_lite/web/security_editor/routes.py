@@ -21,6 +21,9 @@ from fastapi import APIRouter, Request
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Paths
 current_dir = Path(__file__).parent
@@ -67,7 +70,7 @@ async def restart_app():
     import threading
 
     def do_restart():
-        print("[RESTART] Restarting OpenSCADA-Lite process...")
+        logger.info("[RESTART] Restarting OpenSCADA-Lite process...")
         project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../.."))
         os.chdir(project_root)
         python = sys.executable

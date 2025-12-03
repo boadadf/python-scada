@@ -24,6 +24,10 @@ from openscada_lite.common.models.dtos import (
     SendCommandMsg,
 )
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 class OPCUAServerDriver(ServerProtocol):
     """
@@ -63,7 +67,7 @@ class OPCUAServerDriver(ServerProtocol):
     def subscribe(self, datapoints: list) -> None:
         for dp in datapoints:
             self._nodes_cache[dp.name] = ""
-        print(f"[OPCUA] Will expose {len(self._nodes_cache)} nodes on connect()")
+        logger.info(f"[OPCUA] Will expose {len(self._nodes_cache)} nodes on connect()")
 
     def set_command_listener(self, listener):
         self._command_listener = listener
@@ -109,7 +113,7 @@ class OPCUAServerDriver(ServerProtocol):
         if self._communication_status_callback:
             await self.publish_driver_state("online")
 
-        print(
+        logger.info(
             f"[OPCUA] Server started at {self.endpoint} "
             f"(namespace: {self.namespace_url}, idx: {self.namespace_index})"
         )
@@ -120,7 +124,7 @@ class OPCUAServerDriver(ServerProtocol):
             try:
                 await self.subscription.delete()
             except Exception as e:
-                print(f"[WARN] Error deleting subscription: {e}")
+                logger.warning(f"Error deleting subscription: {e}")
 
             self.subscription = None
 
@@ -128,7 +132,7 @@ class OPCUAServerDriver(ServerProtocol):
             try:
                 await self.server.stop()
             except Exception as e:
-                print(f"[WARN] Error stopping server: {e}")
+                logger.warning(f"Error stopping server: {e}")
 
         self.server = None
         self.nodes.clear()
@@ -138,7 +142,7 @@ class OPCUAServerDriver(ServerProtocol):
         if self._communication_status_callback:
             await self.publish_driver_state("offline")
 
-        print("[OPCUA] Server stopped")
+        logger.info("[OPCUA] Server stopped")
 
     # ----------------------------------------------------------------------
     # Node creation
@@ -170,7 +174,7 @@ class OPCUAServerDriver(ServerProtocol):
             self.nodes[dp_name] = node
             count += 1
 
-        print(f"[OPCUA] Created {count} nodes")
+        logger.info(f"[OPCUA] Created {count} nodes")
 
     # ----------------------------------------------------------------------
     # Write monitoring
@@ -178,7 +182,7 @@ class OPCUAServerDriver(ServerProtocol):
     async def _setup_write_monitors(self):
         """Subscribe data-change events only for writable nodes."""
         if not self.subscription:
-            print("[WARN] Subscription missing during write monitor setup")
+            logger.warning("Subscription missing during write monitor setup")
             return
 
         watch_count = 0
@@ -187,7 +191,7 @@ class OPCUAServerDriver(ServerProtocol):
                 await self.subscription.subscribe_data_change(node)
                 watch_count += 1
 
-        print(f"[OPCUA] Write monitoring enabled on {watch_count} nodes")
+        logger.info(f"[OPCUA] Write monitoring enabled on {watch_count} nodes")
 
     async def datachange_notification(self, node, val, data):
         """Called when OPC UA client writes to a node."""
@@ -196,7 +200,7 @@ class OPCUAServerDriver(ServerProtocol):
             return
 
         val_str = str(val)
-        print(f"[WRITE] Client wrote {dp_name} -> '{val_str}'")
+        logger.info(f"[WRITE] Client wrote {dp_name} -> '{val_str}'")
 
         if self._command_listener:
             msg = SendCommandMsg(
@@ -219,9 +223,9 @@ class OPCUAServerDriver(ServerProtocol):
         node = self.nodes.get(dp_name)
         if node:
             await node.set_value(ua.Variant(val_str, ua.VariantType.String))
-            print(f"[OPCUA] Updated {dp_name} = {val_str}")
+            logger.info(f"[OPCUA] Updated {dp_name} = {val_str}")
         else:
-            print(f"[OPCUA] Unknown datapoint {dp_name}, cannot update")
+            logger.warning(f"[OPCUA] Unknown datapoint {dp_name}, cannot update")
 
     # ----------------------------------------------------------------------
     # Properties

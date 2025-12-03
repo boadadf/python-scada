@@ -45,67 +45,115 @@ export default function App() {
   const [config, setConfig] = useState(DEFAULT_CONFIG);
   const [activeTab, setActiveTab] = useState('Modules');
   const [dirty, setDirty] = useState(false);
+  const [currentConfigName, setCurrentConfigName] = useState("system_config");
 
-  useEffect(() => { loadConfig(); }, []);
+  // Dialog state
+  const [showLoadDialog, setShowLoadDialog] = useState(false);
+  const [showSaveAsDialog, setShowSaveAsDialog] = useState(false);
+  const [availableConfigs, setAvailableConfigs] = useState([]);
+  const [selectedConfig, setSelectedConfig] = useState("");
+  const [saveAsFilename, setSaveAsFilename] = useState("");
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-
-  function newConfig() {
-    if (!window.confirm('Discard current and create new?')) return;
-    setConfig(JSON.parse(JSON.stringify(DEFAULT_CONFIG)));
-    setDirty(true);
+  // Use AuthProvider to check authentication
+  function RequireAuth({ children }) {
+    const { isAuthenticated } = useAuth();
+    useEffect(() => {
+      setIsAuthenticated(isAuthenticated);
+    }, [isAuthenticated]);
+    if (!isAuthenticated) {
+      return <Login redirectPath="/config-editor" />;
+    }
+    return children;
   }
 
-  async function loadConfig() {
+  // Show load dialog after login
+  useEffect(() => {
+    if (isAuthenticated) {
+      openLoadDialog();
+    }
+    // eslint-disable-next-line
+  }, [isAuthenticated]);
+
+  async function loadConfigByName(name) {
     try {
-      const res = await fetch('/config-editor/api/config');
+      const res = await fetch(`/config-editor/api/config/${name}`);
       if (!res.ok) throw new Error(await res.text());
       const data = await res.json();
       setConfig(data);
+      setCurrentConfigName(name); // Track loaded config name
       setDirty(false);
+      setShowLoadDialog(false);
     } catch (err) {
       alert('Failed to load config: ' + err.message);
     }
   }
 
+  async function openLoadDialog() {
+    try {
+      const res = await fetch('/config-editor/api/configs');
+      const files = await res.json();
+      setAvailableConfigs(files);
+      setShowLoadDialog(true);
+    } catch (err) {
+      alert('Failed to list configs: ' + err.message);
+    }
+  }
+
   async function saveConfig() {
-    if (!window.confirm("Saving will cause a restart in the SCADA application. Do you want to continue?")) {
+    if (!currentConfigName) {
+      alert("No config loaded. Please load a config first.");
       return;
     }
     try {
-      const res = await fetch('/config-editor/api/config', {
+      const res = await fetch('/config-editor/api/saveas', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(config)
+        body: JSON.stringify({ config, filename: currentConfigName })
       });
-      if (!res.ok) throw new Error(await res.text());
-      alert('Saved. The application will now restart.');
-
-      // Trigger the restart and handle the expected NetworkError
-      try {
-        await fetch('/config-editor/api/restart', { method: 'POST' });
-      } catch (err) {
-        if (err.message.includes('NetworkError')) {
-          console.warn('Restart triggered successfully, ignoring NetworkError.');
-        } else {
-          throw err; // Re-throw unexpected errors
-        }
-      }
-
-      // Delay before reloading the page
-      setTimeout(() => {
-        window.location.reload();
-      }, 3000); // 3-second delay
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'unknown');
+      alert('Saved: ' + data.filename);
+      setDirty(false);
     } catch (err) {
       alert('Failed to save: ' + err.message);
     }
   }
 
+  async function saveConfigAs() {
+    if (!saveAsFilename) {
+      alert("Please enter a filename.");
+      return;
+    }
+    try {
+      const res = await fetch('/config-editor/api/saveas', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ config, filename: saveAsFilename })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'unknown');
+      alert('Saved as: ' + data.filename);
+      setShowSaveAsDialog(false);
+    } catch (err) {
+      alert('Failed to save as: ' + err.message);
+    }
+  }
+
   async function uploadConfig() {
     try {
-      const res = await fetch('/config-editor/api/reload', { method: 'POST' });
+      const res = await fetch('/config-editor/api/saveas', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ config, filename: "system_config.json" }) // <-- fix here
+      });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'unknown');
-      alert('Upload: ' + data.message);
+      if (!res.ok) throw new Error(data.error || 'unknown');
+      alert('Uploaded and restarting: ' + data.filename);
+      await fetch('/config-editor/api/restart', { method: 'POST' });
+      setTimeout(() => {
+        window.location.reload();
+      }, 3000);
     } catch (err) {
       alert('Failed to upload: ' + err.message);
     }
@@ -116,11 +164,63 @@ export default function App() {
       <RequireAuth>
         <div style={{ fontFamily: 'Arial, sans-serif', height: '100vh', display: 'flex', flexDirection: 'column' }}>
           <TopMenu
-            onNew={newConfig}
-            onLoad={loadConfig}
+            onLoad={openLoadDialog}
             onSave={saveConfig}
+            onSaveAs={() => setShowSaveAsDialog(true)}
             onUpload={uploadConfig}
+            dirty={dirty}
           />
+          {/* Load Dialog */}
+          {showLoadDialog && (
+            <div style={{
+              position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
+              background: 'rgba(0,0,0,0.2)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center'
+            }}>
+              <div style={{ background: '#fff', padding: 24, borderRadius: 8, minWidth: 320 }}>
+                <h3>Select Config to Load</h3>
+                <select
+                  style={{ width: '100%', marginBottom: 16 }}
+                  value={selectedConfig}
+                  onChange={e => setSelectedConfig(e.target.value)}
+                >
+                  <option value="">-- Select --</option>
+                  {availableConfigs.map(f => (
+                    <option key={f} value={f}>{f}</option>
+                  ))}
+                </select>
+                <button
+                  disabled={!selectedConfig}
+                  onClick={() => loadConfigByName(selectedConfig)}
+                  style={{ marginRight: 8 }}
+                >Load</button>
+                <button onClick={() => setShowLoadDialog(false)}>Cancel</button>
+              </div>
+            </div>
+          )}
+          {/* Save As Dialog */}
+          {showSaveAsDialog && (
+            <div style={{
+              position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
+              background: 'rgba(0,0,0,0.2)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center'
+            }}>
+              <div style={{ background: '#fff', padding: 24, borderRadius: 8, minWidth: 320 }}>
+                <h3>Save As New Config</h3>
+                <input
+                  type="text"
+                  style={{ width: '100%', marginBottom: 16 }}
+                  placeholder="Filename (e.g. my_system_config.json)"
+                  value={saveAsFilename}
+                  onChange={e => setSaveAsFilename(e.target.value)}
+                />
+                <button
+                  disabled={!saveAsFilename}
+                  onClick={saveConfigAs}
+                  style={{ marginRight: 8 }}
+                >Save As</button>
+                <button onClick={() => setShowSaveAsDialog(false)}>Cancel</button>
+              </div>
+            </div>
+          )}
           <div style={{ padding: 8 }}>
             <Tabs
               tabs={[

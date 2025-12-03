@@ -30,11 +30,14 @@ from openscada_lite.common.models.dtos import (
 )
 from openscada_lite.modules.communication.drivers.driver_protocol import DriverProtocol
 from openscada_lite.common.models.entities import Datapoint
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class TestDriver(DriverProtocol, ABC):
     def __init__(self, server_name: str):
-        print(f"[INIT] Creating TestDriver {server_name}")
+        logger.info(f"[INIT] Creating TestDriver {server_name}")
         self._server_name = server_name
         self._tags: Dict[str, RawTagUpdateMsg] = {}
         self._value_callback: Callable[[RawTagUpdateMsg], Any] | None = None
@@ -67,12 +70,12 @@ class TestDriver(DriverProtocol, ABC):
     async def disconnect(self):
         self._connected = False
         await self.stop_test()
-        print(f"[DISCONNECT] Disconnecting driver {self._server_name}")
+        logger.info(f"[DISCONNECT] Disconnecting driver {self._server_name}")
         await self.publish_driver_state("offline")
 
     async def initValues(self):
         now = datetime.datetime.now()
-        print(f"[INIT] Initializing values for {self._server_name} tags: {self._tags}")
+        logger.info(f"[INIT] Initializing values for {self._server_name} tags: {self._tags}")
         for tag in self._tags.values():
             tag.value = Config.get_instance().get_default_value(tag.datapoint_identifier)
             tag.timestamp = now
@@ -169,7 +172,7 @@ class TestDriver(DriverProtocol, ABC):
         await self._safe_invoke(self._command_feedback_callback, msg)
 
     async def handle_special_command(self, datapoint_name: str, value: str) -> Optional[str]:
-        print(f"[COMMAND] Handling special command: {datapoint_name} = {value}")
+        logger.info(f"[COMMAND] Handling special command: {datapoint_name} = {value}")
 
         if datapoint_name == "TEST_CMD":
             return await self._handle_test_command(value)
@@ -231,7 +234,7 @@ class TestDriver(DriverProtocol, ABC):
         if self._running:
             return
         self._running = True
-        print(f"[TEST] Starting simulation loop for {self._server_name}")
+        logger.debug(f"[TEST] Starting simulation loop for {self._server_name}")
         self._task = asyncio.create_task(self._publish_loop_async())
 
     async def stop_test(self):
@@ -241,24 +244,24 @@ class TestDriver(DriverProtocol, ABC):
             try:
                 await self._task
             except asyncio.CancelledError:
-                print(f"[TEST] Simulation loop canceled for {self._server_name}")
+                logger.debug(f"[TEST] Simulation loop canceled for {self._server_name}")
                 raise
 
     async def _publish_loop_async(self):
-        print(f"[TEST] Simulation loop started for {self._server_name}")
+        logger.debug(f"[TEST] Simulation loop started for {self._server_name}")
         try:
             while self._running:
                 self._simulate_values()
                 for tag in self._tags.values():
                     await self._publish_value(tag)
-                print(f"[TEST] Published all tag values for {self._server_name}")
+                logger.debug(f"[TEST] Published all tag values for {self._server_name}")
                 await asyncio.sleep(5)
-                print(f"[TEST] Simulation loop iteration complete for {self._server_name}")
+                logger.debug(f"[TEST] Simulation loop iteration complete for {self._server_name}")
         except asyncio.CancelledError:
-            print(f"[DEBUG] Simulation loop canceled for {self._server_name}")
+            logger.debug(f"[TEST] Simulation loop canceled for {self._server_name}")
             raise
         finally:
-            print(f"[TEST] Simulation loop stopped for {self._server_name}")
+            logger.debug(f"[TEST] Simulation loop stopped for {self._server_name}")
 
     # For testing: simulate a value change
     async def simulate_value(self, tag_id: str, value: Any, track_id: str):
@@ -294,5 +297,5 @@ class TestDriver(DriverProtocol, ABC):
             else:
                 callback(*args, **kwargs)
         except Exception as e:
-            print(f"[ERROR] Exception in callback {callback}: {e}")
+            logger.error(f"Exception in callback {callback}: {e}")
             raise

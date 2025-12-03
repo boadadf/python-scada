@@ -30,6 +30,9 @@ from openscada_lite.common.config.config import Config
 from .handlers.tag_handler import TagHandler
 from .handlers.alarm_handler import AlarmHandler
 from .handlers.connection_handler import ConnectionHandler
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class AnimationService(
@@ -203,6 +206,6 @@ class AnimationService(
             try:
                 return simple_eval(expr, names={"value": value})
             except Exception as e:
-                print(f"AnimationService: error evaluating '{expr}' with value={value}: {e}")
+                logger.error(f"AnimationService: error evaluating '{expr}' with value={value}: {e}")
                 return None
         return None

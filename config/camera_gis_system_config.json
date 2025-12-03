@@ -19,6 +19,44 @@
   },
   "drivers": [
     {
+      "command_datapoints": [],
+      "connection_info": {
+        "server_name": "OPCUAServerDriver"
+      },
+      "datapoints": [
+        {
+          "name": "CameraDriver@CAMERA_1_POSITION",
+          "type": "CAMERA_POSITION"
+        },
+        {
+          "name": "CameraDriver@CAMERA_2_POSITION",
+          "type": "CAMERA_POSITION"
+        },
+        {
+          "name": "CameraDriver@CAMERA_3_POSITION",
+          "type": "CAMERA_POSITION"
+        },
+        {
+          "name": "CameraDriver@CAMERA_1_POSITION_CMD",
+          "type": "CAMERA_POSITION"
+        },
+        {
+          "name": "CameraDriver@CAMERA_2_POSITION_CMD",
+          "type": "CAMERA_POSITION"
+        },
+        {
+          "name": "CameraDriver@CAMERA_3_POSITION_CMD",
+          "type": "CAMERA_POSITION"
+        }
+      ],
+      "driver_class": "OPCUAServerDriver",
+      "driver_config": {
+        "allow_write_regex": ".*_CMD$",
+        "namespaceurl": "http://openscada-lite/opcua/server"
+      },
+      "name": "OPCUAServerDriver"
+    },
+    {
       "command_datapoints": [
         {
           "name": "CAMERA_1_POSITION_CMD",
@@ -71,14 +109,14 @@
       "alarm": {
         "ACTIVE": "/static/icons/camera_ko.png"
       },
-      "rule_id": "camera_1_alarm",
       "datapoint": "CameraDriver@CAMERA_1_POSITION",
       "icon": "/static/icons/camera.png",
       "id": "camera1",
       "label": "Camera 1",
-      "latitude": 11.7889,
-      "longitude": 108.4086,
+      "latitude": 47.4328,
+      "longitude": 8.2384,
       "navigation": "stream/feed1",
+      "rule_id": "camera_1_alarm",
       "states": {
         "LEFT": "/static/icons/camera_left.png",
         "RIGHT": "/static/icons/camera_right.png"
@@ -88,15 +126,15 @@
       "alarm": {
         "ACTIVE": "/static/icons/camera_ko.png"
       },
-      "rule_id": "camera_2_alarm",
       "datapoint": "CameraDriver@CAMERA_2_POSITION",
       "icon": "/static/icons/camera.png",
       "id": "camera2",
       "label": "Camera 2",
-      "latitude": 11.8227,
-      "longitude": 108.4364,
+      "latitude": 47.4202,
+      "longitude": 8.2249,
       "navigation": "stream/feed2",
       "navigation_type": "popup",
+      "rule_id": "camera_2_alarm",
       "states": {
         "LEFT": "/static/icons/camera_left.png",
         "RIGHT": "/static/icons/camera_right.png"
@@ -106,14 +144,14 @@
       "alarm": {
         "ACTIVE": "/static/icons/camera_ko.png"
       },
-      "rule_id": "camera_3_alarm",
       "datapoint": "CameraDriver@CAMERA_3_POSITION",
       "icon": "/static/icons/camera.png",
       "id": "camera3",
       "label": "Camera 3",
-      "latitude": 11.8363,
-      "longitude": 108.4516,
+      "latitude": 47.4081,
+      "longitude": 8.214,
       "navigation": "stream/feed3",
+      "rule_id": "camera_3_alarm",
       "states": {
         "LEFT": "/static/icons/camera_left.png",
         "RIGHT": "/static/icons/camera_right.png"
@@ -121,6 +159,9 @@
     }
   ],
   "modules": [
+    {
+      "name": "animation"
+    },
     {
       "name": "alarm"
     },
@@ -131,6 +172,9 @@
       "name": "communication"
     },
     {
+      "name": "tracking"
+    } ,
+    {
       "name": "datapoint"
     },
     {
@@ -140,8 +184,8 @@
       "config": {
         "attribution": "&copy; <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a> contributors",
         "baseurl": "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-        "center_x": "11.8227",
-        "center_y": "108.4364",
+        "center_x": "47.4189",
+        "center_y": "8.2246",
         "zoom": 13
       },
       "name": "gis"
@@ -151,6 +195,20 @@
     },
     {
       "name": "stream"
+    },
+    {
+      "name": "frontend",
+      "config": {
+        "tabs": [
+          "Main",
+          "Datapoints",
+          "Communications",
+          "Alarms",
+          "Commands",
+          "Tracking",
+          "Streams"
+        ]
+      }
     }
   ],
   "rules": [
