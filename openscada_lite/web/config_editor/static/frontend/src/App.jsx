@@ -92,8 +92,16 @@ export default function App() {
   async function openLoadDialog() {
     try {
       const res = await fetch('/config-editor/api/configs');
-      const files = await res.json();
+      let files = await res.json();
+      // Ensure system_config is present and first
+      if (!files.includes("system_config")) {
+        files.unshift("system_config");
+      } else {
+        // Move to first position if not already
+        files = ["system_config", ...files.filter(f => f !== "system_config")];
+      }
       setAvailableConfigs(files);
+      setSelectedConfig("system_config"); // Default selection
       setShowLoadDialog(true);
     } catch (err) {
       alert('Failed to list configs: ' + err.message);
