@@ -23,22 +23,22 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+SYSTEM_CONFIG_FILENAME = "system_config.json"
 
 CONFIG_FILE = os.path.join(
-    os.path.dirname(__file__), "..", "..", "..", "config", "system_config.json"
+    os.path.dirname(__file__), "..", "..", "..", "config", SYSTEM_CONFIG_FILENAME
 )
 
 config_router = APIRouter(prefix="/config-editor/api", tags=["ConfigEditor"])
 
-
 def normalize_config_filename(name: str) -> str:
     if name == "system_config":
-        return "system_config.json"
-    if name.endswith("system_config.json"):
+        return SYSTEM_CONFIG_FILENAME
+    if name.endswith(SYSTEM_CONFIG_FILENAME):
         return name
     if name.endswith(".json"):
         return name
-    return f"{name}_system_config.json"
+    return f"{name}_{SYSTEM_CONFIG_FILENAME}"
 
 
 @config_router.get("/config/{name}", response_class=JSONResponse)
@@ -56,9 +56,9 @@ async def get_config_by_name(name: str):
 @config_router.get("/configs", response_class=JSONResponse)
 async def list_configs():
     config_dir = os.path.dirname(CONFIG_FILE)
-    files = [f for f in os.listdir(config_dir) if f.endswith("_system_config.json")]
+    files = [f for f in os.listdir(config_dir) if f.endswith(f"_{SYSTEM_CONFIG_FILENAME}")]
     # Strip suffix for user display
-    display_names = [f.replace("_system_config.json", "") for f in files]
+    display_names = [f.replace(f"_{SYSTEM_CONFIG_FILENAME}", "") for f in files]
     return display_names
 
 
