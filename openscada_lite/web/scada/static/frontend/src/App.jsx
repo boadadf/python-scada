@@ -17,7 +17,7 @@ import MainView from "./components/MainView";
 import "leaflet/dist/leaflet.css";
 
 const TAB_COMPONENTS = {
-  Main: MainView,
+  GIS: MainView,
   Image: ImageView,
   Datapoints: DatapointsView,
   Communications: CommunicationsView,

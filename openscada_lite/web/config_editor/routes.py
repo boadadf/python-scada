@@ -32,7 +32,8 @@ config_router = APIRouter(prefix="/config-editor/api", tags=["ConfigEditor"])
 
 
 def normalize_config_filename(name: str) -> str:
-    # Always return a valid config filename
+    if name == "system_config":
+        return "system_config.json"
     if name.endswith("system_config.json"):
         return name
     if name.endswith(".json"):
