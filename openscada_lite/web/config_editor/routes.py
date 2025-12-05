@@ -31,6 +31,7 @@ CONFIG_FILE = os.path.join(
 
 config_router = APIRouter(prefix="/config-editor/api", tags=["ConfigEditor"])
 
+
 def normalize_config_filename(name: str) -> str:
     if name == "system_config":
         return SYSTEM_CONFIG_FILENAME
