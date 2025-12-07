@@ -1,3 +1,4 @@
+import asyncio
 import pytest
 from fastapi.testclient import TestClient
 from openscada_lite.app import app, sio
@@ -36,17 +37,37 @@ async def test_restart_app_docker(monkeypatch):
     mock_client = MagicMock()
     mock_client.containers.get.return_value = mock_container
 
-    # Patch docker.from_env
-    monkeypatch.setattr("docker.from_env", lambda: mock_client)
+    # Patch docker.from_env in the correct namespace
+    monkeypatch.setattr(
+        "openscada_lite.web.config_editor.routes.docker.from_env",
+        lambda: mock_client
+    )
+
     # Patch HOSTNAME
     monkeypatch.setenv("HOSTNAME", "fake_id")
 
-    # Run the endpoint
-    response = await restart_app()
+    # Patch asyncio.create_task to schedule the coroutine and store the task
+    created_tasks = []
 
-    # Check HTTP response
+    def create_task_sync(coro):
+        task = asyncio.get_event_loop().create_task(coro)
+        created_tasks.append(task)
+        return task
+
+    monkeypatch.setattr(
+        "openscada_lite.web.config_editor.routes.asyncio.create_task",
+        create_task_sync
+    )
+
+    # Call endpoint
+    response = await restart_app()
+    # Await all created tasks to ensure background logic runs
+    for task in created_tasks:
+        await task
+
     assert response["message"] == "Restarting OpenSCADA-Lite container..."
 
-    # Assert the restart was actually called
+    # Assert restart happened
     mock_client.containers.get.assert_called_with("fake_id")
     mock_container.restart.assert_called_once()
+
