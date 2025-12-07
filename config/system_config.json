@@ -15,6 +15,79 @@
         "LEFT",
         "RIGHT"
       ]
+    },
+    "LEVEL": {
+      "default": 0,
+      "max": 100,
+      "min": 0,
+      "type": "float"
+    },
+    "OPENED_CLOSED": {
+      "default": "CLOSED",
+      "type": "enum",
+      "values": [
+        "OPENED",
+        "CLOSED"
+      ]
+    },
+    "OPEN_CLOSE_CMD": {
+      "default": "CLOSE",
+      "type": "enum",
+      "values": [
+        "OPEN",
+        "CLOSE",
+        "TOGGLE"
+      ]
+    },
+    "PRESSURE": {
+      "default": 50,
+      "max": 200,
+      "min": 0,
+      "type": "float"
+    },
+    "START_STOP": {
+      "default": "STOPPED",
+      "type": "enum",
+      "values": [
+        "STARTED",
+        "STOPPED"
+      ]
+    },
+    "START_STOP_CMD": {
+      "default": "STOP",
+      "type": "enum",
+      "values": [
+        "START",
+        "STOP",
+        "TOGGLE"
+      ]
+    },
+    "SWITCH_CONTROL": {
+      "default": "STRAIGHT",
+      "max": 100,
+      "min": 0,
+      "type": "enum",
+      "values": [
+        "STRAIGHT",
+        "TURN"
+      ]
+    },
+    "SWITCH_CONTROL_CMD": {
+      "default": "TOGGLE",
+      "max": 100,
+      "min": 0,
+      "type": "enum",
+      "values": [
+        "TOGGLE",
+        "STRAIGHT",
+        "TURN"
+      ]
+    },
+    "TEMPERATURE": {
+      "default": 120,
+      "max": 150,
+      "min": 100,
+      "type": "enum"
     }
   },
   "drivers": [
@@ -102,6 +175,1124 @@
       ],
       "driver_class": "CameraDriver",
       "name": "CameraDriver"
+    },
+    {
+      "command_datapoints": [
+        {
+          "name": "PUMP_CMD",
+          "type": "OPEN_CLOSE_CMD"
+        },
+        {
+          "name": "DOOR_CMD",
+          "type": "OPEN_CLOSE_CMD"
+        },
+        {
+          "name": "TEST_CMD",
+          "type": "START_STOP_CMD"
+        }
+      ],
+      "connection_info": {
+        "server_name": "WaterTank"
+      },
+      "datapoints": [
+        {
+          "name": "TANK",
+          "type": "LEVEL"
+        },
+        {
+          "name": "PUMP",
+          "type": "OPENED_CLOSED"
+        },
+        {
+          "name": "DOOR",
+          "type": "OPENED_CLOSED"
+        },
+        {
+          "name": "TEST",
+          "type": "START_STOP"
+        }
+      ],
+      "driver_class": "TankTestDriver",
+      "name": "WaterTank"
+    },
+    {
+      "command_datapoints": [],
+      "connection_info": {
+        "server_name": "OPCUAServer"
+      },
+      "datapoints": [
+        {
+          "name": "TrainTestDriver@RIGHT_SWITCH_CONTROL",
+          "type": "SWITCH_CONTROL"
+        },
+        {
+          "name": "TrainTestDriver@LEFT_SWITCH_CONTROL",
+          "type": "SWITCH_CONTROL"
+        },
+        {
+          "name": "TrainTestDriver@RIGHT_SWITCH_CONTROL_CMD",
+          "type": "SWITCH_CONTROL_CMD"
+        },
+        {
+          "name": "TrainTestDriver@LEFT_SWITCH_CONTROL_CMD",
+          "type": "SWITCH_CONTROL_CMD"
+        }
+      ],
+      "driver_class": "OPCUAServerDriver",
+      "driver_config": {
+        "allow_write_regex": ".*_CMD$",
+        "namespaceurl": "http://openscada-lite/opcua/server"
+      },
+      "name": "OPCUAServer"
+    },
+    {
+      "command_datapoints": [
+        {
+          "name": "TEST_CMD",
+          "type": "START_STOP_CMD"
+        }
+      ],
+      "connection_info": {
+        "server_name": "StressTest"
+      },
+      "datapoints": [
+        {
+          "name": "TEST",
+          "type": "START_STOP"
+        },
+        {
+          "name": "DP_0",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_1",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_2",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_3",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_4",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_5",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_6",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_7",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_8",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_9",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_10",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_11",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_12",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_13",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_14",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_15",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_16",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_17",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_18",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_19",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_20",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_21",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_22",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_23",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_24",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_25",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_26",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_27",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_28",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_29",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_30",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_31",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_32",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_33",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_34",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_35",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_36",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_37",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_38",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_39",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_40",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_41",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_42",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_43",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_44",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_45",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_46",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_47",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_48",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_49",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_50",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_51",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_52",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_53",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_54",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_55",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_56",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_57",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_58",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_59",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_60",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_61",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_62",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_63",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_64",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_65",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_66",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_67",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_68",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_69",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_70",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_71",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_72",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_73",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_74",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_75",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_76",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_77",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_78",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_79",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_80",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_81",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_82",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_83",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_84",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_85",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_86",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_87",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_88",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_89",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_90",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_91",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_92",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_93",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_94",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_95",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_96",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_97",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_98",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_99",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_100",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_101",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_102",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_103",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_104",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_105",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_106",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_107",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_108",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_109",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_110",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_111",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_112",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_113",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_114",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_115",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_116",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_117",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_118",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_119",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_120",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_121",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_122",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_123",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_124",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_125",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_126",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_127",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_128",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_129",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_130",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_131",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_132",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_133",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_134",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_135",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_136",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_137",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_138",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_139",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_140",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_141",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_142",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_143",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_144",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_145",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_146",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_147",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_148",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_149",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_150",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_151",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_152",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_153",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_154",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_155",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_156",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_157",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_158",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_159",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_160",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_161",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_162",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_163",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_164",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_165",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_166",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_167",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_168",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_169",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_170",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_171",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_172",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_173",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_174",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_175",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_176",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_177",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_178",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_179",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_180",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_181",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_182",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_183",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_184",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_185",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_186",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_187",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_188",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_189",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_190",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_191",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_192",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_193",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_194",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_195",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_196",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_197",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_198",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_199",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_200",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_201",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_202",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_203",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_204",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_205",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_206",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_207",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_208",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_209",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_210",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_211",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_212",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_213",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_214",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_215",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_216",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_217",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_218",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_219",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_220",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_221",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_222",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_223",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_224",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_225",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_226",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_227",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_228",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_229",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_230",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_231",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_232",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_233",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_234",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_235",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_236",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_237",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_238",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_239",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_240",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_241",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_242",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_243",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_244",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_245",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_246",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_247",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_248",
+          "type": "BOOL"
+        },
+        {
+          "name": "DP_249",
+          "type": "BOOL"
+        }
+      ],
+      "driver_class": "StressTestDriver",
+      "name": "StressTest",
+      "params": {
+        "toggle_delay": 0.02
+      }
+    },
+    {
+      "command_datapoints": [
+        {
+          "name": "RIGHT_SWITCH_CONTROL_CMD",
+          "type": "SWITCH_CONTROL_CMD"
+        },
+        {
+          "name": "LEFT_SWITCH_CONTROL_CMD",
+          "type": "SWITCH_CONTROL_CMD"
+        }
+      ],
+      "connection_info": {
+        "server_name": "TrainTestDriver"
+      },
+      "datapoints": [
+        {
+          "name": "RIGHT_SWITCH_CONTROL",
+          "type": "SWITCH_CONTROL"
+        },
+        {
+          "name": "LEFT_SWITCH_CONTROL",
+          "type": "SWITCH_CONTROL"
+        }
+      ],
+      "driver_class": "TrainTestDriver",
+      "name": "TrainTestDriver"
     }
   ],
   "gis_icons": [
@@ -200,6 +1391,7 @@
       "name": "frontend",
       "config": {
         "tabs": [
+          "Image",
           "Main",
           "Datapoints",
           "Communications",
@@ -207,6 +1399,19 @@
           "Commands",
           "Tracking",
           "Streams"
+        ]
+      }
+    },
+    {
+      "name": "frontend",
+      "config": {
+        "tabs": [
+          "Image",
+          "Datapoints",
+          "Alarms",
+          "Communications",
+          "Commands",
+          "Tracking"
         ]
       }
     }
@@ -232,6 +1437,42 @@
       ],
       "on_condition": "CameraDriver@CAMERA_3_ALARM == TRUE",
       "rule_id": "camera_3_alarm"
+    },
+    {
+      "on_actions": [
+        "send_command('WaterTank@PUMP_CMD', 'OPEN')",
+        "send_command('WaterTank@DOOR_CMD', 'CLOSE')",
+        "raise_alarm()"
+      ],
+      "on_condition": "float(WaterTank@TANK) < 10",
+      "rule_id": "pump_start_if_low_level"
+    },
+    {
+      "on_actions": [
+        "raise_alarm()"
+      ],
+      "on_condition": "WaterTank@DOOR == OPENED",
+      "rule_id": "door_open_alarm"
+    },
+    {
+      "off_actions": [],
+      "off_condition": "",
+      "on_actions": [
+        "raise_alarm()",
+        "client_alert('Switches are in an invalid state!\\nSolve issue by setting right switch to TURN?', 'confirm_cancel', 'TrainTestDriver@RIGHT_SWITCH_CONTROL_CMD', 'TURN', 30)"
+      ],
+      "on_condition": "TrainTestDriver@RIGHT_SWITCH_CONTROL == 'STRAIGHT' and TrainTestDriver@LEFT_SWITCH_CONTROL == 'TURN'",
+      "rule_id": "switch_error_straight"
+    },
+    {
+      "off_actions": [],
+      "off_condition": "",
+      "on_actions": [
+        "raise_alarm()",
+        "client_alert('Switches are in an invalid state!\\nSolve issue by setting right switch to STRAIGHT?', 'confirm_cancel', 'TrainTestDriver@RIGHT_SWITCH_CONTROL_CMD', 'STRAIGHT', 30)"
+      ],
+      "on_condition": "TrainTestDriver@RIGHT_SWITCH_CONTROL == 'TURN' and TrainTestDriver@LEFT_SWITCH_CONTROL == 'STRAIGHT'",
+      "rule_id": "switch_error_turn"
     }
   ],
   "streams": [
@@ -259,5 +1500,186 @@
       "protocol": "https",
       "server": "www.openscadalite.com"
     }
-  ]
+  ],
+  "animations": {
+    "ALARM_SWITCHES": [
+      {
+        "attribute": "href",
+        "default": "#",
+        "expression": {
+          "ACTIVE": "#alert",
+          "FINISHED": "#",
+          "INACTIVE": "#",
+          "ACK": "#",
+          "UNKNOWN": "#"
+        },
+        "quality": {
+          "unknown": "#alert"
+        },
+        "revert_after": 0,
+        "trigger_type": "alarm"
+      }
+    ],
+    "LEFT_SWITCH_STRAIGHT": [
+      {
+        "attribute": "visibility",
+        "expression": {
+          "STRAIGHT": "visible",
+          "TURN": "hidden"
+        },
+        "quality": {
+          "unknown": "hidden"
+        }
+      }
+    ],
+    "LEFT_SWITCH_TURN": [
+      {
+        "attribute": "visibility",
+        "expression": {
+          "STRAIGHT": "hidden",
+          "TURN": "visible"
+        },
+        "quality": {
+          "unknown": "hidden"
+        }
+      }
+    ],
+    "RIGHT_SWITCH_STRAIGHT": [
+      {
+        "attribute": "visibility",
+        "expression": {
+          "STRAIGHT": "visible",
+          "TURN": "hidden"
+        },
+        "quality": {
+          "unknown": "hidden"
+        }
+      }
+    ],
+    "RIGHT_SWITCH_TURN": [
+      {
+        "attribute": "visibility",
+        "expression": {
+          "STRAIGHT": "hidden",
+          "TURN": "visible"
+        },
+        "quality": {
+          "unknown": "hidden"
+        }
+      }
+    ],
+    "SIGNAL_STRAIGHT": [
+      {
+        "attribute": "href",
+        "expression": {
+          "STRAIGHT": "#clear",
+          "TURN": "#stop"
+        },
+        "quality": {
+          "unknown": "none"
+        }
+      }
+    ],
+    "SIGNAL_TURN": [
+      {
+        "attribute": "href",
+        "expression": {
+          "STRAIGHT": "#stop",
+          "TURN": "#clear"
+        },
+        "quality": {
+          "unknown": "none"
+        }
+      }
+    ],
+    "SWITCH_CONTROL": [
+      {
+        "attribute": "fill",
+        "default": "gray",
+        "expression": {
+          "STRAIGHT": "green",
+          "TURN": "red"
+        },
+        "quality": {
+          "unknown": "gray"
+        }
+      }
+    ],
+    "driver_connection": [
+      {
+        "attribute": "fill",
+        "default": "gray",
+        "duration": 0.5,
+        "expression": {
+          "OFFLINE": "red",
+          "ONLINE": "green"
+        },
+        "quality": {
+          "unknown": "gray"
+        },
+        "trigger_type": "connection"
+      }
+    ],
+    "fill_level": [
+      {
+        "attribute": "y",
+        "expression": "280 - ((value/100) * 120)",
+        "quality": {
+          "unknown": 280
+        }
+      },
+      {
+        "attribute": "height",
+        "expression": "(value/100) * 120",
+        "quality": {
+          "unknown": 0
+        }
+      }
+    ],
+    "level_text": [
+      {
+        "attribute": "text",
+        "expression": "str(value)",
+        "quality": {
+          "unknown": "0.0"
+        }
+      }
+    ],
+    "stress_square": [
+      {
+        "attribute": "fill",
+        "expression": {
+          "FALSE": "red",
+          "TRUE": "green"
+        },
+        "quality": {
+          "unknown": "gray"
+        }
+      }
+    ],
+    "toggle_opened_closed": [
+      {
+        "attribute": "fill",
+        "expression": {
+          "CLOSED": "red",
+          "OPENED": "green"
+        },
+        "quality": {
+          "unknown": "gray"
+        }
+      }
+    ],
+    "toggle_start_stop": [
+      {
+        "attribute": "fill",
+        "expression": {
+          "STARTED": "green",
+          "STOPPED": "brown"
+        },
+        "quality": {
+          "unknown": "gray"
+        }
+      }
+    ]
+  }
 }

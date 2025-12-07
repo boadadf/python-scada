@@ -9,15 +9,14 @@ import CommunicationsView from "./components/CommunicationsView";
 import AlarmsView from "./components/AlarmsView";
 import CommandsView from "./components/CommandsView";
 import TrackingView from "./components/TrackingView";
+import StreamView from "./components/StreamView";
+import MainView from "./components/MainView";
 import { AlertProvider } from "./contexts/AlertContext";
 import { UserActionProvider } from "./contexts/UserActionContext";
 import AlertPopup from "./components/AlertPopup";
-import StreamView from "./components/StreamView";
-import MainView from "./components/MainView";
-import "leaflet/dist/leaflet.css";
 
 const TAB_COMPONENTS = {
-  GIS: MainView,
+  Main: MainView,
   Image: ImageView,
   Datapoints: DatapointsView,
   Communications: CommunicationsView,
@@ -51,9 +50,9 @@ function RequireAuth({ children }) {
 
 function PrivateApp() {
   const [activeTabKey, setActiveTabKey] = useState(null);
+  const [tabs, setTabs] = useState([]);
+  const [selectedSvg, setSelectedSvg] = useState(null);
   const [alarmActive, setAlarmActive] = useState(false);
-  const [selectedSvg, setSelectedSvg] = useState(null); // for ImageView when using dropdown mode
-  const [tabs, setTabs] = useState([]); // normalized tab objects
   const alarmBtnRef = useRef();
 
   useEffect(() => {
@@ -61,31 +60,23 @@ function PrivateApp() {
     fetch("/frontend/api/tabs")
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error("no tabs"))))
       .then((fetched) => {
-        // fetched is expected to be array of strings like ["Main","Image","Image(stress_test)"]
         const normalized = fetched.map((t, idx) => {
           if (typeof t !== "string") return { key: `tab_${idx}`, label: String(t), raw: t };
+
           const imageMatch = /^Image\(([^)]+)\)$/i.exec(t.trim());
           if (imageMatch) {
-            const svgName = imageMatch[1];
-            // key unique per forced image tab
-            return { key: `Image:${svgName}`, label: "Image", forcedSvg: svgName, raw: t };
+            return { key: `Image:${imageMatch[1]}`, label: "Image", forcedSvg: imageMatch[1], raw: t };
           }
-          // plain Image without forced svg
           if (t.trim().toLowerCase() === "image") {
             return { key: `Image:all`, label: "Image", forcedSvg: null, raw: t };
           }
-          // other tabs
           return { key: t, label: t, forcedSvg: null, raw: t };
         });
 
         setTabs(normalized);
-
-        // determine initial active tab: prefer first tab, otherwise Main
-        const initial = normalized[0] || { key: "Main", label: "Main" };
-        setActiveTabKey(initial.key);
+        setActiveTabKey(normalized[0]?.key || "Main");
       })
       .catch(() => {
-        // fallback to default tabs
         const defaults = [
           { key: "Main", label: "Main", forcedSvg: null },
           { key: "Image:all", label: "Image", forcedSvg: null },
@@ -96,21 +87,19 @@ function PrivateApp() {
   }, []);
 
   useEffect(() => {
-    function handleMessage(event) {
+    const handleMessage = (event) => {
       if (event.data === "RaiseAlert:Alarms") setAlarmActive(true);
       if (event.data === "LowerAlert:Alarms") setAlarmActive(false);
-    }
+    };
     window.addEventListener("message", handleMessage);
     return () => window.removeEventListener("message", handleMessage);
   }, []);
 
-  // Called by MainView markers when user wants to navigate to an SVG
   const handleMarkerClick = (navigatePath) => {
     let svgName = navigatePath;
     if (svgName && svgName.includes("/")) svgName = svgName.split("/").pop();
-    // set selection for dropdown-mode ImageView
     setSelectedSvg(svgName);
-    // if there's a plain Image tab, switch to that; otherwise switch to first Image tab
+
     const plainImage = tabs.find((t) => t.label === "Image" && t.forcedSvg === null);
     const anyImage = tabs.find((t) => t.label === "Image");
     const targetKey = plainImage ? plainImage.key : anyImage ? anyImage.key : activeTabKey;
@@ -121,6 +110,7 @@ function PrivateApp() {
     <div className="app-container">
       <TopMenu />
 
+      {/* Tabs */}
       <div className="tabs">
         {tabs.map((t) => (
           <button
@@ -135,21 +125,25 @@ function PrivateApp() {
         ))}
       </div>
 
+      {/* Tab content */}
       {tabs.map((t) => {
         const Component = TAB_COMPONENTS[t.label];
         if (!Component) return null;
 
+        const isActive = activeTabKey === t.key;
         return (
           <div
             key={t.key + "_content"}
             className="tab-content"
-            style={{ display: activeTabKey === t.key ? "block" : "none" }}
+            style={{ display: isActive ? "block" : "none", height: "calc(100vh - 120px)" }}
           >
             {t.label === "Image" ? (
-              // pass forcedSvg when present, also pass selectedSvgProp for dropdown-mode
-              <ImageView forcedSvg={t.forcedSvg} selectedSvgProp={t.forcedSvg ? t.forcedSvg : selectedSvg} onSvgChange={(s) => { /* no-op or store if needed */ }} />
+              <ImageView
+                forcedSvg={t.forcedSvg}
+                selectedSvgProp={t.forcedSvg ? t.forcedSvg : selectedSvg}
+              />
             ) : t.label === "Main" ? (
-              <Component active={activeTabKey === t.key} onMarkerClick={handleMarkerClick} />
+              <Component active={isActive} onMarkerClick={handleMarkerClick} />
             ) : (
               <Component />
             )}
