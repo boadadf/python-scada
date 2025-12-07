@@ -73,7 +73,7 @@ export default function TopMenu({ onLoad, onSave, dirty = false }) {
             <div
               style={{ padding: '8px 16px', cursor: 'pointer' }}
               onClick={() => { setOpen(false); onSave(); }}
-            >Save</div>
+            >Upload</div>
             <div
               style={{ padding: '8px 16px', cursor: 'pointer', color: '#e53935', borderTop: '1px solid #eee' }}
               onClick={() => { setOpen(false); handleLogout(); }}

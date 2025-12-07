@@ -39,8 +39,7 @@ async def test_restart_app_docker(monkeypatch):
 
     # Patch docker.from_env in the correct namespace
     monkeypatch.setattr(
-        "openscada_lite.web.config_editor.routes.docker.from_env",
-        lambda: mock_client
+        "openscada_lite.web.config_editor.routes.docker.from_env", lambda: mock_client
     )
 
     # Patch HOSTNAME
@@ -55,8 +54,7 @@ async def test_restart_app_docker(monkeypatch):
         return task
 
     monkeypatch.setattr(
-        "openscada_lite.web.config_editor.routes.asyncio.create_task",
-        create_task_sync
+        "openscada_lite.web.config_editor.routes.asyncio.create_task", create_task_sync
     )
 
     # Call endpoint
@@ -70,4 +68,3 @@ async def test_restart_app_docker(monkeypatch):
     # Assert restart happened
     mock_client.containers.get.assert_called_with("fake_id")
     mock_container.restart.assert_called_once()
-

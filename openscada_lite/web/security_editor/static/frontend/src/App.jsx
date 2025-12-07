@@ -15,8 +15,8 @@
  * - All changes are kept in memory until you click "Save".
  * 
  * API Endpoints (expected by this app):
- *   GET  /security-editor/api/config      - loads the current security_config.json
- *   POST /security-editor/api/config      - saves the edited security_config.json
+ *   GET  /security/api/config      - loads the current security_config.json
+ *   POST /security/api/config      - saves the edited security_config.json
  * 
  * Usage:
  * - Place this file as `App.jsx` in your security editor React project.
@@ -52,7 +52,7 @@ function SecureApp() {
 
   async function loadConfig(signal) {
     try {
-      const res = await fetch("/security-editor/api/config", { signal });
+      const res = await fetch("/security/api/config", { signal });
       if (!res.ok) throw new Error(await res.text());
       const data = await res.json();
       setConfig(data);
@@ -71,7 +71,7 @@ function SecureApp() {
 
   async function saveConfig() {
     try {
-      const res = await fetch("/security-editor/api/config", {
+      const res = await fetch("/security/api/config", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(config),
@@ -81,21 +81,6 @@ function SecureApp() {
       setDirty(false);
     } catch (err) {
       alert("Failed to save: " + err.message);
-    }
-  }
-
-  // When saving/uploading:
-  async function saveConfigToBackend() {
-    try {
-      const res = await fetch(`/api/config/save`, {
-        method: "POST",
-        body: JSON.stringify({ filename: CONFIG_FILENAME, content: config }),
-        headers: { "Content-Type": "application/json" },
-      });
-      if (!res.ok) throw new Error(await res.text());
-      console.log("Config saved to backend");
-    } catch (err) {
-      console.error("Failed to save config to backend: " + err.message);
     }
   }
 

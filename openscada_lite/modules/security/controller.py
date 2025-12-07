@@ -46,6 +46,7 @@ class SecurityController(
 
     # ---------------- Register Routes ----------------
     def register_local_routes(self, router: APIRouter):
+        print("=========================================[SECURITY] Loading security routes")
         logger.debug("[SECURITY] Loading security routes")
         self.model.load_endpoints(router)
 
@@ -97,8 +98,10 @@ class SecurityController(
                 endpoint="login",
             )
 
+        print("=========================================[SECURITY] Registered login route loaded")
+
         # GET security config
-        @router.get("/security-editor/api/config")
+        @router.get("/security/api/config")
         async def get_security_config():
             try:
                 config = self.model.get_security_config()
@@ -110,7 +113,7 @@ class SecurityController(
                 )
 
         # POST security config
-        @router.post("/security-editor/api/config")
+        @router.post("/security/api/config")
         async def save_security_config(data: dict):
             if not data:
                 return JSONResponse(
