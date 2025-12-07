@@ -14,12 +14,14 @@
 # limitations under the License.
 # -----------------------------------------------------------------------------
 # openscada_lite/web/config_editor/routes.py
+import asyncio
 import os
 import json
 import anyio
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 import logging
+import docker
 
 logger = logging.getLogger(__name__)
 
@@ -86,10 +88,25 @@ async def save_config_as(request: Request):
 
 @config_router.post("/restart", response_class=JSONResponse)
 async def restart_app():
-    async def delayed_exit():
-        await anyio.sleep(0.5)  # Let HTTP response complete
-        print("[RESTART] Exiting process to trigger Docker restart...")
-        os._exit(1)  # Immediately kill the container
+    async def _restart():
+        # Give HTTP response time to finish
+        await asyncio.sleep(0.5)
 
-    anyio.create_task(delayed_exit())
+        # Try Docker SDK restart
+        try:
+            client = docker.from_env()
+            container_id = os.environ.get("HOSTNAME")
+            if container_id:
+                container = client.containers.get(container_id)
+                print(f"[RESTART] Restarting container {container_id} via Docker socket...")
+                container.restart()
+                return
+        except Exception as e:
+            print(f"[RESTART] Docker socket restart failed: {e}")
+
+        # Fallback: exit process
+        print("[RESTART] Exiting process to trigger restart (fallback)...")
+        os._exit(1)
+
+    asyncio.create_task(_restart())
     return {"message": "Restarting OpenSCADA-Lite container..."}
