@@ -1,8 +1,7 @@
 import pytest
 from fastapi.testclient import TestClient
 from openscada_lite.app import app, sio
-import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 from openscada_lite.web.config_editor.routes import restart_app
 
 
