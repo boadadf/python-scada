@@ -86,7 +86,7 @@ export default function StreamsTab({ config, setConfig }) {
 
             <label>Port:</label>
             <input
-              type="number"
+              type="text"
               value={streams[selectedKey].port || ""}
               onChange={(e) => updateField("port", e.target.value)}
             />
