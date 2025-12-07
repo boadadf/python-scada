@@ -69,11 +69,11 @@ def test_full_config_roundtrip(client):
     }
 
     # Save config
-    resp = client.post("/security-editor/api/config", json=config)
+    resp = client.post("/security/api/config", json=config)
     assert resp.status_code == 200
 
     # Load config
-    resp = client.get("/security-editor/api/config")
+    resp = client.get("/security/api/config")
     assert resp.status_code == 200
     loaded = resp.json()
     assert loaded == config
@@ -99,7 +99,7 @@ def test_login_admin(client):
             }
         ],
     }
-    client.post("/security-editor/api/config", json=config)
+    client.post("/security/api/config", json=config)
 
     # Try login with admin/admin
     resp = client.post(
@@ -126,7 +126,7 @@ def test_invalid_login(client):
             }
         ],
     }
-    client.post("/security-editor/api/config", json=config)
+    client.post("/security/api/config", json=config)
 
     # Wrong password
     resp = client.post(
@@ -145,7 +145,7 @@ def test_invalid_login(client):
 
 def test_missing_fields(client):
     # POST config missing users/groups
-    resp = client.post("/security-editor/api/config", json={})
+    resp = client.post("/security/api/config", json={})
     assert resp.status_code == 400 or resp.status_code == 422
 
 
@@ -171,9 +171,9 @@ def test_permissions_structure(client):
             },
         ],
     }
-    resp = client.post("/security-editor/api/config", json=config)
+    resp = client.post("/security/api/config", json=config)
     assert resp.status_code == 200
-    resp = client.get("/security-editor/api/config")
+    resp = client.get("/security/api/config")
     assert resp.status_code == 200
     loaded = resp.json()
     assert len(loaded["groups"]) == 2
@@ -204,7 +204,7 @@ def test_admin_permissions(client):
             }
         ],
     }
-    resp = client.post("/security-editor/api/config", json=config)
+    resp = client.post("/security/api/config", json=config)
     assert resp.status_code == 200
 
     # Test login
@@ -215,7 +215,7 @@ def test_admin_permissions(client):
     assert resp.status_code == 200
 
     # Verify permissions in config
-    resp = client.get("/security-editor/api/config")
+    resp = client.get("/security/api/config")
     assert resp.status_code == 200
     loaded = resp.json()
     perms = loaded["groups"][0]["permissions"]
