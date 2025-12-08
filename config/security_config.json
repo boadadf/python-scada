@@ -29,6 +29,18 @@
       ],
       "password_hash": "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918",
       "username": "admin"
+    },
+    {
+      "username": "dani",
+      "password_hash": "bbdda550319287f2dfa031ab9c67a181b6886cad91b645c04c29c773a537c3c2",
+      "groups": [
+        "test_group"
+      ],
+      "allowed_apps": [
+        "security_editor",
+        "scada",
+        "config_editor"
+      ]
     }
   ]
 }

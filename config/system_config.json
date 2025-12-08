@@ -15,6 +15,79 @@
         "LEFT",
         "RIGHT"
       ]
+    },
+    "LEVEL": {
+      "default": 0,
+      "max": 100,
+      "min": 0,
+      "type": "float"
+    },
+    "OPENED_CLOSED": {
+      "default": "CLOSED",
+      "type": "enum",
+      "values": [
+        "OPENED",
+        "CLOSED"
+      ]
+    },
+    "OPEN_CLOSE_CMD": {
+      "default": "CLOSE",
+      "type": "enum",
+      "values": [
+        "OPEN",
+        "CLOSE",
+        "TOGGLE"
+      ]
+    },
+    "PRESSURE": {
+      "default": 50,
+      "max": 200,
+      "min": 0,
+      "type": "float"
+    },
+    "START_STOP": {
+      "default": "STOPPED",
+      "type": "enum",
+      "values": [
+        "STARTED",
+        "STOPPED"
+      ]
+    },
+    "START_STOP_CMD": {
+      "default": "STOP",
+      "type": "enum",
+      "values": [
+        "START",
+        "STOP",
+        "TOGGLE"
+      ]
+    },
+    "SWITCH_CONTROL": {
+      "default": "STRAIGHT",
+      "max": 100,
+      "min": 0,
+      "type": "enum",
+      "values": [
+        "STRAIGHT",
+        "TURN"
+      ]
+    },
+    "SWITCH_CONTROL_CMD": {
+      "default": "TOGGLE",
+      "max": 100,
+      "min": 0,
+      "type": "enum",
+      "values": [
+        "TOGGLE",
+        "STRAIGHT",
+        "TURN"
+      ]
+    },
+    "TEMPERATURE": {
+      "default": 120,
+      "max": 150,
+      "min": 100,
+      "type": "enum"
     }
   },
   "drivers": [
@@ -1297,6 +1370,7 @@
       "name": "frontend",
       "config": {
         "tabs": [
+          "Image",
           "Main",
           "Datapoints",
           "Communications",
@@ -1304,6 +1378,19 @@
           "Commands",
           "Tracking",
           "Streams"
+        ]
+      }
+    },
+    {
+      "name": "frontend",
+      "config": {
+        "tabs": [
+          "Image",
+          "Datapoints",
+          "Alarms",
+          "Communications",
+          "Commands",
+          "Tracking"
         ]
       }
     }
@@ -1329,6 +1416,42 @@
       ],
       "on_condition": "CameraDriver@CAMERA_3_ALARM == TRUE",
       "rule_id": "camera_3_alarm"
+    },
+    {
+      "on_actions": [
+        "send_command('WaterTank@PUMP_CMD', 'OPEN')",
+        "send_command('WaterTank@DOOR_CMD', 'CLOSE')",
+        "raise_alarm()"
+      ],
+      "on_condition": "float(WaterTank@TANK) < 10",
+      "rule_id": "pump_start_if_low_level"
+    },
+    {
+      "on_actions": [
+        "raise_alarm()"
+      ],
+      "on_condition": "WaterTank@DOOR == OPENED",
+      "rule_id": "door_open_alarm"
+    },
+    {
+      "off_actions": [],
+      "off_condition": "",
+      "on_actions": [
+        "raise_alarm()",
+        "client_alert('Switches are in an invalid state!\\nSolve issue by setting right switch to TURN?', 'confirm_cancel', 'TrainTestDriver@RIGHT_SWITCH_CONTROL_CMD', 'TURN', 30)"
+      ],
+      "on_condition": "TrainTestDriver@RIGHT_SWITCH_CONTROL == 'STRAIGHT' and TrainTestDriver@LEFT_SWITCH_CONTROL == 'TURN'",
+      "rule_id": "switch_error_straight"
+    },
+    {
+      "off_actions": [],
+      "off_condition": "",
+      "on_actions": [
+        "raise_alarm()",
+        "client_alert('Switches are in an invalid state!\\nSolve issue by setting right switch to STRAIGHT?', 'confirm_cancel', 'TrainTestDriver@RIGHT_SWITCH_CONTROL_CMD', 'STRAIGHT', 30)"
+      ],
+      "on_condition": "TrainTestDriver@RIGHT_SWITCH_CONTROL == 'TURN' and TrainTestDriver@LEFT_SWITCH_CONTROL == 'STRAIGHT'",
+      "rule_id": "switch_error_turn"
     }
   ],
   "streams": [
@@ -1356,5 +1479,186 @@
       "protocol": "https",
       "server": "www.openscadalite.com"
     }
-  ]
+  ],
+  "animations": {
+    "ALARM_SWITCHES": [
+      {
+        "attribute": "href",
+        "default": "#",
+        "expression": {
+          "ACTIVE": "#alert",
+          "FINISHED": "#",
+          "INACTIVE": "#",
+          "ACK": "#",
+          "UNKNOWN": "#"
+        },
+        "quality": {
+          "unknown": "#alert"
+        },
+        "revert_after": 0,
+        "trigger_type": "alarm"
+      }
+    ],
+    "LEFT_SWITCH_STRAIGHT": [
+      {
+        "attribute": "visibility",
+        "expression": {
+          "STRAIGHT": "visible",
+          "TURN": "hidden"
+        },
+        "quality": {
+          "unknown": "hidden"
+        }
+      }
+    ],
+    "LEFT_SWITCH_TURN": [
+      {
+        "attribute": "visibility",
+        "expression": {
+          "STRAIGHT": "hidden",
+          "TURN": "visible"
+        },
+        "quality": {
+          "unknown": "hidden"
+        }
+      }
+    ],
+    "RIGHT_SWITCH_STRAIGHT": [
+      {
+        "attribute": "visibility",
+        "expression": {
+          "STRAIGHT": "visible",
+          "TURN": "hidden"
+        },
+        "quality": {
+          "unknown": "hidden"
+        }
+      }
+    ],
+    "RIGHT_SWITCH_TURN": [
+      {
+        "attribute": "visibility",
+        "expression": {
+          "STRAIGHT": "hidden",
+          "TURN": "visible"
+        },
+        "quality": {
+          "unknown": "hidden"
+        }
+      }
+    ],
+    "SIGNAL_STRAIGHT": [
+      {
+        "attribute": "href",
+        "expression": {
+          "STRAIGHT": "#clear",
+          "TURN": "#stop"
+        },
+        "quality": {
+          "unknown": "none"
+        }
+      }
+    ],
+    "SIGNAL_TURN": [
+      {
+        "attribute": "href",
+        "expression": {
+          "STRAIGHT": "#stop",
+          "TURN": "#clear"
+        },
+        "quality": {
+          "unknown": "none"
+        }
+      }
+    ],
+    "SWITCH_CONTROL": [
+      {
+        "attribute": "fill",
+        "default": "gray",
+        "expression": {
+          "STRAIGHT": "green",
+          "TURN": "red"
+        },
+        "quality": {
+          "unknown": "gray"
+        }
+      }
+    ],
+    "driver_connection": [
+      {
+        "attribute": "fill",
+        "default": "gray",
+        "duration": 0.5,
+        "expression": {
+          "OFFLINE": "red",
+          "ONLINE": "green"
+        },
+        "quality": {
+          "unknown": "gray"
+        },
+        "trigger_type": "connection"
+      }
+    ],
+    "fill_level": [
+      {
+        "attribute": "y",
+        "expression": "280 - ((value/100) * 120)",
+        "quality": {
+          "unknown": 280
+        }
+      },
+      {
+        "attribute": "height",
+        "expression": "(value/100) * 120",
+        "quality": {
+          "unknown": 0
+        }
+      }
+    ],
+    "level_text": [
+      {
+        "attribute": "text",
+        "expression": "str(value)",
+        "quality": {
+          "unknown": "0.0"
+        }
+      }
+    ],
+    "stress_square": [
+      {
+        "attribute": "fill",
+        "expression": {
+          "FALSE": "red",
+          "TRUE": "green"
+        },
+        "quality": {
+          "unknown": "gray"
+        }
+      }
+    ],
+    "toggle_opened_closed": [
+      {
+        "attribute": "fill",
+        "expression": {
+          "CLOSED": "red",
+          "OPENED": "green"
+        },
+        "quality": {
+          "unknown": "gray"
+        }
+      }
+    ],
+    "toggle_start_stop": [
+      {
+        "attribute": "fill",
+        "expression": {
+          "STARTED": "green",
+          "STOPPED": "brown"
+        },
+        "quality": {
+          "unknown": "gray"
+        }
+      }
+    ]
+  }
 }

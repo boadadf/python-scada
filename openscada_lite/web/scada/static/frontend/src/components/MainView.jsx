@@ -1,17 +1,16 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import GisView from "./GisView";
 import ImageView from "./ImageView";
 import StreamView from "./StreamView";
 import DatapointsView from "./DatapointsView";
 import CommunicationsView from "./CommunicationsView";
 
-export default function MainView() {
+export default function MainView({ active, onMarkerClick }) {
   const [rightPanelView, setRightPanelView] = useState(null);
   const [viewProp, setViewProp] = useState(null);
-  const [popupContent, setPopupContent] = useState(null); // For popup content
-  const [popupVisible, setPopupVisible] = useState(false); // Popup visibility
+  const [popupContent, setPopupContent] = useState(null);
+  const [popupVisible, setPopupVisible] = useState(false);
 
-  // 🔹 This runs when you click a marker
   const handleMarkerClick = (navigation, navigationType) => {
     if (!navigation) {
       setRightPanelView(null);
@@ -24,35 +23,14 @@ export default function MainView() {
     const navType = type?.trim().toLowerCase();
     const navValue = rest.join("/").trim();
 
-    console.log("🧭 Marker clicked:", { navType, navValue, navigationType });
-
     if (navigationType === "popup") {
-      // Handle popup navigation
       setPopupContent({ navType, navValue });
       setPopupVisible(true);
     } else {
-      // Handle right panel navigation
-      if (navType === "image") {
-        setRightPanelView("image");
-        setViewProp(navValue);
-      } else if (navType === "stream") {
-        setRightPanelView("stream");
-        setViewProp(navValue);
-      } else if (navType === "datapoint") {
-        setRightPanelView("datapoint");
-        setViewProp(navValue);
-      } else if (navType === "communication") {
-        setRightPanelView("communication");
-        setViewProp(navValue);
-      } else {
-        console.warn("❌ Unknown navigation type:", navigation);
-      }
+      setRightPanelView(navType);
+      setViewProp(navValue);
     }
   };
-
-  useEffect(() => {
-    console.log("📺 Right panel changed:", rightPanelView, viewProp);
-  }, [rightPanelView, viewProp]);
 
   return (
     <div
@@ -60,27 +38,24 @@ export default function MainView() {
         display: "grid",
         gridTemplateColumns: "1fr 1fr",
         gap: "8px",
-        height: "calc(100vh - 120px)",
+        height: "100%",
       }}
     >
       {/* Left - Map */}
-      <div style={{ borderRadius: "8px", overflow: "hidden", border: "1px solid #ccc" }}>
-        <GisView
-          onMarkerClick={(navigation, navigationType) => {
-            const [type, ...rest] = navigation.split("/");
-            const navType = type?.trim().toLowerCase();
-            const navValue = rest.join("/").trim();
-
-            console.log("🧭 Marker clicked:", { navType, navValue, navigationType });
-
-            handleMarkerClick(navigation, navigationType); // Pass navigationType directly
-          }}
-        />
+      <div
+        style={{
+          borderRadius: "8px",
+          overflow: "hidden",
+          border: "1px solid #ccc",
+          height: "100%",
+          minHeight: "400px",
+        }}
+      >
+        {active && <GisView active={active} onMarkerClick={handleMarkerClick} />}
       </div>
 
       {/* Right - Dynamic panel */}
       <div
-        className="right-panel"
         style={{ flex: 1, paddingLeft: 16, overflowY: "auto" }}
       >
         {rightPanelView === "image" && (
@@ -105,7 +80,6 @@ export default function MainView() {
       {/* Floating Popup */}
       {popupVisible && popupContent && (
         <div
-          className="floating-popup"
           style={{
             position: "fixed",
             top: "20%",
@@ -136,17 +110,28 @@ export default function MainView() {
           >
             &times;
           </button>
+
           {popupContent.navType === "image" && (
-            <ImageView key={`popup-image-${popupContent.navValue}`} selectedSvgProp={popupContent.navValue} />
+            <ImageView
+              key={`popup-image-${popupContent.navValue}`}
+              selectedSvgProp={popupContent.navValue}
+            />
           )}
           {popupContent.navType === "stream" && (
-            <StreamView key={`popup-stream-${popupContent.navValue}`} selectedStreamId={popupContent.navValue} />
+            <StreamView
+              key={`popup-stream-${popupContent.navValue}`}
+              selectedStreamId={popupContent.navValue}
+            />
           )}
           {popupContent.navType === "datapoint" && (
-            <DatapointsView key={`popup-datapoint-${popupContent.navValue}`} />
+            <DatapointsView
+              key={`popup-datapoint-${popupContent.navValue}`}
+            />
           )}
           {popupContent.navType === "communication" && (
-            <CommunicationsView key={`popup-comm-${popupContent.navValue}`} />
+            <CommunicationsView
+              key={`popup-comm-${popupContent.navValue}`}
+            />
           )}
         </div>
       )}

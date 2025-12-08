@@ -17,7 +17,9 @@ L.Icon.Default.mergeOptions({
 function MapRefresher({ active }) {
   const map = useMap();
   useEffect(() => {
-    if (active && map) setTimeout(() => map.invalidateSize(), 300);
+    if (active && map) {
+      setTimeout(() => map.invalidateSize(), 100);
+    }
   }, [active, map]);
   return null;
 }
@@ -56,7 +58,7 @@ export default function GisView({ active, onMarkerClick }) {
       >
         <TileLayer attribution={attribution} url={baseurl} />
 
-        <MapRefresher active={active} />
+        <MapRefresher active={active} /> {/* <-- pass active prop */}
 
         {Object.values(markers).map((m) => {
           const key = markerKey(m);

@@ -200,7 +200,7 @@
       "name": "frontend",
       "config": {
         "tabs": [
-          "Main",
+          "Gis",
           "Datapoints",
           "Communications",
           "Alarms",

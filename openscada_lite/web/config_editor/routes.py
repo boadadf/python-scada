@@ -110,5 +110,6 @@ async def restart_app():
         print("[RESTART] Exiting process to trigger restart (fallback)...")
         os._exit(1)
 
-    asyncio.create_task(_restart())
+    global _restart_task
+    _restart_task = asyncio.create_task(_restart())
     return {"message": "Restarting OpenSCADA-Lite container..."}

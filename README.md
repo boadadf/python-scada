@@ -932,7 +932,7 @@ The **Security Module** provides authentication and authorization for the SCADA 
   Protected endpoints require a valid JWT token. The controller verifies the token and checks user permissions before granting access.
 
 - **Configuration Management:**  
-  Security configuration (users, groups, permissions) can be retrieved and updated via the `/security-editor/api/config` endpoints.
+  Security configuration (users, groups, permissions) can be retrieved and updated via the `/security/api/config` endpoints.
 
 ---
 

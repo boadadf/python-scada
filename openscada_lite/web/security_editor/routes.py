@@ -14,11 +14,8 @@
 # limitations under the License.
 # -----------------------------------------------------------------------------
 # openscada_lite/web/security_editor/routes.py
-import os
-import json
-import anyio
-from fastapi import APIRouter, Request
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi import APIRouter
+from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 import logging
@@ -44,37 +41,3 @@ async def editor_index():
     if index_file.exists():
         return FileResponse(index_file)
     return FileResponse(status_code=404)
-
-
-# -------------------- API Endpoints --------------------
-
-
-@security_router.get("/api/config", response_class=JSONResponse)
-async def get_security_config():
-    async with await anyio.open_file(config_file, "r") as file:
-        data = await file.read()
-        return json.loads(data)
-
-
-@security_router.post("/api/config", response_class=JSONResponse)
-async def save_security_config(request: Request):
-    config = await request.json()
-    async with await anyio.open_file(config_file, "w") as file:
-        await file.write(json.dumps(config, indent=2))
-    return {"status": "ok"}
-
-
-@security_router.post("/api/restart", response_class=JSONResponse)
-async def restart_app():
-    import sys
-    import threading
-
-    def do_restart():
-        logger.info("[RESTART] Restarting OpenSCADA-Lite process...")
-        project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../.."))
-        os.chdir(project_root)
-        python = sys.executable
-        os.execl(python, python, "-m", "openscada_lite.app", *sys.argv[1:])
-
-    threading.Thread(target=do_restart).start()
-    return {"message": "Restarting OpenSCADA-Lite..."}

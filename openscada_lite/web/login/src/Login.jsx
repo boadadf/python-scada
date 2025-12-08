@@ -5,8 +5,7 @@ import "./login.css";
 const APP_LINKS = [
   { href: "/scada", label: "SCADA" },
   { href: "/security-editor", label: "Security Config" },
-  { href: "/config-editor", label: "System Config" },
-  { href: "/static/README.html", label: "About OSL" }
+  { href: "/config-editor", label: "System Config" }
 ];
 
 function getOtherApps(currentPath) {
