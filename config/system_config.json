@@ -102,8 +102,6 @@
       ],
       "driver_class": "CameraDriver",
       "name": "CameraDriver"
-<<<<<<< Updated upstream
-=======
     },
     {
       "command_datapoints": [
@@ -1192,7 +1190,6 @@
       ],
       "driver_class": "TrainTestDriver",
       "name": "TrainTestDriver"
->>>>>>> Stashed changes
     }
   ],
   "gis_icons": [

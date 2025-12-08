@@ -1,7 +1,7 @@
-This is the tank simulation
-Go to the communications tab and connect the WaterTank server
-Click on the PUMP button to start pumping water
-Open the VALVE IN to let the water fill tank
-Click on the VALVE OUT to empty the tank
-Notice the alarm when level is below 10
-Go to the alarm tab to ack the alarm
+This is the Tank Simulation module.
+1. Go to the Communications tab and connect to the WaterTank server.
+2. Click the "PUMP" button to start pumping water.
+3. Open the "VALVE IN" to fill the tank with water.
+4. Click the "VALVE OUT" to empty the tank.
+5. Observe the alarm when the water level drops below 10.
+6. Navigate to the Alarm tab to acknowledge the alarm.

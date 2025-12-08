@@ -1,6 +1,6 @@
-This is the model train simulation
-Press on the RaspberryPi button to connect/disconnect to the IO driver
-Press on the left control to change the switch (straight / turn)
-If the switches do not have the same state (both straight or both turn) an alarm is triggered
-A popup is displayed to set both switches to the same state
-Go to the alarm tab to ack the alarm
+This is the Model Train Simulation module.
+1. Press the "RaspberryPi" button to connect or disconnect from the IO driver.
+2. Use the "Left Control" to change the switch state (Straight or Turn).
+3. If the switches are not in the same state (both Straight or both Turn), an alarm will be triggered.
+4. A popup will appear, prompting you to set both switches to the same state.
+5. Navigate to the Alarm tab to acknowledge the alarm and resolve the issue.

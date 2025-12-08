@@ -1,5 +1,5 @@
-This is the stress test
-Go to the communications and connect the stress test
-Press Test to start the test
-Every 5 seconds the all the datapoints are toggled between True/false
-Check the datapoint tab to see how the datapoints are changed
+This is the Stress Test module.
+1. Go to the Communications tab and connect the Stress Test driver.
+2. Press the "Test" button to start the test.
+3. Every 5 seconds, all datapoints will toggle between True and False.
+4. Navigate to the Datapoint tab to observe how the datapoints change in real-time.
