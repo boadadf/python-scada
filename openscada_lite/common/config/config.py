@@ -219,7 +219,7 @@ class Config:
             # folder missing — return empty list instead of crashing
             return []
         logger.debug(f"Scanning SVG folder: {svg_folder}")
-        return [f for f in os.listdir(svg_folder) if f.endswith(".svg")]
+        return sorted([f for f in os.listdir(svg_folder) if f.endswith(".svg")])
 
     def get_animation_datapoint_map(self) -> dict:
         """

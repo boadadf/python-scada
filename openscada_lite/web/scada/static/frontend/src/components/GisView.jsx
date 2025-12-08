@@ -85,6 +85,16 @@ export default function GisView({ active, onMarkerClick }) {
                   <br />
                   Lat: {m.latitude.toFixed(4)} <br />
                   Lon: {m.longitude.toFixed(4)} <br />
+                  {m.text && (
+                    <>
+                      <br />
+                      <div
+                        dangerouslySetInnerHTML={{
+                          __html: m.text.replace(/\n/g, "<br>"), // Replace \n with <br>
+                        }}
+                      />
+                    </>
+                  )}
                   {m.navigation && onMarkerClick && (
                     <button
                       style={{ marginTop: "4px" }}

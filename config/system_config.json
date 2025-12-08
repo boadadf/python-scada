@@ -216,36 +216,6 @@
       "name": "WaterTank"
     },
     {
-      "command_datapoints": [],
-      "connection_info": {
-        "server_name": "OPCUAServer"
-      },
-      "datapoints": [
-        {
-          "name": "TrainTestDriver@RIGHT_SWITCH_CONTROL",
-          "type": "SWITCH_CONTROL"
-        },
-        {
-          "name": "TrainTestDriver@LEFT_SWITCH_CONTROL",
-          "type": "SWITCH_CONTROL"
-        },
-        {
-          "name": "TrainTestDriver@RIGHT_SWITCH_CONTROL_CMD",
-          "type": "SWITCH_CONTROL_CMD"
-        },
-        {
-          "name": "TrainTestDriver@LEFT_SWITCH_CONTROL_CMD",
-          "type": "SWITCH_CONTROL_CMD"
-        }
-      ],
-      "driver_class": "OPCUAServerDriver",
-      "driver_config": {
-        "allow_write_regex": ".*_CMD$",
-        "namespaceurl": "http://openscada-lite/opcua/server"
-      },
-      "name": "OPCUAServer"
-    },
-    {
       "command_datapoints": [
         {
           "name": "TEST_CMD",
@@ -1330,6 +1300,15 @@
         "LEFT": "/static/icons/camera_left.png",
         "RIGHT": "/static/icons/camera_right.png"
       }
+    },
+    {      
+      "icon": "/static/icons/help.png",
+      "id": "help",
+      "label": "Help",
+      "latitude": 47.4202,
+      "longitude": 8.24,
+      "navigation_type": "popup",
+      "text": "- In the Communication tab connect the CameraDriver\n\n- In the Command tab the cameras can be moved (LEFT/RIGHT) by sending commands on the _CMD\n\n- In the Datapoint tab you can trigger alarms by setting the _ALARM datapoint to True\n\n- In the Communication tab connect the OPCUAServerDriver, connect with a standard OPC UA browser on the opc.tcp://www.openscadalite.com:4840 to control the cameras from an OPC UA Client"
     },
     {
       "alarm": {

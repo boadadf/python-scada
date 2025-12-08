@@ -135,6 +135,24 @@ export default function Login({ onLoginSuccess, loginEndpoint = "/security/login
             {loading ? "Signing in..." : "Sign in"}
           </button>
         </form>
+         {/* Dani: Added test-system hint - remove for prod*/}
+        <div style={{
+          marginTop: "18px",
+          color: "red",
+          textAlign: "center",
+          fontSize: "14px",
+          fontWeight: "500"
+        }}>
+          Hint:<br />
+          This is a test system, login with <b>admin / admin</b><br />
+          Or create your own user at{" "}
+          <a
+            href={`${globalThis.location.origin}/security-editor/`}
+            style={{ color: "red", textDecoration: "underline" }}
+          >
+            OSL Security Editor
+          </a>
+        </div>
       </div>
     </div>
   );

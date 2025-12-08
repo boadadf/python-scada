@@ -21,6 +21,7 @@ export default function GisIconsTab({ config, setConfig }) {
       navigation: "",
       datapoint: "",
       rule_id: "",
+      text: "", // Add default value for text
       states: {},
       alarm: {}
     });
@@ -124,7 +125,8 @@ export default function GisIconsTab({ config, setConfig }) {
                 ["longitude", "Longitude"],
                 ["navigation", "Navigation"],
                 ["datapoint", "Datapoint"],
-                ["rule_id", "Rule ID"]
+                ["rule_id", "Rule ID"],
+                ["text", "Text"] // Add text field
               ].map(([field, label]) => (
                 <tr key={field}>
                   <td style={{ width: 120, padding: "0 8px" }}>{label}</td>
