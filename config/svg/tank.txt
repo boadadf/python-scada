@@ -1,6 +1,7 @@
 This is the tank simulation
-Go to the communications tav and connect the WaterTank server
-Click on the Test button to start the test
-Click on the Pump to pump water into the tank
-Click on the Valve to empty the tank
-If the tank level is below 10, an alarm is triggered
+Go to the communications tab and connect the WaterTank server
+Click on the PUMP button to start pumping water
+Open the VALVE IN to let the water fill tank
+Click on the VALVE OUT to empty the tank
+Notice the alarm when level is below 10
+Go to the alarm tab to ack the alarm

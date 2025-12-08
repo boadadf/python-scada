@@ -1,5 +1,5 @@
 This is the model train simulation
-Press on the RaspberryPi button to connect/disconnect
+Press on the RaspberryPi button to connect/disconnect to the IO driver
 Press on the left control to change the switch (straight / turn)
 If the switches do not have the same state (both straight or both turn) an alarm is triggered
 A popup is displayed to set both switches to the same state

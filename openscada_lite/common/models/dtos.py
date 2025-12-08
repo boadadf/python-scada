@@ -500,6 +500,7 @@ class GisUpdateMsg(DTO):
     label: str | None = None
     navigation: str | None = None
     navigation_type: str | None = None  # e.g., "popup"
+    text: str | None = None
     states: dict = field(default_factory=dict)
     extra: dict = field(default_factory=dict)
 

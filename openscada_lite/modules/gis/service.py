@@ -46,6 +46,7 @@ class GisService(BaseService[Union[TagUpdateMsg, AlarmUpdateMsg], None, GisUpdat
                 label=icon_cfg.get("label"),
                 navigation=icon_cfg.get("navigation"),
                 navigation_type=icon_cfg.get("navigation_type"),
+                text=icon_cfg.get("text"),
                 extra={"datapoint-value": None},
             )
             logger.debug(f"Initializing GIS icon: {gis_msg}")
