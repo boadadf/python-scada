@@ -147,7 +147,7 @@ export default function Login({ onLoginSuccess, loginEndpoint = "/security/login
           This is a test system, login with <b>admin / admin</b><br />
           Or create your own user at{" "}
           <a
-            href={`${window.location.origin}/security-editor/`}
+            href={`${globalThis.location.origin}/security-editor/`}
             style={{ color: "red", textDecoration: "underline" }}
           >
             OSL Security Editor
