@@ -100,7 +100,6 @@ async def test_command_live_feed_and_feedback():
         value=42,
     )
     headers = {"Authorization": f"Bearer {token}"}
-    print("Sending command:", test_command.to_dict())
     response = requests.post(
         f"{SERVER_URL}/command_send_sendcommandmsg", json=test_command.to_dict(), headers=headers
     )

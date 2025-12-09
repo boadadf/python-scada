@@ -78,7 +78,7 @@ class RuleEngine:
         self.asteval.symtable["FALSE"] = False
         config = Config.get_instance()
         dp_types = config.get_types()
-        logger.info(f"Initializing RuleEngine with datapoint types: {list(dp_types.keys())}")
+        logger.debug(f"Initializing RuleEngine with datapoint types: {list(dp_types.keys())}")
         for dp in dp_types.values():
             values = dp.get("values", [])
             for val in values:
@@ -86,6 +86,8 @@ class RuleEngine:
                 if isinstance(val, str):
                     self.asteval.symtable[val] = val
                     self.asteval.symtable[val.upper()] = val
+        self.asteval.symtable["TRUE"] = True
+        self.asteval.symtable["FALSE"] = False
         self.rules = []
         self.datapoint_state = {}
         self.tag_to_rules = {}  # tag_id -> [rules]

@@ -46,7 +46,6 @@ class SecurityController(
 
     # ---------------- Register Routes ----------------
     def register_local_routes(self, router: APIRouter):
-        print("=========================================[SECURITY] Loading security routes")
         logger.debug("[SECURITY] Loading security routes")
         self.model.load_endpoints(router)
 
@@ -97,8 +96,6 @@ class SecurityController(
                 user=username,
                 endpoint="login",
             )
-
-        print("=========================================[SECURITY] Registered login route loaded")
 
         # GET security config
         @router.get("/security/api/config")

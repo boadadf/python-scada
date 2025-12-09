@@ -25,7 +25,7 @@ export default function AnimationTestTab() {
   // --- Load selected SVG content ---
   useEffect(() => {
     if (!selectedSvg) return;
-    fetch(`/svg/${selectedSvg}`)
+    fetch(`/config/svg/${selectedSvg}`)
       .then((r) => r.text())
       .then((svg) => {
         setSvgContent(svg);
