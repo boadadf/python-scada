@@ -1,15 +1,37 @@
 import React, { useState, useEffect } from "react";
 import Table from "./Table";
 
-export default function GroupsTab({ config, setConfig }) {
+export default function GroupsTab({ config, setConfig, activeTab }) {
   const [selected, setSelected] = useState(null);
   const [endpoints, setEndpoints] = useState([]);
   const groups = config.groups || [];
 
+  // Fetch endpoints on mount
+  useEffect(() => {
+    console.debug("useEffect for fetching endpoints triggered"); // Debugging log
+    async function fetchEndpoints() {
+      console.debug("Fetching endpoints...");
+      try {
+        const token = localStorage.getItem("jwt_token");
+        const res = await fetch("/security/endpoints", {
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setEndpoints(Array.isArray(data) ? data : []);
+        }
+      } catch (err) {
+        console.error("Error fetching endpoints:", err);
+        setEndpoints([]);
+      }
+    }
+    fetchEndpoints();
+  }, []);
+
+
   useEffect(() => {
     if (selected != null && selected >= groups.length) setSelected(null);
   }, [groups.length]);
-
 
   function add() {
     const name = prompt('Group name:');
