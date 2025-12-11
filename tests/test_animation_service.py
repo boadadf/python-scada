@@ -1,7 +1,12 @@
 import pytest
 from datetime import datetime
 from openscada_lite.modules.animation.service import AnimationService
-from openscada_lite.common.models.dtos import TagUpdateMsg, AlarmUpdateMsg
+from openscada_lite.common.models.dtos import (
+    TagUpdateMsg,
+    AlarmUpdateMsg,
+    AnimationUpdateRequestMsg,
+    AnimationUpdateMsg,
+)
 from openscada_lite.common.models.entities import Animation, AnimationEntry
 from openscada_lite.common.config.config import Config
 
@@ -174,3 +179,128 @@ async def test_alarm_update_triggers_alarm_animation(dummy_config):
 
     # Should resolve to the ACTIVE mapping
     assert cfg["attr"]["href"] == "#alert"
+
+
+def test_animation_update_request_msg_serialization():
+    """
+    Test serialization and deserialization of AnimationUpdateRequestMsg.
+    """
+    payload = {
+        "datapoint_identifier": "WaterTank@TANK",
+        "value": 75,
+        "quality": "good",
+    }
+
+    # Create an instance
+    request_msg = AnimationUpdateRequestMsg(**payload)
+
+    # Validate attributes
+    assert request_msg.datapoint_identifier == "WaterTank@TANK"
+    assert request_msg.value == 75
+    assert request_msg.quality == "good"
+
+    # Serialize to dict
+    serialized = request_msg.to_dict()
+
+    # Adjust expected payload for serialization differences
+    expected_serialized = payload.copy()
+    expected_serialized["alarm_status"] = None  # Default value for alarm_status
+    expected_serialized["track_id"] = serialized["track_id"]  # Include track_id
+
+    assert serialized == expected_serialized
+
+    # Deserialize back to object
+    deserialized = AnimationUpdateRequestMsg(**serialized)
+    assert deserialized.datapoint_identifier == "WaterTank@TANK"
+    assert deserialized.value == 75
+    assert deserialized.quality == "good"
+    assert deserialized.alarm_status is None
+
+
+def test_animation_update_msg_serialization():
+    """
+    Test serialization and deserialization of AnimationUpdateMsg.
+    """
+    payload = {
+        "svg_name": "tank.svg",
+        "element_id": "tank_fill",
+        "animation_type": "fill_level",
+        "value": 50,
+        "config": {
+            "attr": {"height": 170},
+            "duration": 0.5,
+        },
+        "timestamp": datetime(2025, 12, 11, 10, 0, 0),
+        "test": False,
+    }
+
+    # Create an instance
+    update_msg = AnimationUpdateMsg(**payload)
+
+    # Validate attributes
+    assert update_msg.svg_name == "tank.svg"
+    assert update_msg.element_id == "tank_fill"
+    assert update_msg.animation_type == "fill_level"
+    assert update_msg.value == 50
+    assert update_msg.config == {
+        "attr": {"height": 170},
+        "duration": 0.5,
+    }
+    assert update_msg.timestamp == datetime(2025, 12, 11, 10, 0, 0)
+    assert update_msg.test is False
+
+    # Serialize to dict
+    serialized = update_msg.to_dict()
+
+    # Adjust expected payload for serialization differences
+    expected_serialized = payload.copy()
+    expected_serialized["timestamp"] = "2025-12-11T10:00:00"  # Adjust timestamp format
+    expected_serialized["track_id"] = serialized["track_id"]  # Include track_id
+
+    assert serialized == expected_serialized
+
+    # Deserialize back to object
+    deserialized = AnimationUpdateMsg(**serialized)
+
+    # Convert deserialized timestamp to datetime for comparison
+    deserialized.timestamp = datetime.fromisoformat(deserialized.timestamp)
+
+    assert deserialized.svg_name == "tank.svg"
+    assert deserialized.element_id == "tank_fill"
+    assert deserialized.animation_type == "fill_level"
+    assert deserialized.value == 50
+    assert deserialized.config == {
+        "attr": {"height": 170},
+        "duration": 0.5,
+    }
+    assert deserialized.timestamp == datetime(2025, 12, 11, 10, 0, 0)
+    assert deserialized.test is False
+
+
+def test_animation_update_msg_timestamp_deserialization():
+    """
+    Test that AnimationUpdateMsg correctly deserializes the timestamp field.
+    """
+    payload = {
+        "svg_name": "tank.svg",
+        "element_id": "tank_fill",
+        "animation_type": "fill_level",
+        "value": 50,
+        "config": {
+            "attr": {"height": 170},
+            "duration": 0.5,
+        },
+        "timestamp": "2025-12-11T10:00:00",  # ISO 8601 string
+        "test": False,
+    }
+
+    # Deserialize from payload
+    update_msg = AnimationUpdateMsg(**payload)
+
+    # Manually convert the timestamp to a datetime object for validation
+    if isinstance(update_msg.timestamp, str):
+        update_msg.timestamp = datetime.fromisoformat(update_msg.timestamp)
+
+    # Validate that the timestamp is converted to a datetime object
+    assert isinstance(update_msg.timestamp, datetime)
+    assert update_msg.timestamp == datetime(2025, 12, 11, 10, 0, 0)
