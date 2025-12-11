@@ -1,7 +1,12 @@
 import pytest
 from datetime import datetime
 from openscada_lite.modules.animation.service import AnimationService
-from openscada_lite.common.models.dtos import TagUpdateMsg, AlarmUpdateMsg, AnimationUpdateRequestMsg, AnimationUpdateMsg
+from openscada_lite.common.models.dtos import (
+    TagUpdateMsg,
+    AlarmUpdateMsg,
+    AnimationUpdateRequestMsg,
+    AnimationUpdateMsg,
+)
 from openscada_lite.common.models.entities import Animation, AnimationEntry
 from openscada_lite.common.config.config import Config
 
