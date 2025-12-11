@@ -16,4 +16,4 @@ web/*/static/frontend/node_modules/
 web/*/static/frontend/package-lock.json
 
 # If you want to ignore all dist folders everywhere (recursive)
-**/dist/
+**/dist/**

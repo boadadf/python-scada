@@ -100,14 +100,13 @@ async def restart_app():
             container_id = os.environ.get("HOSTNAME")
             if container_id:
                 container = client.containers.get(container_id)
-                print(f"[RESTART] Restarting container {container_id} via Docker socket...")
+                logger.info(f"[RESTART] Restarting container {container_id} via Docker socket...")
                 container.restart()
                 return
         except Exception as e:
-            print(f"[RESTART] Docker socket restart failed: {e}")
-
+            logger.error(f"[RESTART] Docker socket restart failed: {e}")
         # Fallback: exit process
-        print("[RESTART] Exiting process to trigger restart (fallback)...")
+        logger.info("[RESTART] Exiting process to trigger restart (fallback)...")
         os._exit(1)
 
     global _restart_task

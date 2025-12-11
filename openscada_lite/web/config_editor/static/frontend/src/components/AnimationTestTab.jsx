@@ -25,7 +25,7 @@ export default function AnimationTestTab() {
   // --- Load selected SVG content ---
   useEffect(() => {
     if (!selectedSvg) return;
-    fetch(`/svg/${selectedSvg}`)
+    fetch(`/config/svg/${selectedSvg}`)
       .then((r) => r.text())
       .then((svg) => {
         setSvgContent(svg);
@@ -75,19 +75,24 @@ export default function AnimationTestTab() {
         socket.emit("animation_subscribe_live_feed");
       });
       socket.on("animation_animationupdatemsg", (msg) => {
-        if (!msg.test) return; // Only process test updates
-        if (msg.svg_name !== selectedSvg) return;
-
         const svgElem = svgContainerRef.current;
         if (!svgElem) return;
-        const elem = svgElem.querySelector(`#${msg.element_id}`);
-        if (!elem || !msg.config) return;
 
-        const cfg = { duration: msg.config.duration || 0.5 };
-        if (msg.config.attr) cfg.attr = msg.config.attr;
-        if (msg.config.text) cfg.text = msg.config.text;
+        const messages = Array.isArray(msg) ? msg : [msg];
 
-        gsap.to(elem, cfg);
+        messages.forEach((m) => {
+          if (!m.test) return;
+          if (m.svg_name !== selectedSvg) return;
+
+          const elem = svgElem.querySelector(`#${m.element_id}`);
+          if (!elem || !m.config) return;
+
+          const cfg = { duration: m.config.duration || 0.5 };
+          if (m.config.attr) cfg.attr = m.config.attr;
+          if (m.config.text) cfg.text = m.config.text;
+
+          gsap.to(elem, cfg);
+        });
       });
     }
   }, [selectedSvg]);
@@ -101,9 +106,10 @@ export default function AnimationTestTab() {
       alarm_status: dp.alarm_status || null, // NEW
     };
 
+    const token = localStorage.getItem("jwt_token");
     fetch("/animation_send_animationupdaterequestmsg", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
       body: JSON.stringify(payload),
     })
       .then((r) => r.json())
