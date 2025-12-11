@@ -95,7 +95,11 @@ function SecureApp() {
             <UsersTab config={config} setConfig={(c) => { setConfig(c); setDirty(true); }} />
           )}
           {activeTab === "Groups" && (
-            <GroupsTab config={config} setConfig={(c) => { setConfig(c); setDirty(true); }} />
+            <GroupsTab 
+              config={config} 
+              setConfig={(c) => { setConfig(c); setDirty(true); }}
+              activeTab={activeTab}
+            />
           )}
         </div>
       </div>
