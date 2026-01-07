@@ -90,6 +90,8 @@ class RuleEngine:
                 if isinstance(val, str):
                     self.asteval.symtable[val] = val
                     self.asteval.symtable[val.upper()] = val
+        self.asteval.symtable["TRUE"] = True
+        self.asteval.symtable["FALSE"] = False
         self.rules = []
         self.datapoint_state = {}
         self.tag_to_rules = {}  # tag_id -> [rules]

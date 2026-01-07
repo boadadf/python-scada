@@ -280,3 +280,53 @@ async def test_switch_error_rules_toggle():
     )
     await asyncio.sleep(0.01)
     assert any(lowered_alarm[1] == "switch_error_straight" for lowered_alarm in lowered)
+
+
+@pytest.mark.asyncio
+async def test_boolean_symbols():
+    """
+    Test that rules using TRUE and FALSE symbols are correctly evaluated.
+    """
+    test_bus = EventBus.get_instance()
+    engine = RuleEngine.get_instance()
+    engine.rules = [
+        Rule(
+            rule_id="test_boolean_true",
+            on_condition="CameraDriver@CAMERA_1_ALARM == TRUE",
+            on_actions=["raise_alarm('CameraDriver@CAMERA_1_ALARM')"],
+        )
+    ]
+    engine.build_tag_to_rules_index()
+
+    alarms_raised = []
+    alarms_lowered = []
+
+    async def capture_alarm_raised(msg: RaiseAlarmMsg):
+        alarms_raised.append(msg)
+
+    # Add debugging output to capture which rule is triggering the action
+    async def capture_alarm_lowered(msg: LowerAlarmMsg):
+        alarms_lowered.append(msg)
+
+    test_bus.subscribe(EventType.RAISE_ALARM, capture_alarm_raised)
+    test_bus.subscribe(EventType.LOWER_ALARM, capture_alarm_lowered)
+
+    # Trigger TRUE condition
+    await test_bus.publish(
+        EventType.TAG_UPDATE,
+        TagUpdateMsg(datapoint_identifier="CameraDriver@CAMERA_1_ALARM", value="TRUE"),
+    )
+    await asyncio.sleep(0.01)
+
+    assert len(alarms_raised) == 1
+    assert alarms_raised[0].datapoint_identifier == "CameraDriver@CAMERA_1_ALARM"
+
+    # Trigger FALSE condition
+    await test_bus.publish(
+        EventType.TAG_UPDATE,
+        TagUpdateMsg(datapoint_identifier="CameraDriver@CAMERA_1_ALARM", value="FALSE"),
+    )
+    await asyncio.sleep(0.01)
+
+    assert len(alarms_lowered) == 1
+    assert alarms_lowered[0].datapoint_identifier == "CameraDriver@CAMERA_1_ALARM"

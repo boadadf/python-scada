@@ -1445,24 +1445,24 @@
     {
       "description": "Feed 1 - 1080p",
       "id": "feed1",
-      "path": "feed1/feed1.m3u8",
-      "port": "8444",
+      "path": "hls/stream1.m3u8",
+      "port": "",
       "protocol": "https",
       "server": "www.openscadalite.com"
     },
     {
       "description": "Feed 2 - 4K",
       "id": "feed2",
-      "path": "feed2/feed2.m3u8",
-      "port": "8444",
+      "path": "hls/stream2.m3u8",
+      "port": "",
       "protocol": "https",
       "server": "www.openscadalite.com"
     },
     {
       "description": "Feed 3 - 4K",
       "id": "feed3",
-      "path": "feed3/feed3.m3u8",
-      "port": "8444",
+      "path": "hls/stream3.m3u8",
+      "port": "",
       "protocol": "https",
       "server": "www.openscadalite.com"
     }

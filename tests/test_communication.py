@@ -45,7 +45,6 @@ def reset_connector_manager(monkeypatch):
 def set_scada_config_path():
     """Ensure SCADA_CONFIG_PATH points to the test configuration."""
     os.environ["SCADA_CONFIG_PATH"] = "tests/system_config.json"
-    print(f"[TEST SETUP] SCADA_CONFIG_PATH set to {os.environ['SCADA_CONFIG_PATH']}")
 
 
 @pytest.fixture
