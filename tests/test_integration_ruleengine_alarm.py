@@ -67,11 +67,15 @@ async def test_integration_switch_rules_alarm_lifecycle():
     # --- Simulate condition for switch_error_turn ---
     await bus.publish(
         EventType.TAG_UPDATE,
-        TagUpdateMsg(datapoint_identifier="TrainTestDriver@RIGHT_SWITCH_CONTROL", value="TURN"),
+        TagUpdateMsg(
+            datapoint_identifier="TrainTestDriver@RIGHT_SWITCH_CONTROL", value="TURN"
+        ),
     )
     await bus.publish(
         EventType.TAG_UPDATE,
-        TagUpdateMsg(datapoint_identifier="TrainTestDriver@LEFT_SWITCH_CONTROL", value="STRAIGHT"),
+        TagUpdateMsg(
+            datapoint_identifier="TrainTestDriver@LEFT_SWITCH_CONTROL", value="STRAIGHT"
+        ),
     )
     await asyncio.sleep(0.05)
 
@@ -94,7 +98,9 @@ async def test_integration_switch_rules_alarm_lifecycle():
     )
     await bus.publish(
         EventType.TAG_UPDATE,
-        TagUpdateMsg(datapoint_identifier="TrainTestDriver@LEFT_SWITCH_CONTROL", value="TURN"),
+        TagUpdateMsg(
+            datapoint_identifier="TrainTestDriver@LEFT_SWITCH_CONTROL", value="TURN"
+        ),
     )
     await asyncio.sleep(0.05)
 
@@ -117,7 +123,9 @@ async def test_integration_switch_rules_alarm_lifecycle():
     )
     await bus.publish(
         EventType.TAG_UPDATE,
-        TagUpdateMsg(datapoint_identifier="TrainTestDriver@LEFT_SWITCH_CONTROL", value="STRAIGHT"),
+        TagUpdateMsg(
+            datapoint_identifier="TrainTestDriver@LEFT_SWITCH_CONTROL", value="STRAIGHT"
+        ),
     )
     await asyncio.sleep(0.05)
 
@@ -157,13 +165,19 @@ async def test_reactivation_creates_new_occurrence():
     bus.subscribe(EventType.ALARM_UPDATE, capture)
 
     # Activate once
-    await bus.publish(EventType.TAG_UPDATE, TagUpdateMsg(datapoint_identifier="X@pos", value="A"))
+    await bus.publish(
+        EventType.TAG_UPDATE, TagUpdateMsg(datapoint_identifier="X@pos", value="A")
+    )
     await asyncio.sleep(0.01)
     # Deactivate
-    await bus.publish(EventType.TAG_UPDATE, TagUpdateMsg(datapoint_identifier="X@pos", value="B"))
+    await bus.publish(
+        EventType.TAG_UPDATE, TagUpdateMsg(datapoint_identifier="X@pos", value="B")
+    )
     await asyncio.sleep(0.01)
     # Reactivate
-    await bus.publish(EventType.TAG_UPDATE, TagUpdateMsg(datapoint_identifier="X@pos", value="A"))
+    await bus.publish(
+        EventType.TAG_UPDATE, TagUpdateMsg(datapoint_identifier="X@pos", value="A")
+    )
     await asyncio.sleep(0.01)
 
     assert len(updates) >= 3

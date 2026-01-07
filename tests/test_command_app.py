@@ -99,10 +99,12 @@ async def test_command_live_feed_and_feedback():
         datapoint_identifier="WaterTank@TANK",
         value=42,
     )
-    headers = {"Authorization": f"Bearer {token}"}
+    cookies = {"jwt": token}
     print("Sending command:", test_command.to_dict())
     response = requests.post(
-        f"{SERVER_URL}/command_send_sendcommandmsg", json=test_command.to_dict(), headers=headers
+        f"{SERVER_URL}/command/sendcommandmsg",
+        json=test_command.to_dict(),
+        cookies=cookies,
     )
     assert response.status_code == 200
 

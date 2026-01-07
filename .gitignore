@@ -1,10 +1,13 @@
+# Python artifacts
 __pycache__/
 *.pyc
 *.pyo
-*.sqlite
-*.log
+*.pyd
+*.egg-info/
+*.eggs/
+*.venv/
+env/
 venv/
-.env
 
 # Node
 node_modules/

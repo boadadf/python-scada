@@ -1,0 +1,81 @@
+# -----------------------------------------------------------------------------
+# Copyright 2025 Daniel&Hector Fernandez
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# -----------------------------------------------------------------------------
+
+from openscada_lite.common.models.dtos import DriverConnectStatus, AnimationUpdateMsg
+
+
+class ConnectionHandler:
+    def can_handle(self, msg) -> bool:
+        return isinstance(msg, DriverConnectStatus)
+
+    def handle(self, msg, service):
+        updates = []
+        mappings = service.datapoint_map.get(msg.driver_name, [])
+        if not mappings:
+            return updates
+
+        event_value = "ONLINE" if msg.status.lower() == "online" else "OFFLINE"
+
+        for svg_name, elem_id, anim_name in mappings:
+            update = self._create_animation_update(
+                service, svg_name, elem_id, anim_name, event_value
+            )
+            if update:
+                updates.append(update)
+
+        return updates
+
+    def _create_animation_update(
+        self, service, svg_name, elem_id, anim_name, event_value
+    ):
+        animation = service.animations.get(anim_name)
+        if not animation:
+            return None
+
+        agg_attr, agg_text, duration = self._process_animation_entries(
+            service, animation, event_value
+        )
+
+        cfg = {"attr": agg_attr, "duration": duration}
+        if agg_text:
+            cfg["text"] = agg_text
+
+        return AnimationUpdateMsg(
+            svg_name=svg_name,
+            element_id=elem_id,
+            animation_type=anim_name,
+            value=None,
+            config=cfg,
+            test=False,
+        )
+
+    def _process_animation_entries(self, service, animation, event_value):
+        agg_attr, agg_text = {}, None
+        duration = service.DURATION_DEFAULT
+
+        for entry in animation.entries:
+            if getattr(entry, "trigger_type", "") != "connection":
+                continue
+
+            attr_changes, text_change, dur = service.process_single_entry(
+                entry, event_value, None
+            )
+            agg_attr.update(attr_changes)
+            if text_change:
+                agg_text = text_change
+            duration = dur or duration
+
+        return agg_attr, agg_text, duration

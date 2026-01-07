@@ -86,16 +86,17 @@ async def test_live_feed_and_set_tag_real():
     for tag in expected_tags:
         assert tag in initial_tags
     token = SecurityUtils.create_jwt("admin", "test_group")
-    headers = {"Authorization": f"Bearer {token}"}
+    cookies = {"jwt": token}
 
     # Set a value for one tag using HTTP POST (if you have a REST endpoint), or via WebSocket
     test_tag = expected_tags[0]
     test_value = 123.45
-    requests.post(
-        f"{SERVER_URL}/datapoint_send_rawtagupdatemsg",
+    response = requests.post(
+        f"{SERVER_URL}/datapoint/rawtagupdatemsg",
         json=RawTagUpdateMsg(test_tag, test_value, "good", None).to_dict(),
-        headers=headers,
+        cookies=cookies,
     )
+    assert response.status_code == 200
     await asyncio.sleep(1.1)  # Wait for update
 
     assert received_updates, "No datapoint_update received after set_tag"
@@ -104,7 +105,9 @@ async def test_live_feed_and_set_tag_real():
     all_updates = [item for batch in received_updates for item in batch]
 
     # Check if the expected update is in the batch
-    update = next((u for u in all_updates if u["datapoint_identifier"] == test_tag), None)
+    update = next(
+        (u for u in all_updates if u["datapoint_identifier"] == test_tag), None
+    )
     assert update is not None, "Expected update not found in received updates"
     assert update["value"] == pytest.approx(test_value)
 

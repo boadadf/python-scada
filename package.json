@@ -1,6 +1,10 @@
 {
-  "dependencies": {
-    "eventlet": "^0.1.0",
-    "jwt-decode": "^4.0.0"
+  "devDependencies": {
+    "swagger-typescript-api": "^13.2.16"
+  },
+  "scripts": {
+    "openapi:export": "python -m openapi.export_openapi",
+    "openapi:client": "npx swagger-typescript-api generate -p openapi/openapi.json -o ./src/openscada_lite/web/lib/openApi -n index.ts",
+    "openapi:generate": "npm run openapi:export && npm run openapi:client"
   }
 }

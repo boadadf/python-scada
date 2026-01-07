@@ -1380,19 +1380,6 @@
           "Streams"
         ]
       }
-    },
-    {
-      "name": "frontend",
-      "config": {
-        "tabs": [
-          "Image",
-          "Datapoints",
-          "Alarms",
-          "Communications",
-          "Commands",
-          "Tracking"
-        ]
-      }
     }
   ],
   "rules": [
