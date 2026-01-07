@@ -1,6 +1,6 @@
-Add Swagger
 File management / endpoints
 User expiration time->redirect
 Add historical service->add db
 Refactor: Config + serve files
 Move configuration out from project
+rename endpoint of the live feed

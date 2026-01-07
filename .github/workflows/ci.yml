@@ -41,27 +41,27 @@ jobs:
           node-version: '20'
 
       - name: Install frontend dependencies
-        working-directory: ./openscada_lite/web/scada/static/frontend
+        working-directory: ./src/openscada_lite/web/scada/static/frontend
         run: npm install
 
       - name: Build React frontend
-        working-directory: ./openscada_lite/web/scada/static/frontend
+        working-directory: ./src/openscada_lite/web/scada/static/frontend
         run: npm run build
 
       - name: Install frontend dependencies
-        working-directory: ./openscada_lite/web/config_editor/static/frontend
+        working-directory: ./src/openscada_lite/web/config_editor/static/frontend
         run: npm install
 
       - name: Build React frontend
-        working-directory: ./openscada_lite/web/config_editor/static/frontend
+        working-directory: ./src/openscada_lite/web/config_editor/static/frontend
         run: npm run build
 
       - name: Install frontend dependencies
-        working-directory: ./openscada_lite/web/security_editor/static/frontend
+        working-directory: ./src/openscada_lite/web/security_editor/static/frontend
         run: npm install
 
       - name: Build React frontend
-        working-directory: ./openscada_lite/web/security_editor/static/frontend
+        working-directory: ./src/openscada_lite/web/security_editor/static/frontend
         run: npm run build
 
       # Run Python lint
@@ -89,8 +89,8 @@ jobs:
             -Dsonar.organization=${{ env.SONAR_ORGANIZATION }}
             -Dsonar.projectKey=${{ env.SONAR_PROJECT_KEY }}
             -Dsonar.projectName=python-scada
-            -Dsonar.sources=openscada_lite
+            -Dsonar.sources=src/openscada_lite
             -Dsonar.python.coverage.reportPaths=coverage.xml
-            -Dsonar.exclusions=**/node_modules/**,**/__pycache__/**,**/.github/**,**/dist/**,openscada_lite/web/scada/static/frontend/**,openscada_lite/web/config_editor/static/frontend/**,openscada_lite/web/security_editor/static/frontend/**
+            -Dsonar.exclusions=**/node_modules/**,**/__pycache__/**,**/.github/**,**/dist/**,src/openscada_lite/web/scada/static/frontend/**,src/openscada_lite/web/config_editor/static/frontend/**,src/openscada_lite/web/security_editor/static/frontend/**
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
