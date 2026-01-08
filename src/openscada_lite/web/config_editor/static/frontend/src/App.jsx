@@ -17,7 +17,7 @@ This is a single-file React implementation using fetch (no external libs).
 Keep index.jsx as entry that mounts this App.
 */
 
-import React, { useEffect, useState, lazy, Suspense } from 'react';
+import React, { useEffect, useState, lazy, Suspense, useMemo } from 'react';
 import "./App.css";
 import { AuthProvider, useAuth, Login } from "login";
 import TopMenu from "./components/TopMenu";
@@ -30,6 +30,7 @@ import AnimationsTab from "./components/AnimationsTab";
 import GisIconsTab from "./components/GisIconsTab";
 import StreamsTab from "./components/StreamsTab";
 import FrontendTab from "./components/FrontendTab";
+import { Api, ContentType } from "generatedApi";
 
 // Lazy-load AnimationTestTab
 const AnimationTestTab = lazy(() => import("./components/AnimationTestTab"));
@@ -46,6 +47,9 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('Modules');
   const [dirty, setDirty] = useState(false);
   const [currentConfigName, setCurrentConfigName] = useState("system_config");
+
+  // OpenAPI client instance
+  const api = useMemo(() => new Api(), []);
 
   // Dialog state
   const [showLoadDialog, setShowLoadDialog] = useState(false);
@@ -77,9 +81,8 @@ export default function App() {
 
   async function loadConfigByName(name) {
     try {
-      const res = await fetch(`/config-editor/api/config/${name}`);
-      if (!res.ok) throw new Error(await res.text());
-      const data = await res.json();
+      const res = await api.configEditor.getConfigByName(name);
+      const data = res?.data;
       setConfig(data);
       setCurrentConfigName(name); // Track loaded config name
       setDirty(false);
@@ -91,8 +94,8 @@ export default function App() {
 
   async function openLoadDialog() {
     try {
-      const res = await fetch('/config-editor/api/configs');
-      let files = await res.json();
+      const res = await api.configEditor.getConfigs();
+      let files = res?.data || [];
       // Ensure system_config is present and first
       if (!files.includes("system_config")) {
         files.unshift("system_config");
@@ -114,13 +117,12 @@ export default function App() {
       return;
     }
     try {
-      const res = await fetch('/config-editor/api/saveas', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ config, filename: currentConfigName })
+      const res = await api.configEditor.saveConfigAs({
+        body: { config, filename: currentConfigName },
+        type: ContentType.Json,
+        format: 'json'
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'unknown');
+      const data = res?.data || {};
       alert('Saved: ' + data.filename);
       setDirty(false);
     } catch (err) {
@@ -134,13 +136,12 @@ export default function App() {
       return;
     }
     try {
-      const res = await fetch('/config-editor/api/saveas', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ config, filename: saveAsFilename })
+      const res = await api.configEditor.saveConfigAs({
+        body: { config, filename: saveAsFilename },
+        type: ContentType.Json,
+        format: 'json'
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'unknown');
+      const data = res?.data || {};
       alert('Saved as: ' + data.filename);
       setShowSaveAsDialog(false);
     } catch (err) {
@@ -150,15 +151,14 @@ export default function App() {
 
   async function uploadConfig() {
     try {
-      const res = await fetch('/config-editor/api/saveas', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ config, filename: "system_config.json" }) // <-- fix here
+      const res = await api.configEditor.saveConfigAs({
+        body: { config, filename: "system_config.json" },
+        type: ContentType.Json,
+        format: 'json'
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'unknown');
+      const data = res?.data || {};
       alert('Uploaded and restarting: ' + data.filename);
-      await fetch('/config-editor/api/restart', { method: 'POST' });
+      await api.configEditor.restart();
       setTimeout(() => {
         window.location.reload();
       }, 3000);

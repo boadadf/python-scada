@@ -19,14 +19,18 @@ module.exports = {
   module: {
     rules: [
       {
-        test: /\.jsx?$/,
+        test: /\.(js|jsx|ts|tsx)$/,
         exclude: (modulePath) => {
           return /node_modules/.test(modulePath) && !/node_modules[\\/](login)/.test(modulePath);
         },
         use: {
           loader: "babel-loader",
           options: {
-            presets: ["@babel/preset-env", "@babel/preset-react"],
+            presets: [
+              "@babel/preset-env",
+              "@babel/preset-react",
+              "@babel/preset-typescript",
+            ],
           },
         },
       },
@@ -38,12 +42,13 @@ module.exports = {
   },
 
   resolve: {
-    extensions: [".js", ".jsx"],
+    extensions: [".js", ".jsx", ".ts", ".tsx"],
     symlinks: true,
     alias: {
       react: path.resolve(__dirname, "node_modules/react"),
       "react-dom": path.resolve(__dirname, "node_modules/react-dom"),
-      login: path.resolve(__dirname, "../../../login/src")
+      login: path.resolve(__dirname, "../../../login/src"),
+      generatedApi: path.resolve(__dirname, "../../../lib/openApi"),
     },
   },
 
