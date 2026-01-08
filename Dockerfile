@@ -6,33 +6,34 @@ FROM node:20 AS frontend
 WORKDIR /app
 
 # Make login module available
-COPY openscada_lite/web/login /app/openscada_lite/web/login
+COPY src/openscada_lite/web/login /app/openscada_lite/web/login
+COPY src/openscada_lite/web/lib /app/openscada_lite/web/lib
 
 #
 # SCADA frontend
 #
 WORKDIR /app/openscada_lite/web/scada/static/frontend
-COPY openscada_lite/web/scada/static/frontend/package*.json ./
+COPY src/openscada_lite/web/scada/static/frontend/package*.json ./
 RUN npm install
-COPY openscada_lite/web/scada/static/frontend/ ./
+COPY src/openscada_lite/web/scada/static/frontend/ ./
 RUN npm run build
 
 #
 # Config Editor frontend
 #
 WORKDIR /app/openscada_lite/web/config_editor/static/frontend
-COPY openscada_lite/web/config_editor/static/frontend/package*.json ./
+COPY src/openscada_lite/web/config_editor/static/frontend/package*.json ./
 RUN npm install
-COPY openscada_lite/web/config_editor/static/frontend/ ./
+COPY src/openscada_lite/web/config_editor/static/frontend/ ./
 RUN npm run build
 
 #
 # Security Editor frontend
 #
 WORKDIR /app/openscada_lite/web/security_editor/static/frontend
-COPY openscada_lite/web/security_editor/static/frontend/package*.json ./
+COPY src/openscada_lite/web/security_editor/static/frontend/package*.json ./
 RUN npm install
-COPY openscada_lite/web/security_editor/static/frontend/ ./
+COPY src/openscada_lite/web/security_editor/static/frontend/ ./
 RUN npm run build
 
 # ==============================
@@ -53,7 +54,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 RUN pip install gunicorn
 
 # Copy backend + config + modules
-COPY openscada_lite ./openscada_lite
+COPY src/openscada_lite ./openscada_lite
 COPY config ./config
 
 # Copy built frontends from previous stage
