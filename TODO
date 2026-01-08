@@ -1,18 +1,6 @@
-Unit testing web
-
-Driver for GPIO, opc ua client
-Allow server drivers to expose datapoints from another drivers
-Drvier for Opc ua server
-
-Add headers to all files
-Better SVGs
-Documentation (README.md)
-
-
------
-Rules by datapoint type
-animations by datapoint type
-SVG editor
-Add dynamically a module
-AI that predicts when alarms will happen
-
+File management / endpoints
+User expiration time->redirect
+Add historical service->add db
+Refactor: Config + serve files
+Move configuration out from project
+rename endpoint of the live feed

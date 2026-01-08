@@ -1,0 +1,862 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "OpenSCADA-Lite",
+    "version": "0.0.1"
+  },
+  "paths": {
+    "/config-editor/config/{name}": {
+      "get": {
+        "tags": [
+          "ConfigEditor",
+          "ConfigEditor"
+        ],
+        "summary": "Get Config By Name",
+        "operationId": "getConfigByName",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/config-editor/configs": {
+      "get": {
+        "tags": [
+          "ConfigEditor",
+          "ConfigEditor"
+        ],
+        "summary": "Get Configs",
+        "operationId": "getConfigs",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/config-editor/config": {
+      "post": {
+        "tags": [
+          "ConfigEditor",
+          "ConfigEditor"
+        ],
+        "summary": "Save Config",
+        "operationId": "saveConfig",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/config-editor/saveas": {
+      "post": {
+        "tags": [
+          "ConfigEditor",
+          "ConfigEditor"
+        ],
+        "summary": "Save Config As",
+        "operationId": "saveConfigAs",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/config-editor/restart": {
+      "post": {
+        "tags": [
+          "ConfigEditor",
+          "ConfigEditor"
+        ],
+        "summary": "Restart App",
+        "operationId": "restart",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/": {
+      "get": {
+        "summary": "Index",
+        "operationId": "index__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/alarm/ackalarmmsg": {
+      "post": {
+        "tags": [
+          "alarm"
+        ],
+        "summary": "Alarm/Ackalarmmsg",
+        "operationId": "ackalarmmsg",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AckAlarmMsg"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/alert/clientalertfeedbackmsg": {
+      "post": {
+        "tags": [
+          "alert"
+        ],
+        "summary": "Alert/Clientalertfeedbackmsg",
+        "operationId": "clientalertfeedbackmsg",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClientAlertFeedbackMsg"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/animation/animationupdaterequestmsg": {
+      "post": {
+        "tags": [
+          "animation"
+        ],
+        "summary": "Animation/Animationupdaterequestmsg",
+        "operationId": "animationupdaterequestmsg",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnimationUpdateRequestMsg"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/animation/svgs": {
+      "get": {
+        "tags": [
+          "animation"
+        ],
+        "summary": "List Svgs",
+        "operationId": "getSvgs",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/animation/svg/{filename}": {
+      "get": {
+        "tags": [
+          "animation"
+        ],
+        "summary": "Svg",
+        "operationId": "getSvg",
+        "parameters": [
+          {
+            "name": "filename",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Filename"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "SVG file content",
+            "content": {
+              "text/plain": {}
+            }
+          },
+          "404": {
+            "description": "File not found",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/command/sendcommandmsg": {
+      "post": {
+        "tags": [
+          "command"
+        ],
+        "summary": "Command/Sendcommandmsg",
+        "operationId": "sendcommandmsg",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SendCommandMsg"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/communication/driverconnectcommand": {
+      "post": {
+        "tags": [
+          "communication"
+        ],
+        "summary": "Communication/Driverconnectcommand",
+        "operationId": "driverconnectcommand",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DriverConnectCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/datapoint/rawtagupdatemsg": {
+      "post": {
+        "tags": [
+          "datapoint"
+        ],
+        "summary": "Datapoint/Rawtagupdatemsg",
+        "operationId": "rawtagupdatemsg",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RawTagUpdateMsg"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/frontend/tabs": {
+      "get": {
+        "tags": [
+          "frontend"
+        ],
+        "summary": "Get Tabs",
+        "operationId": "getTabs",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/frontend/ping": {
+      "get": {
+        "tags": [
+          "frontend"
+        ],
+        "summary": "Ping",
+        "operationId": "ping",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/gis/config": {
+      "get": {
+        "tags": [
+          "gis"
+        ],
+        "summary": "Get Gis Config",
+        "description": "Expose the GIS configuration from system_config.json.",
+        "operationId": "getGisConfig",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/streams": {
+      "get": {
+        "tags": [
+          "stream"
+        ],
+        "summary": "List Streams",
+        "operationId": "getStreams",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/security/endpoints": {
+      "get": {
+        "tags": [
+          "security"
+        ],
+        "summary": "Get Endpoints",
+        "operationId": "getRegisteredEndpoints",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/security/login": {
+      "post": {
+        "tags": [
+          "security"
+        ],
+        "summary": "Login",
+        "operationId": "login",
+        "parameters": [
+          {
+            "name": "app",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "title": "App"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true,
+                "title": "Data"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/security/config": {
+      "get": {
+        "tags": [
+          "security"
+        ],
+        "summary": "Get Security Config",
+        "operationId": "getSecurityConfig",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "security"
+        ],
+        "summary": "Save Security Config",
+        "operationId": "saveSecurityConfig",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "type": "object",
+                "title": "Data"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AckAlarmMsg": {
+        "properties": {
+          "alarm_occurrence_id": {
+            "type": "string",
+            "title": "Alarm Occurrence Id"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Timestamp"
+          },
+          "track_id": {
+            "type": "string",
+            "title": "Track Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "alarm_occurrence_id"
+        ],
+        "title": "AckAlarmMsg"
+      },
+      "AnimationUpdateRequestMsg": {
+        "properties": {
+          "datapoint_identifier": {
+            "type": "string",
+            "title": "Datapoint Identifier"
+          },
+          "quality": {
+            "type": "string",
+            "title": "Quality"
+          },
+          "value": {
+            "type": "number",
+            "title": "Value",
+            "default": 0.09
+          },
+          "alarm_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Alarm Status"
+          },
+          "track_id": {
+            "type": "string",
+            "title": "Track Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "datapoint_identifier",
+          "quality"
+        ],
+        "title": "AnimationUpdateRequestMsg"
+      },
+      "ClientAlertFeedbackMsg": {
+        "properties": {
+          "feedback": {
+            "type": "string",
+            "title": "Feedback"
+          },
+          "track_id": {
+            "type": "string",
+            "title": "Track Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "feedback"
+        ],
+        "title": "ClientAlertFeedbackMsg"
+      },
+      "DriverConnectCommand": {
+        "properties": {
+          "driver_name": {
+            "type": "string",
+            "title": "Driver Name"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "track_id": {
+            "type": "string",
+            "title": "Track Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "driver_name",
+          "status"
+        ],
+        "title": "DriverConnectCommand"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "RawTagUpdateMsg": {
+        "properties": {
+          "datapoint_identifier": {
+            "type": "string",
+            "title": "Datapoint Identifier"
+          },
+          "value": {
+            "title": "Value"
+          },
+          "quality": {
+            "type": "string",
+            "title": "Quality",
+            "default": "good"
+          },
+          "timestamp": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timestamp"
+          },
+          "track_id": {
+            "type": "string",
+            "title": "Track Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "datapoint_identifier",
+          "value"
+        ],
+        "title": "RawTagUpdateMsg"
+      },
+      "SendCommandMsg": {
+        "properties": {
+          "command_id": {
+            "type": "string",
+            "title": "Command Id"
+          },
+          "datapoint_identifier": {
+            "type": "string",
+            "title": "Datapoint Identifier"
+          },
+          "value": {
+            "title": "Value"
+          },
+          "track_id": {
+            "type": "string",
+            "title": "Track Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "command_id",
+          "datapoint_identifier",
+          "value"
+        ],
+        "title": "SendCommandMsg"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  }
+}

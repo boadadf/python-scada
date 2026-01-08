@@ -88,13 +88,18 @@ async def test_publish_tag_emits_when_no_initializing(controller):
     controller.socketio.emit.assert_called_once()
     args, _ = controller.socketio.emit.call_args
     assert args[0] == "datapoint_tagupdatemsg"
-    assert any(tag["datapoint_identifier"] == "Test@TAG" and tag["value"] == 456 for tag in args[1])
+    assert any(
+        tag["datapoint_identifier"] == "Test@TAG" and tag["value"] == 456
+        for tag in args[1]
+    )
 
 
 @pytest.mark.asyncio
 async def test_handle_subscribe_live_feed_emits_initial_state(controller):
     # Mock the `enter_room` method
-    with patch.object(controller.socketio, "enter_room", new_callable=AsyncMock) as mock_enter_room:
+    with patch.object(
+        controller.socketio, "enter_room", new_callable=AsyncMock
+    ) as mock_enter_room:
         # Mock the `trigger_event` method
         async def mock_trigger_event(event_name, *args, **kwargs):
             if event_name == f"{controller.base_event}_subscribe_live_feed":
@@ -159,7 +164,7 @@ async def test_set_tag_calls_service_and_emits_ack(controller):
     # Use FastAPI's TestClient to simulate requests
     client = TestClient(app)
     response = client.post(
-        "/datapoint_send_rawtagupdatemsg",
+        "/datapoint/rawtagupdatemsg",
         content=json.dumps(test_data.to_dict()),  # Use 'content' instead of 'data'
         headers={"Content-Type": "application/json"},
     )
@@ -176,6 +181,8 @@ async def test_set_tag_calls_service_and_emits_ack(controller):
         datapoint_identifier="Test@TAG",
         value=42,
         quality="good",
-        timestamp=test_data.timestamp.isoformat(),  # Expect string, not datetime
+        timestamp=test_data.timestamp,
     )
-    test_controller.service.handle_controller_message.assert_called_once_with(expected_data)
+    test_controller.service.handle_controller_message.assert_called_once_with(
+        expected_data
+    )

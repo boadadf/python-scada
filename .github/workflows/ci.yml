@@ -34,34 +34,47 @@ jobs:
           pip install -r requirements.txt
           pip install flake8 pytest
 
+      - name: Install project package
+        run: |
+          pip install -e .
+
+      - name: Verify package import
+        run: |
+          python - << 'PY'
+          import sys
+          print('PYTHONPATH:', sys.path)
+          import openscada_lite
+          print('openscada_lite imported from:', openscada_lite.__file__)
+          PY
+
       # Set up Node.js / React
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '20'
 
-      - name: Install frontend dependencies
-        working-directory: ./openscada_lite/web/scada/static/frontend
+      - name: Install SCADA frontend dependencies
+        working-directory: ./src/openscada_lite/web/scada/static/frontend
         run: npm install
 
-      - name: Build React frontend
-        working-directory: ./openscada_lite/web/scada/static/frontend
+      - name: Build React SCADA frontend
+        working-directory: ./src/openscada_lite/web/scada/static/frontend
         run: npm run build
 
-      - name: Install frontend dependencies
-        working-directory: ./openscada_lite/web/config_editor/static/frontend
+      - name: Install Config Editor frontend dependencies
+        working-directory: ./src/openscada_lite/web/config_editor/static/frontend
         run: npm install
 
-      - name: Build React frontend
-        working-directory: ./openscada_lite/web/config_editor/static/frontend
+      - name: Build React Config Editor frontend
+        working-directory: ./src/openscada_lite/web/config_editor/static/frontend
         run: npm run build
 
-      - name: Install frontend dependencies
-        working-directory: ./openscada_lite/web/security_editor/static/frontend
+      - name: Install Security Editor frontend dependencies
+        working-directory: ./src/openscada_lite/web/security_editor/static/frontend
         run: npm install
 
-      - name: Build React frontend
-        working-directory: ./openscada_lite/web/security_editor/static/frontend
+      - name: Build React Security Editor frontend
+        working-directory: ./src/openscada_lite/web/security_editor/static/frontend
         run: npm run build
 
       # Run Python lint
@@ -69,10 +82,11 @@ jobs:
         run: flake8 .
 
       - name: Run tests with coverage
+        env:
+          PYTHONPATH: src
         run: |
           pip install pytest pytest-cov
-          coverage run -m pytest
-          coverage xml
+          pytest --cov=src/openscada_lite --cov-report=xml
 
       - name: Upload coverage.xml
         uses: actions/upload-artifact@v4
@@ -89,8 +103,8 @@ jobs:
             -Dsonar.organization=${{ env.SONAR_ORGANIZATION }}
             -Dsonar.projectKey=${{ env.SONAR_PROJECT_KEY }}
             -Dsonar.projectName=python-scada
-            -Dsonar.sources=openscada_lite
+            -Dsonar.sources=src/openscada_lite
             -Dsonar.python.coverage.reportPaths=coverage.xml
-            -Dsonar.exclusions=**/node_modules/**,**/__pycache__/**,**/.github/**,**/dist/**,openscada_lite/web/scada/static/frontend/**,openscada_lite/web/config_editor/static/frontend/**,openscada_lite/web/security_editor/static/frontend/**
+            -Dsonar.exclusions=**/node_modules/**,**/__pycache__/**,**/.github/**,**/dist/**,src/openscada_lite/web/scada/static/frontend/**,src/openscada_lite/web/config_editor/static/frontend/**,src/openscada_lite/web/security_editor/static/frontend/**
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

@@ -4,8 +4,8 @@
       "name": "test_group",
       "permissions": [
         "security_editor_access",
-        "command_send_sendcommandmsg",
-        "datapoint_send_rawtagupdatemsg"
+        "command/sendcommandmsg",
+        "datapoint/rawtagupdatemsg"
       ]
     }
   ],

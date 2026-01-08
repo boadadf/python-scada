@@ -36,7 +36,9 @@ async def test_alarm_active_creation():
 
     await bus.publish(
         EventType.RAISE_ALARM,
-        RaiseAlarmMsg(datapoint_identifier="tag1", timestamp=datetime.now(), rule_id="rule1"),
+        RaiseAlarmMsg(
+            datapoint_identifier="tag1", timestamp=datetime.now(), rule_id="rule1"
+        ),
     )
     await asyncio.sleep(0.01)
 
@@ -62,7 +64,9 @@ async def test_alarm_inactive_transition():
 
     await bus.publish(
         EventType.RAISE_ALARM,
-        RaiseAlarmMsg(datapoint_identifier="tag1", timestamp=datetime.now(), rule_id="rule1"),
+        RaiseAlarmMsg(
+            datapoint_identifier="tag1", timestamp=datetime.now(), rule_id="rule1"
+        ),
     )
     await asyncio.sleep(0.01)
     await bus.publish(

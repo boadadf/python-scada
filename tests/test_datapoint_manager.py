@@ -39,7 +39,9 @@ async def test_update_tag_quality_and_timestamp():
     bus.subscribe(EventType.TAG_UPDATE, capture)
 
     now = datetime.datetime.now()
-    await dp_engine.handle_controller_message(RawTagUpdateMsg("WaterTank@TANK", 55.5, "bad", now))
+    await dp_engine.handle_controller_message(
+        RawTagUpdateMsg("WaterTank@TANK", 55.5, "bad", now)
+    )
     tag = dp_engine.model.get("WaterTank@TANK")
     assert tag.value == 55.5
     assert tag.quality == "bad"
@@ -69,9 +71,15 @@ async def test_multiple_tag_updates():
 
     bus.subscribe(EventType.TAG_UPDATE, capture)
 
-    await dp_engine.handle_controller_message(RawTagUpdateMsg("WaterTank@TANK", 10, "good", None))
-    await dp_engine.handle_controller_message(RawTagUpdateMsg("WaterTank@TANK", 20, "good", None))
-    await dp_engine.handle_controller_message(RawTagUpdateMsg("WaterTank@TANK", 15, "good", None))
+    await dp_engine.handle_controller_message(
+        RawTagUpdateMsg("WaterTank@TANK", 10, "good", None)
+    )
+    await dp_engine.handle_controller_message(
+        RawTagUpdateMsg("WaterTank@TANK", 20, "good", None)
+    )
+    await dp_engine.handle_controller_message(
+        RawTagUpdateMsg("WaterTank@TANK", 15, "good", None)
+    )
 
     await asyncio.sleep(0.01)
     assert dp_engine.model.get("WaterTank@TANK").value == 15
@@ -91,7 +99,9 @@ async def test_update_tag_without_optional_fields():
 
     bus.subscribe(EventType.TAG_UPDATE, capture)
 
-    await dp_engine.handle_controller_message(RawTagUpdateMsg("WaterTank@TANK", 99, "good", None))
+    await dp_engine.handle_controller_message(
+        RawTagUpdateMsg("WaterTank@TANK", 99, "good", None)
+    )
     tag = dp_engine.model.get("WaterTank@TANK")
     assert tag.value == 99
     assert tag.quality == "good"  # Default quality

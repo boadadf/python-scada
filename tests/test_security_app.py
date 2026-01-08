@@ -53,8 +53,8 @@ def test_full_config_roundtrip(client):
                 "name": "test_group",
                 "permissions": [
                     "security_editor_access",
-                    "command_send_sendcommandmsg",
-                    "datapoint_send_rawtagupdatemsg",
+                    "command/sendcommandmsg",
+                    "datapoint/rawtagupdatemsg",
                 ],
             }
         ],
@@ -69,11 +69,11 @@ def test_full_config_roundtrip(client):
     }
 
     # Save config
-    resp = client.post("/security/api/config", json=config)
+    resp = client.post("/security/config", json=config)
     assert resp.status_code == 200
 
     # Load config
-    resp = client.get("/security/api/config")
+    resp = client.get("/security/config")
     assert resp.status_code == 200
     loaded = resp.json()
     assert loaded == config
@@ -99,17 +99,21 @@ def test_login_admin(client):
             }
         ],
     }
-    client.post("/security/api/config", json=config)
+    client.post("/security/config", json=config)
 
     # Try login with admin/admin
     resp = client.post(
         "/security/login",
-        json={"username": "admin", "password": "admin", "app": "security_editor"},  # NOSONAR
+        json={
+            "username": "admin",
+            "password": "admin",
+            "app": "security_editor",
+        },  # NOSONAR
     )
     assert resp.status_code == 200
     data = resp.json()
-    assert "token" in data["data"]
-    assert data["data"]["user"] == "admin"
+    assert "jwt" in resp.cookies.keys()
+    assert data["user"] == "admin"
 
 
 def test_invalid_login(client):
@@ -126,26 +130,34 @@ def test_invalid_login(client):
             }
         ],
     }
-    client.post("/security/api/config", json=config)
+    client.post("/security/config", json=config)
 
     # Wrong password
     resp = client.post(
         "/security/login",
-        json={"username": "admin", "password": "wrong", "app": "security_editor"},  # NOSONAR
+        json={
+            "username": "admin",
+            "password": "wrong",
+            "app": "security_editor",
+        },  # NOSONAR
     )
     assert resp.status_code == 401
 
     # Unknown user
     resp = client.post(
         "/security/login",
-        json={"username": "ghost", "password": "admin", "app": "security_editor"},  # NOSONAR
+        json={
+            "username": "ghost",
+            "password": "admin",
+            "app": "security_editor",
+        },  # NOSONAR
     )
     assert resp.status_code == 401
 
 
 def test_missing_fields(client):
     # POST config missing users/groups
-    resp = client.post("/security/api/config", json={})
+    resp = client.post("/security/config", json={})
     assert resp.status_code == 400 or resp.status_code == 422
 
 
@@ -171,9 +183,9 @@ def test_permissions_structure(client):
             },
         ],
     }
-    resp = client.post("/security/api/config", json=config)
+    resp = client.post("/security/config", json=config)
     assert resp.status_code == 200
-    resp = client.get("/security/api/config")
+    resp = client.get("/security/config")
     assert resp.status_code == 200
     loaded = resp.json()
     assert len(loaded["groups"]) == 2
@@ -190,8 +202,8 @@ def test_admin_permissions(client):
                 "name": "test_group",
                 "permissions": [
                     "security_editor_access",
-                    "command_send_sendcommandmsg",
-                    "datapoint_send_rawtagupdatemsg",
+                    "command/sendcommandmsg",
+                    "datapoint/rawtagupdatemsg",
                 ],
             }
         ],
@@ -204,21 +216,25 @@ def test_admin_permissions(client):
             }
         ],
     }
-    resp = client.post("/security/api/config", json=config)
+    resp = client.post("/security/config", json=config)
     assert resp.status_code == 200
 
     # Test login
     resp = client.post(
         "/security/login",
-        json={"username": "admin", "password": "admin", "app": "security_editor"},  # NOSONAR
+        json={
+            "username": "admin",
+            "password": "admin",
+            "app": "security_editor",
+        },  # NOSONAR
     )
     assert resp.status_code == 200
 
     # Verify permissions in config
-    resp = client.get("/security/api/config")
+    resp = client.get("/security/config")
     assert resp.status_code == 200
     loaded = resp.json()
     perms = loaded["groups"][0]["permissions"]
     assert "security_editor_access" in perms
-    assert "command_send_sendcommandmsg" in perms
-    assert "datapoint_send_rawtagupdatemsg" in perms
+    assert "command/sendcommandmsg" in perms
+    assert "datapoint/rawtagupdatemsg" in perms
