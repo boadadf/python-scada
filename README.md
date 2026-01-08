@@ -1296,24 +1296,6 @@ Example: Alarms View
 
     Automatically subscribes to "alarm_alarmupdatemsg" and updates in real time.
 
-### Sending Commands. 
-
-Some backend modules allow commands or control messages. Add a postType:
-
-    const [commands, , postJson] = useLiveFeed(
-      "command",
-      "commandfeedbackmsg",
-      cmd => cmd.datapoint_identifier,
-      "sendcommandmsg"
-    );
-
-    async function sendCommand(datapoint, value) {
-      await postJson({ datapoint_identifier: datapoint, value });
-    }
-
-This sends a POST request to:
-
-    /command_send_sendcommandmsg
 
 with all headers handled automatically.
 Template for a New View
@@ -1340,6 +1322,49 @@ Template for a New View
     }
 
 Every view in the SCADA frontend alarms, datapoints, commands, GIS markers, communications, tracking, and animations—uses the same useLiveFeed hook.
+
+## API & Swagger/OpenAPI
+
+OpenSCADA Lite exposes a FastAPI backend with automatic Swagger UI and OpenAPI schema generation. You can browse the interactive API docs at:
+
+- Swagger UI: http://localhost:5443/docs
+- OpenAPI JSON (served by FastAPI): http://localhost:5443/openapi.json
+
+Additionally, this repository provides scripts to export the OpenAPI schema to a file and generate a TypeScript client library that can be used by the frontend to call all backend endpoints.
+
+### Generate OpenAPI schema and TypeScript client
+
+- Export the OpenAPI schema to [openapi/openapi.json](openapi/openapi.json):
+
+```bash
+npm run openapi:export
+```
+
+- Generate the TypeScript client to [src/openscada_lite/web/lib/openApi/index.ts](src/openscada_lite/web/lib/openApi/index.ts):
+
+```bash
+npm run openapi:client
+```
+
+- Run both steps together:
+
+```bash
+npm run openapi:generate
+```
+
+Script definitions are in [package.json](package.json):
+
+- `openapi:export` → runs the exporter at [openapi/export_openapi.py](openapi/export_openapi.py) to write [openapi/openapi.json](openapi/openapi.json)
+- `openapi:client` → uses `swagger-typescript-api` to generate the client at [src/openscada_lite/web/lib/openApi/index.ts](src/openscada_lite/web/lib/openApi/index.ts)
+
+### Using the generated client
+
+The generated client provides typed methods for all backend endpoints. Import it in your frontend code from [src/openscada_lite/web/lib/openApi/index.ts](src/openscada_lite/web/lib/openApi/index.ts) and initialize it with your API base URL (e.g., `http://localhost:5443`). Once generated, you can call backend endpoints via the typed methods exposed by the client.
+
+If you change or add backend routes, re-run `npm run openapi:generate` to refresh both the OpenAPI schema and the client.
+
+---
+
 
 Live Feed Data Flow
 
