@@ -12,16 +12,6 @@ SRC_ROOT = Path(__file__).parents[1] / "src"
 if str(SRC_ROOT) not in sys.path:
     sys.path.insert(0, str(SRC_ROOT))
 
-from openscada_lite.modules.registry import MODULES
-from openscada_lite.modules.loader import module_loader
-from openscada_lite.modules.base.base_controller import BaseController
-from openscada_lite.common.bus.event_bus import EventBus  # real EventBus
-
-from openscada_lite.web.config_editor.routes import config_router
-from openscada_lite.web.security_editor.routes import security_router
-from openscada_lite.web.scada.routes import scada_router
-from openscada_lite.web.mounter import mount_enpoints
-
 
 # --- Minimal dummy SocketIO just to allow controller registration ---
 class DummySocketIO:
@@ -29,14 +19,24 @@ class DummySocketIO:
         return lambda f: f
 
     def emit(self, *args, **kwargs):
+        # Dummy implementation for OpenAPI schema generation - no actual emission needed
         pass
 
 
-# --- Fake config generated from registry ---
-fake_config = {"modules": [{"name": name} for name in MODULES]}
-
-
 def create_api_app() -> FastAPI:
+    # Local imports to comply with flake8 E402 (imports after non-import code)
+    from openscada_lite.modules.registry import MODULES
+    from openscada_lite.modules.loader import module_loader
+    from openscada_lite.common.bus.event_bus import EventBus  # real EventBus
+
+    from openscada_lite.web.config_editor.routes import config_router
+    from openscada_lite.web.security_editor.routes import security_router
+    from openscada_lite.web.scada.routes import scada_router
+    from openscada_lite.web.mounter import mount_enpoints
+
+    # --- Fake config generated from registry ---
+    fake_config = {"modules": [{"name": name} for name in MODULES]}
+
     app = FastAPI(title="OpenSCADA-Lite", version="0.0.1", debug=False)
 
     # Static routers

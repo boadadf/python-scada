@@ -15,6 +15,7 @@ For more information, see:
 """
 from setuptools import setup, find_packages
 
+
 def read_requirements(filename="requirements.txt"):
     """Read requirements from a file, ignoring BOM and comments."""
     with open(filename, encoding="utf-8-sig") as f:
