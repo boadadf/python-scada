@@ -34,6 +34,19 @@ jobs:
           pip install -r requirements.txt
           pip install flake8 pytest
 
+      - name: Install project package
+        run: |
+          pip install -e .
+
+      - name: Verify package import
+        run: |
+          python - << 'PY'
+          import sys
+          print('PYTHONPATH:', sys.path)
+          import openscada_lite
+          print('openscada_lite imported from:', openscada_lite.__file__)
+          PY
+
       # Set up Node.js / React
       - name: Set up Node.js
         uses: actions/setup-node@v3
@@ -69,6 +82,8 @@ jobs:
         run: flake8 .
 
       - name: Run tests with coverage
+        env:
+          PYTHONPATH: src
         run: |
           pip install pytest pytest-cov
           coverage run -m pytest
