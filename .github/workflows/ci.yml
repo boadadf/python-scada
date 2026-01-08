@@ -40,27 +40,27 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install frontend dependencies
+      - name: Install SCADA frontend dependencies
         working-directory: ./src/openscada_lite/web/scada/static/frontend
         run: npm install
 
-      - name: Build React frontend
+      - name: Build React SCADA frontend
         working-directory: ./src/openscada_lite/web/scada/static/frontend
         run: npm run build
 
-      - name: Install frontend dependencies
+      - name: Install Config Editor frontend dependencies
         working-directory: ./src/openscada_lite/web/config_editor/static/frontend
         run: npm install
 
-      - name: Build React frontend
+      - name: Build React Config Editor frontend
         working-directory: ./src/openscada_lite/web/config_editor/static/frontend
         run: npm run build
 
-      - name: Install frontend dependencies
+      - name: Install Security Editor frontend dependencies
         working-directory: ./src/openscada_lite/web/security_editor/static/frontend
         run: npm install
 
-      - name: Build React frontend
+      - name: Build React Security Editor frontend
         working-directory: ./src/openscada_lite/web/security_editor/static/frontend
         run: npm run build
 

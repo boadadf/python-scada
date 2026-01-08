@@ -5,7 +5,7 @@
     "version": "0.0.1"
   },
   "paths": {
-    "/config-editor/api/config/{name}": {
+    "/config-editor/config/{name}": {
       "get": {
         "tags": [
           "ConfigEditor",
@@ -46,7 +46,7 @@
         }
       }
     },
-    "/config-editor/api/configs": {
+    "/config-editor/configs": {
       "get": {
         "tags": [
           "ConfigEditor",
@@ -66,7 +66,7 @@
         }
       }
     },
-    "/config-editor/api/config": {
+    "/config-editor/config": {
       "post": {
         "tags": [
           "ConfigEditor",
@@ -86,7 +86,7 @@
         }
       }
     },
-    "/config-editor/api/saveas": {
+    "/config-editor/saveas": {
       "post": {
         "tags": [
           "ConfigEditor",
@@ -106,7 +106,7 @@
         }
       }
     },
-    "/config-editor/api/restart": {
+    "/config-editor/restart": {
       "post": {
         "tags": [
           "ConfigEditor",

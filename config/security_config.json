@@ -10,7 +10,9 @@
   "users": [
     {
       "allowed_apps": [
-        "security_editor"
+        "security_editor",
+        "scada",
+        "config_editor"
       ],
       "groups": [
         "test_group"

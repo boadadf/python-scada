@@ -387,11 +387,11 @@ export class Api<
      * @tags ConfigEditor, ConfigEditor
      * @name GetConfigByName
      * @summary Get Config By Name
-     * @request GET:/config-editor/api/config/{name}
+     * @request GET:/config-editor/config/{name}
      */
     getConfigByName: (name: string, params: RequestParams = {}) =>
       this.request<any, HTTPValidationError>({
-        path: `/config-editor/api/config/${name}`,
+        path: `/config-editor/config/${name}`,
         method: "GET",
         format: "json",
         ...params,
@@ -403,11 +403,11 @@ export class Api<
      * @tags ConfigEditor, ConfigEditor
      * @name GetConfigs
      * @summary Get Configs
-     * @request GET:/config-editor/api/configs
+     * @request GET:/config-editor/configs
      */
     getConfigs: (params: RequestParams = {}) =>
       this.request<any, any>({
-        path: `/config-editor/api/configs`,
+        path: `/config-editor/configs`,
         method: "GET",
         format: "json",
         ...params,
@@ -419,11 +419,11 @@ export class Api<
      * @tags ConfigEditor, ConfigEditor
      * @name SaveConfig
      * @summary Save Config
-     * @request POST:/config-editor/api/config
+     * @request POST:/config-editor/config
      */
     saveConfig: (params: RequestParams = {}) =>
       this.request<any, any>({
-        path: `/config-editor/api/config`,
+        path: `/config-editor/config`,
         method: "POST",
         format: "json",
         ...params,
@@ -435,11 +435,11 @@ export class Api<
      * @tags ConfigEditor, ConfigEditor
      * @name SaveConfigAs
      * @summary Save Config As
-     * @request POST:/config-editor/api/saveas
+     * @request POST:/config-editor/saveas
      */
     saveConfigAs: (params: RequestParams = {}) =>
       this.request<any, any>({
-        path: `/config-editor/api/saveas`,
+        path: `/config-editor/saveas`,
         method: "POST",
         format: "json",
         ...params,
@@ -451,11 +451,11 @@ export class Api<
      * @tags ConfigEditor, ConfigEditor
      * @name Restart
      * @summary Restart App
-     * @request POST:/config-editor/api/restart
+     * @request POST:/config-editor/restart
      */
     restart: (params: RequestParams = {}) =>
       this.request<any, any>({
-        path: `/config-editor/api/restart`,
+        path: `/config-editor/restart`,
         method: "POST",
         format: "json",
         ...params,

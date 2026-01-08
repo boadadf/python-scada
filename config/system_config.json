@@ -1301,7 +1301,7 @@
         "RIGHT": "/static/icons/camera_right.png"
       }
     },
-    {      
+    {
       "icon": "/static/icons/help.png",
       "id": "help",
       "label": "Help",
@@ -1443,7 +1443,7 @@
   ],
   "streams": [
     {
-      "description": "Feed 1 - 1080p",
+      "description": "Feed 1 - 1080",
       "id": "feed1",
       "path": "hls/stream1.m3u8",
       "port": "",
