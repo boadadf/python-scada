@@ -24,14 +24,15 @@ the lifecycle state for each rule.
 
 import re
 from asteval import Interpreter
+from openscada_lite.common.actions.action_map import ACTION_MAP
 from openscada_lite.common.tracking.decorators import publish_from_arg_async
-from openscada_lite.modules.rule.actioncommands.action import Action
+from openscada_lite.common.actions.action import Action
 from openscada_lite.common.tracking.tracking_types import DataFlowStatus
 from openscada_lite.common.bus.event_types import EventType
 from openscada_lite.common.config.config import Config
 from openscada_lite.common.bus.event_bus import EventBus
 from openscada_lite.common.models.dtos import TagUpdateMsg
-from openscada_lite.modules.rule.actioncommands.command_map import ACTION_MAP
+
 import logging
 
 logger = logging.getLogger(__name__)

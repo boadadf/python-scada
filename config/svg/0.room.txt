@@ -1,0 +1,5 @@
+This is the MQTT module.
+1. Connect / Disconnect the MQTT Driver
+2. Connect the Light 1 or Light 2
+3. Check in the Commands tab the status of the commands
+4. Click in the Datapoints the status of the datapoints

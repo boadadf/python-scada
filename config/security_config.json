@@ -3,7 +3,18 @@
     {
       "name": "test_group",
       "permissions": [
-        "security_editor_access"
+        "security_editor_access",
+        "datapoint/rawtagupdatemsg",
+        "save_security_config",
+        "save_config",
+        "communication/driverconnectcommand",
+        "save_config_as",
+        "alert/clientalertfeedbackmsg",
+        "alarm/ackalarmmsg",
+        "animation/animationupdaterequestmsg",
+        "restart_app",
+        "command/sendcommandmsg",
+        "login"
       ]
     }
   ],

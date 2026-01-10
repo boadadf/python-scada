@@ -88,9 +88,58 @@
       "max": 150,
       "min": 100,
       "type": "enum"
+    },
+    "ON_OFF": {
+      "default": "OFF",
+      "type": "enum",
+      "values": [
+        "ON",
+        "OFF",
+        "TOGGLE"
+      ]
     }
   },
   "drivers": [
+    {
+      "name": "TasmotaRelayDriver",
+      "driver_class": "MQTTTasmotaRelayDriver",
+      "connection_info": {
+        "server_name": "TasmotaRelayDriver"
+      },
+      "datapoints": [
+        { "name": "RELAY_1_STATUS", "type": "ON_OFF" },
+        { "name": "RELAY_2_STATUS", "type": "ON_OFF" }
+      ],
+      "command_datapoints": [
+        { "name": "RELAY_1_CMD", "type": "ON_OFF" },
+        { "name": "RELAY_2_CMD", "type": "ON_OFF" }
+      ],
+      "params": {
+        "host": "orangepizero3",
+        "port": 1883,
+        "client_id": "openscada-tasmota-xmas",
+        "username": "scada",
+        "password": "dani23",
+        "device_topic": "xmas",
+        "relay_mapping": {
+          "RELAY_1": "POWER1",
+          "RELAY_2": "POWER2"
+        },
+        "subscriptions": [
+          {
+            "topic": "stat/xmas/POWER+",
+            "type": "status"
+          },
+          {
+            "topic": "stat/xmas/RESULT",
+            "type": "feedback"
+          }
+        ],
+        "publish": {
+          "command": "cmnd/{device}/{power}"
+        }
+      }
+    },
     {
       "command_datapoints": [],
       "connection_info": {
@@ -123,7 +172,7 @@
         }
       ],
       "driver_class": "OPCUAServerDriver",
-      "driver_config": {
+      "params": {
         "allow_write_regex": ".*_CMD$",
         "namespaceurl": "http://openscada-lite/opcua/server"
       },
@@ -1348,6 +1397,29 @@
       "name": "datapoint"
     },
     {
+      "name": "schedule",
+      "config": {
+        "schedules": [
+          {
+            "schedule_id": "on_mode",
+            "cron": "0 17 * * *",
+            "actions": [
+              "send_command('TasmotaRelayDriver@RELAY_1_CMD', 'ON')",
+              "send_command('TasmotaRelayDriver@RELAY_2_CMD', 'ON')"
+            ]
+          },
+          {
+            "schedule_id": "off_mode",
+            "cron": "0 23 * * *",
+            "actions": [
+              "send_command('TasmotaRelayDriver@RELAY_1_CMD', 'OFF')",
+              "send_command('TasmotaRelayDriver@RELAY_2_CMD', 'OFF')"
+            ]
+          }
+        ]
+      }
+    },
+    {
       "name": "alert"
     },
     {
@@ -1522,6 +1594,18 @@
         }
       }
     ],
+    "LIGHTS": [
+      {
+        "attribute": "visibility",
+        "expression": {
+          "OFF": "hidden",
+          "ON": "visible"
+        },
+        "quality": {
+          "unknown": "hidden"
+        }
+      }
+    ],
     "RIGHT_SWITCH_TURN": [
       {
         "attribute": "visibility",
@@ -1565,6 +1649,19 @@
         "expression": {
           "STRAIGHT": "green",
           "TURN": "red"
+        },
+        "quality": {
+          "unknown": "gray"
+        }
+      }
+    ],
+    "CONNECTOR_ANIMATION": [
+      {
+        "attribute": "fill",
+        "default": "gray",
+        "expression": {
+          "ON": "green",
+          "OFF": "red"
         },
         "quality": {
           "unknown": "gray"

@@ -15,11 +15,11 @@
 # -----------------------------------------------------------------------------
 
 from typing import Dict
-from openscada_lite.modules.rule.actioncommands.action import Action
-from openscada_lite.modules.rule.actioncommands.lower_alarm import LowerAlarmAction
-from openscada_lite.modules.rule.actioncommands.raise_alarm import RaiseAlarmAction
-from openscada_lite.modules.rule.actioncommands.send_command import SendCommandAction
-from openscada_lite.modules.rule.actioncommands.client_alert import ClientAlertAction
+from openscada_lite.common.actions.action import Action
+from openscada_lite.common.actions.lower_alarm import LowerAlarmAction
+from openscada_lite.common.actions.raise_alarm import RaiseAlarmAction
+from openscada_lite.common.actions.send_command import SendCommandAction
+from openscada_lite.common.actions.client_alert import ClientAlertAction
 
 
 ACTION_MAP: Dict[str, Action] = {
