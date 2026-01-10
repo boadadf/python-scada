@@ -6,6 +6,9 @@ import uuid
 from openscada_lite.common.actions.action_utils import execute_action
 from openscada_lite.common.config.config import Config
 from openscada_lite.modules.base.base_service import BaseService
+import logging
+
+logger = logging.getLogger(__name__)
 
 class ScheduleService(BaseService[None, None, None]):
     def __init__(self, event_bus, model, controller):
@@ -20,7 +23,7 @@ class ScheduleService(BaseService[None, None, None]):
         self.scheduler = AsyncIOScheduler()
         self.config = Config.get_instance()
         self.schedules = Config.get_instance().get_module_config("schedule").get("schedules", [])
-        print(f"Loaded schedules: {self.schedules}")
+        logger.debug(f"Loaded schedules: {self.schedules}")
         for sched in self.schedules:
             self._register_schedule(sched)
         self.scheduler.start()

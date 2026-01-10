@@ -1,5 +1,8 @@
 import os
 import re
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Remove override when used in python3.11
 BASE_DIR = "./openscada_lite"  # Change if needed
@@ -32,4 +35,4 @@ for root, _, files in os.walk(BASE_DIR):
             with open(path, "w", encoding="utf-8") as f:
                 f.write(content)
 
-            print(f"Processed {path}")
+            logger.debug(f"Processed {path}")

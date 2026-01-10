@@ -4324,3 +4324,32 @@ ModuleNotFoundError: No module named 'openscada_lite.common.utils.AsyncUtils'
 2026-01-11 00:11:09,523 INFO openscada_lite.modules.communication.drivers.test.test_driver [INIT] Initializing values for WaterTank tags: {'TANK': RawTagUpdateMsg(track_id='3d3e2872-204c-4d91-9159-6ba6d9c9f59f', datapoint_identifier='WaterTank@TANK', value=0.0, quality='good', timestamp=datetime.datetime(2026, 1, 11, 0, 11, 9, 523205))}
 2026-01-11 00:11:09,523 INFO openscada_lite.modules.communication.drivers.test.test_driver [COMMAND] Handling special command: TANK = 50
 2026-01-11 00:11:09,523 INFO openscada_lite.modules.communication.drivers.test.test_driver [DISCONNECT] Disconnecting driver WaterTank
+2026-01-11 00:12:54,623 INFO openscada_lite.app [LIFESPAN] Shutdown complete
+2026-01-11 00:12:57,239 INFO openscada_lite.app [LIFESPAN] Startup starting...
+2026-01-11 00:12:57,888 INFO openscada_lite.modules.communication.drivers.opc_ua_server_driver [OPCUA] Will expose 6 nodes on connect()
+2026-01-11 00:12:57,889 INFO openscada_lite.modules.communication.drivers.test.test_driver [INIT] Creating TestDriver CameraDriver
+2026-01-11 00:12:57,889 INFO openscada_lite.modules.communication.drivers.test.test_driver [INIT] Creating TestDriver WaterTank
+2026-01-11 00:12:57,889 INFO openscada_lite.modules.communication.drivers.test.test_driver [INIT] Creating TestDriver StressTest
+2026-01-11 00:12:57,891 INFO openscada_lite.modules.communication.drivers.test.test_driver [INIT] Creating TestDriver TrainTestDriver
+2026-01-11 00:12:58,024 INFO apscheduler.scheduler Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-01-11 00:12:58,025 INFO apscheduler.scheduler Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-01-11 00:12:58,026 INFO apscheduler.scheduler Added job "ScheduleService._execute_schedule" to job store "default"
+2026-01-11 00:12:58,027 INFO apscheduler.scheduler Added job "ScheduleService._execute_schedule" to job store "default"
+2026-01-11 00:12:58,027 INFO apscheduler.scheduler Scheduler started
+2026-01-11 00:12:58,052 INFO openscada_lite.modules.rule.manager.rule_manager Initializing RuleEngine with datapoint types: ['BOOL', 'CAMERA_POSITION', 'LEVEL', 'OPENED_CLOSED', 'OPEN_CLOSE_CMD', 'PRESSURE', 'START_STOP', 'START_STOP_CMD', 'SWITCH_CONTROL', 'SWITCH_CONTROL_CMD', 'TEMPERATURE', 'ON_OFF']
+2026-01-11 00:12:58,065 INFO openscada_lite.app [LIFESPAN] Startup complete
+2026-01-11 00:12:58,066 INFO apscheduler.executors.default Running job "ScheduleService._execute_schedule (trigger: cron[month='*', day='*', day_of_week='*', hour='17', minute='0'], next run at: 2026-01-11 17:00:00 CET)" (scheduled at 2026-01-11 00:12:58.024459+01:00)
+2026-01-11 00:12:58,067 INFO openscada_lite.modules.communication.manager.connector_manager [COMMAND] Sending command: TasmotaRelayDriver@RELAY_1_CMD = ON
+2026-01-11 00:12:58,068 WARNING openscada_lite.modules.communication.manager.connector_manager Driver 'TasmotaRelayDriver' is not connected. Cannot send command.
+2026-01-11 00:12:58,068 INFO openscada_lite.modules.communication.manager.connector_manager [COMMAND] Sending command: TasmotaRelayDriver@RELAY_2_CMD = ON
+2026-01-11 00:12:58,068 WARNING openscada_lite.modules.communication.manager.connector_manager Driver 'TasmotaRelayDriver' is not connected. Cannot send command.
+2026-01-11 00:12:58,069 INFO apscheduler.executors.default Job "ScheduleService._execute_schedule (trigger: cron[month='*', day='*', day_of_week='*', hour='17', minute='0'], next run at: 2026-01-11 17:00:00 CET)" executed successfully
+2026-01-11 00:12:58,070 INFO apscheduler.executors.default Running job "ScheduleService._execute_schedule (trigger: cron[month='*', day='*', day_of_week='*', hour='23', minute='0'], next run at: 2026-01-11 23:00:00 CET)" (scheduled at 2026-01-11 00:12:58.025130+01:00)
+2026-01-11 00:12:58,070 INFO openscada_lite.modules.communication.manager.connector_manager [COMMAND] Sending command: TasmotaRelayDriver@RELAY_1_CMD = OFF
+2026-01-11 00:12:58,070 WARNING openscada_lite.modules.communication.manager.connector_manager Driver 'TasmotaRelayDriver' is not connected. Cannot send command.
+2026-01-11 00:12:58,072 INFO openscada_lite.modules.communication.manager.connector_manager [COMMAND] Sending command: TasmotaRelayDriver@RELAY_2_CMD = OFF
+2026-01-11 00:12:58,072 WARNING openscada_lite.modules.communication.manager.connector_manager Driver 'TasmotaRelayDriver' is not connected. Cannot send command.
+2026-01-11 00:12:58,073 INFO apscheduler.executors.default Job "ScheduleService._execute_schedule (trigger: cron[month='*', day='*', day_of_week='*', hour='23', minute='0'], next run at: 2026-01-11 23:00:00 CET)" executed successfully
+2026-01-11 00:13:13,168 INFO openscada_lite.modules.communication.drivers.test.test_driver [INIT] Initializing values for TrainTestDriver tags: {'RIGHT_SWITCH_CONTROL': RawTagUpdateMsg(track_id='6cbdc52d-f3b5-4caa-af47-44d550128844', datapoint_identifier='TrainTestDriver@RIGHT_SWITCH_CONTROL', value='STRAIGHT', quality='good', timestamp=datetime.datetime(2026, 1, 11, 0, 12, 57, 891620)), 'LEFT_SWITCH_CONTROL': RawTagUpdateMsg(track_id='9552524b-3fd0-4394-a448-0ef538da2d5f', datapoint_identifier='TrainTestDriver@LEFT_SWITCH_CONTROL', value='STRAIGHT', quality='good', timestamp=datetime.datetime(2026, 1, 11, 0, 12, 57, 891620))}
+2026-01-11 00:13:18,555 INFO openscada_lite.modules.communication.manager.connector_manager [COMMAND] Sending command: TrainTestDriver@LEFT_SWITCH_CONTROL_CMD = TOGGLE
+2026-01-11 00:13:18,556 INFO openscada_lite.modules.communication.drivers.test.test_driver [COMMAND] Handling special command: LEFT_SWITCH_CONTROL_CMD = TOGGLE

@@ -130,7 +130,7 @@ class ConnectorManager:
     async def handle_driver_connect_command(self, data: DriverConnectCommand):
         driver_name = data.driver_name
         status = data.status
-        print(f"Handling driver command: {driver_name} -> {status} from {self.driver_instances.keys()}")
+        logger.debug(f"Handling driver command: {driver_name} -> {status} from {self.driver_instances.keys()}")
         driver = self.driver_instances.get(driver_name)
         if driver:
             if status == "connect":
@@ -153,7 +153,7 @@ class ConnectorManager:
 
     @publish_from_arg_async(status=DataFlowStatus.RECEIVED)
     async def emit_communication_status(self, data: DriverConnectStatus):
-        print(f"Emitting communication status: {data.driver_name} -> {data.status}")
+        logger.debug(f"Emitting communication status: {data.driver_name} -> {data.status}")
         await self.listener.on_driver_connect_status(data) if self.listener else None
         # If the driver went offline, publish all tags as unknown
         driver_name = data.driver_name
