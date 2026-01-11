@@ -79,8 +79,10 @@ class MQTTTasmotaRelayDriver(DriverProtocol):
 
     async def connect(self) -> None:
         if self._demo:
+            print("[MQTT Tasmota Driver] Running in DEMO mode: no real connection")
             self._connected = True
-            if self._status_listener and self._loop:
+            if self._status_listener:
+                print("[MQTT Tasmota Driver] DEMO mode: reporting online status")
                 await self._status_listener(
                     DriverConnectStatus(
                         driver_name=self._server_name,
@@ -114,7 +116,7 @@ class MQTTTasmotaRelayDriver(DriverProtocol):
     async def disconnect(self) -> None:
         if self._demo:
             self._connected = False
-            if self._status_listener and self._loop:
+            if self._status_listener:
                 await self._status_listener(
                     DriverConnectStatus(
                         driver_name=self._server_name,
@@ -137,7 +139,16 @@ class MQTTTasmotaRelayDriver(DriverProtocol):
 
     async def send_command(self, data: SendCommandMsg) -> None:
         if self._demo:
-            # Simulate immediate feedback and status update
+            # Compute effective command value (handles TOGGLE and casing)
+            identifier = data.datapoint_identifier
+            dp_name = identifier.split("@", 1)[1] if "@" in identifier else identifier
+            relay_key = dp_name.replace("_CMD", "")
+
+            desired_value = self._resolve_effective_value(relay_key, data.value)
+            # Mutate DTO so feedback reflects effective value consistently
+            data.value = desired_value
+
+            # Simulate immediate feedback
             if self._feedback_listener:
                 await self._feedback_listener(
                     CommandFeedbackMsg(
@@ -148,13 +159,17 @@ class MQTTTasmotaRelayDriver(DriverProtocol):
                         timestamp=datetime.datetime.now(),
                     )
                 )
+
             # Simulate status update
-            relay_key = data.datapoint_identifier.split("@", 1)[1].replace("_CMD", "")
+
+            # Track last known status
+            if isinstance(desired_value, str):
+                self._relay_status[relay_key] = desired_value
             if self._value_listener:
                 await self._value_listener(
                     RawTagUpdateMsg(
                         datapoint_identifier=f"{self._server_name}@{relay_key}_STATUS",
-                        value=data.value,
+                        value=desired_value,
                         timestamp=datetime.datetime.now(),
                     )
                 )
@@ -180,17 +195,8 @@ class MQTTTasmotaRelayDriver(DriverProtocol):
             power=power,
         )
 
-        # Handle TOGGLE: compute explicit ON/OFF based on current status
-        desired_value = data.value
-        if isinstance(desired_value, str) and desired_value.upper() == "TOGGLE":
-            print("Current relay status:", self._relay_status)
-            current = self._relay_status.get(relay_key)
-            if current == "ON":
-                desired_value = "OFF"
-            elif current == "OFF":
-                desired_value = "ON"
-            else:
-                desired_value = "ON"
+        # Handle TOGGLE and casing via helper
+        desired_value = self._resolve_effective_value(relay_key, data.value)
 
         # Mutate the DTO so feedback reflects the effective value
         data.value = desired_value
@@ -213,6 +219,30 @@ class MQTTTasmotaRelayDriver(DriverProtocol):
         )
 
         self._client.publish(topic, payload, qos=1)
+
+    # --------------------------------------------------
+    # Helpers
+    # --------------------------------------------------
+
+    def _resolve_effective_value(self, relay_key: str, requested_value):
+        """Resolve the effective command value for a relay.
+
+        - If `requested_value` is "TOGGLE", compute ON/OFF based on last known status.
+        - If it's a string other than TOGGLE, return the uppercased value.
+        - Otherwise return the value unchanged (non-string payloads are passed through).
+        """
+        if isinstance(requested_value, str):
+            val_upper = requested_value.upper()
+            if val_upper == "TOGGLE":
+                current = self._relay_status.get(relay_key)
+                if current == "ON":
+                    return "OFF"
+                elif current == "OFF":
+                    return "ON"
+                # Unknown -> default to ON
+                return "ON"
+            return val_upper
+        return requested_value
 
     def register_value_listener(self, callback: Callable) -> None:
         self._value_listener = callback
