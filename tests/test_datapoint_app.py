@@ -16,6 +16,7 @@ SERVER_URL = "http://localhost:5001"
 def run_server():
     import subprocess
     import time
+    import socket
     import os
 
     # Ensure SCADA_CONFIG_PATH is set
@@ -33,7 +34,16 @@ def run_server():
         ],
         env=os.environ.copy(),  # Pass the current environment variables to the subprocess
     )
-    time.sleep(2)  # Give the server time to start
+    # Wait for server readiness (avoid race conditions)
+    start = time.time()
+    while True:
+        try:
+            with socket.create_connection(("127.0.0.1", 5001), timeout=0.5):
+                break
+        except OSError:
+            if time.time() - start > 10:
+                raise RuntimeError("Server on 127.0.0.1:5001 did not start within 10s")
+            time.sleep(0.2)
     yield
     process.terminate()
     process.wait()
