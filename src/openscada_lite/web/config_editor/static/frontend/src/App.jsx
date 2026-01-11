@@ -30,6 +30,7 @@ import AnimationsTab from "./components/AnimationsTab";
 import GisIconsTab from "./components/GisIconsTab";
 import StreamsTab from "./components/StreamsTab";
 import FrontendTab from "./components/FrontendTab";
+import SchedulerTab from "./components/SchedulerTab";
 import { Api, ContentType } from "generatedApi";
 
 // Lazy-load AnimationTestTab
@@ -240,7 +241,8 @@ export default function App() {
                 'GIS Icons',
                 'Animation Test',
                 'Streams',
-                'Frontend' // <-- Add this line
+                'Frontend',
+                'Scheduler' // <-- Add this line
               ]}
               active={activeTab}
               onChange={setActiveTab}
@@ -269,6 +271,9 @@ export default function App() {
               </div>
               <div className={activeTab === 'Frontend' ? 'tab-content active' : 'tab-content'}>
                 <FrontendTab config={config} setConfig={c => { setConfig(c); setDirty(true); }} />
+              </div>
+              <div className={activeTab === 'Scheduler' ? 'tab-content active' : 'tab-content'}>
+                <SchedulerTab config={config} setConfig={c => { setConfig(c); setDirty(true); }} />
               </div>
               {activeTab === 'Animation Test' && (
                 <Suspense fallback={<div style={{padding: 40, textAlign: "center"}}>Loading Animation Test...</div>}>
