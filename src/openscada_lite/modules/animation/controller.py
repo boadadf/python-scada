@@ -40,6 +40,7 @@ class AnimationController(BaseController[AnimationUpdateMsg, AnimationUpdateRequ
 
         # Load SVG files from config
         self.svg_files = Config.get_instance().get_svg_files()
+        self.svg_folder = Config.get_instance().get_svg_folder()
 
     def register_local_routes(self, router: APIRouter):
         @router.get("/animation/svgs", tags=[self.base_event], operation_id="getSvgs")
@@ -65,10 +66,9 @@ class AnimationController(BaseController[AnimationUpdateMsg, AnimationUpdateRequ
             },
         )
         async def svg(filename: str):
-            logger.debug(f"Requested SVG file: {filename}")
-            svg_dir = Path(__file__).parent.parent.parent.parent.parent / "config" / "svg"
-            logger.debug(f"SVG directory: {svg_dir}")
-            file = svg_dir / filename
+            logger.debug(f"Requested SVG file: {filename}")            
+            logger.debug(f"SVG directory: {self.svg_folder}")
+            file = Path(self.svg_folder) / filename
             if file.exists():
                 return FileResponse(file, media_type="text/plain")  # Ensure correct media type
             return JSONResponse(content={"error": "File not found"}, status_code=404)
