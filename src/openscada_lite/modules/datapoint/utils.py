@@ -24,9 +24,7 @@ from openscada_lite.common.models.dtos import RawTagUpdateMsg
 
 class Utils:
     @staticmethod
-    def is_valid(
-        model: "DatapointModel", tag: RawTagUpdateMsg
-    ) -> bool:  # Use string for type hint
+    def is_valid(model: "DatapointModel", tag: RawTagUpdateMsg) -> bool:  # Use string for type hint
         # Example validation logic
         if tag.datapoint_identifier not in model._allowed_tags:
             return False

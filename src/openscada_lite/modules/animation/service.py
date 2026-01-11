@@ -171,11 +171,7 @@ class AnimationService(
         if delay <= 0:
             return
         await asyncio.sleep(delay)
-        if (
-            not hasattr(entry, "default")
-            or entry.default is None
-            or entry.default == ""
-        ):
+        if not hasattr(entry, "default") or entry.default is None or entry.default == "":
             return
 
         revert_cfg = {
@@ -210,8 +206,6 @@ class AnimationService(
             try:
                 return simple_eval(expr, names={"value": value})
             except Exception as e:
-                logger.error(
-                    f"AnimationService: error evaluating '{expr}' with value={value}: {e}"
-                )
+                logger.error(f"AnimationService: error evaluating '{expr}' with value={value}: {e}")
                 return None
         return None

@@ -23,9 +23,7 @@ import datetime
 class CommandModel(BaseModel[CommandFeedbackMsg]):
     def __init__(self):
         super().__init__()
-        self._allowed_commands = set(
-            Config.get_instance().get_allowed_command_identifiers()
-        )
+        self._allowed_commands = set(Config.get_instance().get_allowed_command_identifiers())
         self.initial_load()
 
     def initial_load(self):

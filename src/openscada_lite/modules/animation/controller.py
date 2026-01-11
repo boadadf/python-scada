@@ -22,11 +22,12 @@ from openscada_lite.common.models.dtos import (
     AnimationUpdateRequestMsg,
     AnimationUpdateMsg,
 )
+import logging
+
+logger = logging.getLogger(__name__)
 
 
-class AnimationController(
-    BaseController[AnimationUpdateMsg, AnimationUpdateRequestMsg]
-):
+class AnimationController(BaseController[AnimationUpdateMsg, AnimationUpdateRequestMsg]):
     def __init__(self, model, socketio, module_name: str, router: APIRouter):
         super().__init__(
             model,
@@ -43,7 +44,7 @@ class AnimationController(
     def register_local_routes(self, router: APIRouter):
         @router.get("/animation/svgs", tags=[self.base_event], operation_id="getSvgs")
         async def list_svgs():
-            print("Listing SVG files")
+            logger.debug("Listing SVG files")
             """Return the list of SVG files for the animation module."""
             return JSONResponse(content=self.svg_files)
 
@@ -64,20 +65,14 @@ class AnimationController(
             },
         )
         async def svg(filename: str):
-            print(f"Requested SVG file: {filename}")
-            svg_dir = (
-                Path(__file__).parent.parent.parent.parent.parent / "config" / "svg"
-            )
-            print(f"SVG directory: {svg_dir}")
+            logger.debug(f"Requested SVG file: {filename}")
+            svg_dir = Path(__file__).parent.parent.parent.parent.parent / "config" / "svg"
+            logger.debug(f"SVG directory: {svg_dir}")
             file = svg_dir / filename
             if file.exists():
-                return FileResponse(
-                    file, media_type="text/plain"
-                )  # Ensure correct media type
+                return FileResponse(file, media_type="text/plain")  # Ensure correct media type
             return JSONResponse(content={"error": "File not found"}, status_code=404)
 
-    def validate_request_data(
-        self, data: AnimationUpdateRequestMsg
-    ) -> AnimationUpdateRequestMsg:
+    def validate_request_data(self, data: AnimationUpdateRequestMsg) -> AnimationUpdateRequestMsg:
         # You could also return a StatusDTO if invalid
         return data

@@ -14,20 +14,17 @@
 # limitations under the License.
 # -----------------------------------------------------------------------------
 
-from openscada_lite.modules.rule.actioncommands.action import Action
-from openscada_lite.common.bus.event_types import EventType
-from openscada_lite.common.models.dtos import RaiseAlarmMsg
+from typing import Dict
+from openscada_lite.common.actions.action import Action
+from openscada_lite.common.actions.lower_alarm import LowerAlarmAction
+from openscada_lite.common.actions.raise_alarm import RaiseAlarmAction
+from openscada_lite.common.actions.send_command import SendCommandAction
+from openscada_lite.common.actions.client_alert import ClientAlertAction
 
 
-class RaiseAlarmAction(Action):
-    def get_event_data(
-        self, datapoint_identifier, params, track_id, rule_id
-    ) -> tuple[RaiseAlarmMsg, EventType]:
-        return (
-            RaiseAlarmMsg(
-                datapoint_identifier=datapoint_identifier,
-                track_id=track_id,
-                rule_id=rule_id,
-            ),
-            EventType.RAISE_ALARM,
-        )
+ACTION_MAP: Dict[str, Action] = {
+    "send_command": SendCommandAction(),
+    "raise_alarm": RaiseAlarmAction(),
+    "lower_alarm": LowerAlarmAction(),
+    "client_alert": ClientAlertAction(),
+}

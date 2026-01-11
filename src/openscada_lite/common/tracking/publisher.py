@@ -90,9 +90,7 @@ class TrackingPublisher:
         """Enable actual deliveries to the event loop."""
         """Safe to call once the app is fully running."""
         self._enabled = True
-        logger.debug(
-            "[TrackingPublisher] enabled; will start dispatching queued events"
-        )
+        logger.debug("[TrackingPublisher] enabled; will start dispatching queued events")
 
     def disable(self):
         self._enabled = False
@@ -118,14 +116,10 @@ class TrackingPublisher:
                     payload=dto.get_track_payload(),
                 )
             except Exception as e:
-                logging.debug(
-                    "[TrackingPublisher] failed creating DataFlowEventMsg: %s", e
-                )
+                logging.debug("[TrackingPublisher] failed creating DataFlowEventMsg: %s", e)
                 return
         else:
-            logging.debug(
-                "[TrackingPublisher] skipped: dto is not a valid DTO or DataFlowEventMsg"
-            )
+            logging.debug("[TrackingPublisher] skipped: dto is not a valid DTO or DataFlowEventMsg")
             return
         logging.debug("[TrackingPublisher] created event %s %s", event.track_id, status)
         self.queue.put(event)
@@ -154,9 +148,7 @@ class TrackingPublisher:
     def _publish_to_event_bus(self, item: DataFlowEventMsg):
         """Publish event to the event bus."""
         try:
-            logging.debug(
-                "[TrackingPublisher] scheduling publish for %s", item.track_id
-            )
+            logging.debug("[TrackingPublisher] scheduling publish for %s", item.track_id)
             asyncio.run_coroutine_threadsafe(
                 EventBus.get_instance().publish(EventType.TRACKING_EVENT, item),
                 self.loop,
@@ -169,10 +161,7 @@ class TrackingPublisher:
         if self.mode == "file":
             try:
                 with open(self.file_path, "a") as f:
-                    f.write(
-                        json.dumps(item.get_track_payload(), default=safe_serialize)
-                        + "\n"
-                    )
+                    f.write(json.dumps(item.get_track_payload(), default=safe_serialize) + "\n")
             except Exception:
                 logger.exception("[TrackingPublisher] failed writing event to file")
 

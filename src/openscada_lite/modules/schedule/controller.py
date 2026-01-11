@@ -1,5 +1,5 @@
 # -----------------------------------------------------------------------------
-# Copyright 2025 Daniel&Hector Fernandez
+# Copyright 2026 Daniel&Hector Fernandez
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,20 +14,13 @@
 # limitations under the License.
 # -----------------------------------------------------------------------------
 
-from openscada_lite.modules.rule.actioncommands.action import Action
-from openscada_lite.common.bus.event_types import EventType
-from openscada_lite.common.models.dtos import LowerAlarmMsg
+from fastapi import APIRouter
+from openscada_lite.modules.base.base_controller import BaseController
 
 
-class LowerAlarmAction(Action):
-    def get_event_data(
-        self, datapoint_identifier, params, track_id, rule_id
-    ) -> tuple[LowerAlarmMsg, EventType]:
-        return (
-            LowerAlarmMsg(
-                datapoint_identifier=datapoint_identifier,
-                track_id=track_id,
-                rule_id=rule_id,
-            ),
-            EventType.LOWER_ALARM,
-        )
+class ScheduleController(BaseController[None, None]):
+    def __init__(self, model, socketio, module_name: str, router: APIRouter):
+        super().__init__(model, socketio, None, None, module_name, router)
+
+    def validate_request_data(self, data: None) -> None:
+        return data

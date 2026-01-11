@@ -26,9 +26,7 @@ from openscada_lite.common.models.dtos import (
 )
 
 
-class CommunicationController(
-    BaseController[DriverConnectStatus, DriverConnectCommand]
-):
+class CommunicationController(BaseController[DriverConnectStatus, DriverConnectCommand]):
     def __init__(self, model, socketio, module_name: str, router: APIRouter):
         super().__init__(
             model,

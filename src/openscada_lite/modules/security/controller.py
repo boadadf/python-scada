@@ -47,7 +47,7 @@ class SecurityController(
 
     # ---------------- Register Routes ----------------
     def register_local_routes(self, router: APIRouter):
-        print("[SECURITY] Loading security routes")
+        logger.debug("[SECURITY] Loading security routes")
 
         # GET all registered endpoints
         @router.get(
@@ -59,19 +59,19 @@ class SecurityController(
             endpoints = self.model.get_end_points()
             return JSONResponse(content=endpoints)
 
-        print("[SECURITY] Registered endpoints route loaded")
+        logger.debug("[SECURITY] Registered endpoints route loaded")
 
         # POST login
         @router.post("/security/login", tags=[self.base_event], operation_id="login")
         @publish_route_async(DataFlowStatus.USER_ACTION, source="SecurityController")
         async def login(data: dict, response: Response, app: str = None):
-            print("[SECURITY] Login request received")
+            logger.debug("[SECURITY] Login request received")
 
             username = data.get("username")
             password = data.get("password")
             app_name = app if app is not None else data.get("app")
 
-            print(f"[SECURITY] Login attempt for user: {username}, app: {app_name}")
+            logger.debug(f"[SECURITY] Login attempt for user: {username}, app: {app_name}")
 
             if not username or not password or not app_name:
                 logger.warning("[SECURITY] Missing username, password, or app")

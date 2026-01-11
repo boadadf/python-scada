@@ -31,6 +31,4 @@ scada_router.mount(
 )
 
 # Templates
-templates = Jinja2Templates(
-    directory=os.path.join(os.path.dirname(__file__), "templates")
-)
+templates = Jinja2Templates(directory=os.path.join(os.path.dirname(__file__), "templates"))

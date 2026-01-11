@@ -25,9 +25,7 @@ logger = logging.getLogger(__name__)
 # Paths
 current_dir = Path(__file__).parent
 static_dir = current_dir / "static" / "frontend" / "dist"
-config_file = (
-    Path(__file__).parent.parent.parent / ".." / "config" / "security_config.json"
-)
+config_file = Path(__file__).parent.parent.parent / ".." / "config" / "security_config.json"
 
 # API router
 security_router = APIRouter(
@@ -35,9 +33,7 @@ security_router = APIRouter(
 )
 
 # Mount static frontend files
-security_router.mount(
-    "/static", StaticFiles(directory=static_dir), name="security_static"
-)
+security_router.mount("/static", StaticFiles(directory=static_dir), name="security_static")
 
 
 # Serve main React index.html for the editor

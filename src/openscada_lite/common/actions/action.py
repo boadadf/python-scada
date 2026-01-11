@@ -14,24 +14,32 @@
 # limitations under the License.
 # -----------------------------------------------------------------------------
 
-from openscada_lite.modules.rule.actioncommands.action import Action
+from abc import ABC, abstractmethod
+
+from openscada_lite.common.bus.event_bus import EventBus
 from openscada_lite.common.bus.event_types import EventType
-from openscada_lite.common.models.dtos import SendCommandMsg
-import uuid
+from openscada_lite.common.models.dtos import DTO
+from openscada_lite.common.tracking.decorators import (
+    publish_from_return_async,
+)
+from openscada_lite.common.tracking.tracking_types import DataFlowStatus
 
 
-class SendCommandAction(Action):
+class Action(ABC):
+
+    def __init__(self):
+        self.bus = EventBus.get_instance()
+
+    @publish_from_return_async(status=DataFlowStatus.CREATED)
+    async def __call__(
+        self, datapoint_identifier, params, track_id, rule_id
+    ) -> tuple[DTO, EventType]:
+        dto, event = self.get_event_data(datapoint_identifier, params, track_id, rule_id)
+        await self.bus.publish(event, dto)
+        return dto, event
+
+    @abstractmethod
     def get_event_data(
         self, datapoint_identifier, params, track_id, rule_id
-    ) -> tuple[SendCommandMsg, EventType]:
-        command_datapoint_identifier, value = params
-        command_id = str(uuid.uuid4())
-        return (
-            SendCommandMsg(
-                command_id=command_id,
-                datapoint_identifier=command_datapoint_identifier,
-                value=value,
-                track_id=track_id,
-            ),
-            EventType.SEND_COMMAND,
-        )
+    ) -> tuple[DTO, EventType]:
+        pass

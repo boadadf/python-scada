@@ -9,37 +9,37 @@
     "console": {
       "class": "logging.StreamHandler",
       "formatter": "default",
-      "level": "DEBUG"
+      "level": "INFO"
     },
     "file": {
       "class": "logging.FileHandler",
       "formatter": "default",
       "filename": "app.log",
-      "level": "DEBUG"
+      "level": "INFO"
     }
   },
   "root": {
-    "level": "DEBUG",
+    "level": "INFO",
     "handlers": ["console", "file"]
   },
   "loggers": {
     "openscada_lite.modules.security.service": {
-      "level": "DEBUG",
+      "level": "INFO",
       "handlers": ["console", "file"],
       "propagate": false
     },
     "openscada_lite.modules.security.controller": {
-      "level": "DEBUG",
+      "level": "INFO",
       "handlers": ["console", "file"],
       "propagate": false
     },
     "openscada_lite.modules.base.base_controller": {
-      "level": "DEBUG",
+      "level": "INFO",
       "handlers": ["console", "file"],
       "propagate": false
     },
     "openscada_lite.modules.communication.controller": {
-      "level": "DEBUG",
+      "level": "INFO",
       "handlers": ["console", "file"],
       "propagate": false
     }

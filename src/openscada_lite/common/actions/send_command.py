@@ -14,15 +14,24 @@
 # limitations under the License.
 # -----------------------------------------------------------------------------
 
-# communications_controller.py
-from fastapi import APIRouter
-from openscada_lite.modules.base.base_controller import BaseController
-from openscada_lite.common.models.dtos import CommandFeedbackMsg, SendCommandMsg
+from openscada_lite.common.actions.action import Action
+from openscada_lite.common.bus.event_types import EventType
+from openscada_lite.common.models.dtos import SendCommandMsg
+import uuid
 
 
-class CommandController(BaseController[CommandFeedbackMsg, SendCommandMsg]):
-    def __init__(self, model, socketio, module_name: str, router: APIRouter):
-        super().__init__(model, socketio, CommandFeedbackMsg, SendCommandMsg, module_name, router)
-
-    def validate_request_data(self, data):
-        return data
+class SendCommandAction(Action):
+    def get_event_data(
+        self, datapoint_identifier, params, track_id, rule_id
+    ) -> tuple[SendCommandMsg, EventType]:
+        command_datapoint_identifier, value = params
+        command_id = str(uuid.uuid4())
+        return (
+            SendCommandMsg(
+                command_id=command_id,
+                datapoint_identifier=command_datapoint_identifier,
+                value=value,
+                track_id=track_id,
+            ),
+            EventType.SEND_COMMAND,
+        )

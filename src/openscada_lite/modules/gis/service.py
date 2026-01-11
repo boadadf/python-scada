@@ -53,9 +53,7 @@ class GisService(BaseService[Union[TagUpdateMsg, AlarmUpdateMsg], None, GisUpdat
             self.model.update(gis_msg)
 
     def process_msg(self, msg: TagUpdateMsg | AlarmUpdateMsg) -> GisUpdateMsg | None:
-        logger.debug(
-            f"=================================GisService processing message: {msg}"
-        )
+        logger.debug(f"=================================GisService processing message: {msg}")
         for icon_cfg in self.gis_icons_config:
             if isinstance(msg, TagUpdateMsg):
                 result = self._process_tag_update(msg, icon_cfg)
@@ -67,9 +65,7 @@ class GisService(BaseService[Union[TagUpdateMsg, AlarmUpdateMsg], None, GisUpdat
                     return result
         return None
 
-    def _process_tag_update(
-        self, msg: TagUpdateMsg, icon_cfg: dict
-    ) -> GisUpdateMsg | None:
+    def _process_tag_update(self, msg: TagUpdateMsg, icon_cfg: dict) -> GisUpdateMsg | None:
         if icon_cfg.get("datapoint") != msg.datapoint_identifier:
             return None
 
@@ -88,9 +84,7 @@ class GisService(BaseService[Union[TagUpdateMsg, AlarmUpdateMsg], None, GisUpdat
             extra={"datapoint-value": icon_url},
         )
 
-    def _process_alarm_update(
-        self, msg: AlarmUpdateMsg, icon_cfg: dict
-    ) -> GisUpdateMsg | None:
+    def _process_alarm_update(self, msg: AlarmUpdateMsg, icon_cfg: dict) -> GisUpdateMsg | None:
         if icon_cfg.get("rule_id") != getattr(msg, "rule_id", None):
             return None
 
@@ -124,6 +118,5 @@ class GisService(BaseService[Union[TagUpdateMsg, AlarmUpdateMsg], None, GisUpdat
             )
         else:
             return any(
-                icon.get("datapoint") == tag.datapoint_identifier
-                for icon in self.gis_icons_config
+                icon.get("datapoint") == tag.datapoint_identifier for icon in self.gis_icons_config
             )

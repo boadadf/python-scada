@@ -105,13 +105,9 @@ async def test_connect_driver_valid_status(fastapi_app):
 
     # Use ASGITransport to wrap the FastAPI app
     transport = ASGITransport(app=app)
-    async with AsyncClient(
-        transport=transport, base_url="http://testserver"
-    ) as ac:  # NOSONAR
+    async with AsyncClient(transport=transport, base_url="http://testserver") as ac:  # NOSONAR
         data = DriverConnectCommand(driver_name="WaterTank", status="connect")
-        response = await ac.post(
-            "/communication/driverconnectcommand", json=data.to_dict()
-        )
+        response = await ac.post("/communication/driverconnectcommand", json=data.to_dict())
 
     assert response.status_code == 200
     assert response.json()["status"] == "ok"
@@ -131,19 +127,14 @@ async def test_connect_driver_invalid_status(fastapi_app):
 
     # Use ASGITransport to wrap the FastAPI app
     transport = ASGITransport(app=app)
-    async with AsyncClient(
-        transport=transport, base_url="http://testserver"
-    ) as ac:  # NOSONAR
+    async with AsyncClient(transport=transport, base_url="http://testserver") as ac:  # NOSONAR
         data = DriverConnectCommand(driver_name="WaterTank", status="bad_status")
-        response = await ac.post(
-            "/communication/driverconnectcommand", json=data.to_dict()
-        )
+        response = await ac.post("/communication/driverconnectcommand", json=data.to_dict())
 
     assert response.status_code == 400
     assert response.json()["status"] == "error"
     assert (
-        response.json()["reason"]
-        == "Invalid status. Must be 'connect', 'disconnect', or 'toggle'."
+        response.json()["reason"] == "Invalid status. Must be 'connect', 'disconnect', or 'toggle'."
     )
     assert "data" in response.json()  # Optionally check for data key
     controller.service.handle_controller_message.assert_not_called()
@@ -165,9 +156,7 @@ async def test_publish_status_emits(fastapi_app):
     controller.socketio.emit = fake_emit
 
     # Create a command message
-    cmd = DriverConnectCommand(
-        track_id="1234", driver_name="WaterTank", status="connect"
-    )
+    cmd = DriverConnectCommand(track_id="1234", driver_name="WaterTank", status="connect")
 
     # Call publish (synchronous method, no await needed)
     controller.publish(cmd)
@@ -218,9 +207,7 @@ async def test_service_publishes_connect_status(service):
     bus.subscribe(EventType.DRIVER_CONNECT_STATUS, handler)
 
     await comm_service.async_init()
-    await comm_service.handle_controller_message(
-        DriverConnectCommand("WaterTank", "connect")
-    )
+    await comm_service.handle_controller_message(DriverConnectCommand("WaterTank", "connect"))
 
     assert any(getattr(e, "driver_name", None) == "WaterTank" for e in events)
 

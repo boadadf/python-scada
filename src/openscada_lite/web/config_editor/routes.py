@@ -68,16 +68,16 @@ async def get_config_by_name(name: str):
     operation_id="getConfigs",
 )
 async def get_configs():
-    print("Getting configs...")
+    logger.debug("Getting configs...")
     config_dir = os.path.dirname(CONFIG_FILE)
-    print("Config dir:", config_dir)
+    logger.debug("Config dir:", config_dir)
     files = [
         f for f in os.listdir(config_dir) if f.endswith(f"_{SYSTEM_CONFIG_FILENAME}")
     ]
-    print("Found config files:", files)
+    logger.debug("Found config files:", files)
     # Strip suffix for user display
     display_names = [f.replace(f"_{SYSTEM_CONFIG_FILENAME}", "") for f in files]
-    print("Display names:", display_names)
+    logger.debug("Display names:", display_names)
     return display_names
 
 

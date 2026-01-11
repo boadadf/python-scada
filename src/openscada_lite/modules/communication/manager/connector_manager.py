@@ -49,9 +49,7 @@ class ConnectorManager:
 
     def __new__(cls, *args, **kwargs):
         if cls._instance is not None:
-            raise RuntimeError(
-                "Use EventBus.get_instance() instead of direct instantiation."
-            )
+            raise RuntimeError("Use EventBus.get_instance() instead of direct instantiation.")
         return super().__new__(cls)
 
     @classmethod
@@ -86,9 +84,7 @@ class ConnectorManager:
             driver_cls = DRIVER_REGISTRY.get(cfg["driver_class"])
             if not driver_cls:
                 raise ValueError(f"Unknown driver class: {cfg['driver_class']}")
-            driver_instance: DriverProtocol = driver_cls(
-                **cfg.get("connection_info", {})
-            )
+            driver_instance: DriverProtocol = driver_cls(**cfg.get("connection_info", {}))
             driver_instance.initialize(cfg.get("params", {}))
             driver_instance.subscribe(datapoint_objs)
             self.driver_instances[cfg["name"]] = driver_instance
@@ -104,9 +100,7 @@ class ConnectorManager:
         for driver in self.driver_instances.values():
             driver.register_value_listener(self.emit_value)
             driver.register_command_feedback(self.emit_command_feedback)
-            driver.register_communication_status_listener(
-                self.emit_communication_status
-            )
+            driver.register_communication_status_listener(self.emit_communication_status)
             await self.emit_communication_status(
                 DriverConnectStatus(driver_name=driver.server_name, status="offline")
             )
@@ -130,6 +124,10 @@ class ConnectorManager:
     async def handle_driver_connect_command(self, data: DriverConnectCommand):
         driver_name = data.driver_name
         status = data.status
+        logger.debug(
+            f"Handling driver command: {driver_name}"
+            f" -> {status} from {self.driver_instances.keys()}"
+        )
         driver = self.driver_instances.get(driver_name)
         if driver:
             if status == "connect":
@@ -152,6 +150,7 @@ class ConnectorManager:
 
     @publish_from_arg_async(status=DataFlowStatus.RECEIVED)
     async def emit_communication_status(self, data: DriverConnectStatus):
+        logger.debug(f"Emitting communication status: {data.driver_name} -> {data.status}")
         await self.listener.on_driver_connect_status(data) if self.listener else None
         # If the driver went offline, publish all tags as unknown
         driver_name = data.driver_name
@@ -165,13 +164,9 @@ class ConnectorManager:
 
     async def publish_unknown_for_driver(self, driver_name: str):
         now = datetime.datetime.now()
-        datapoint_types = self.config.get_datapoint_types_for_driver(
-            driver_name, self.types
-        )
+        datapoint_types = self.config.get_datapoint_types_for_driver(driver_name, self.types)
         for tag_name, dp_type in datapoint_types.items():
-            default_value = (
-                dp_type.get("default") if dp_type and "default" in dp_type else None
-            )
+            default_value = dp_type.get("default") if dp_type and "default" in dp_type else None
             tag_msg = RawTagUpdateMsg(
                 datapoint_identifier=f"{driver_name}@{tag_name}",
                 value=default_value,
@@ -193,9 +188,7 @@ class ConnectorManager:
 
     @publish_from_arg_async(status=DataFlowStatus.FORWARDED)
     async def send_command(self, data: SendCommandMsg):
-        logger.info(
-            f"[COMMAND] Sending command: {data.datapoint_identifier} = {data.value}"
-        )
+        logger.info(f"[COMMAND] Sending command: {data.datapoint_identifier} = {data.value}")
         config = Config.get_instance()
         server_id, _ = data.datapoint_identifier.split("@", 1)
 
@@ -215,9 +208,7 @@ class ConnectorManager:
             if driver.is_connected:
                 await driver.send_command(data)
             else:
-                logger.warning(
-                    f"Driver '{server_id}' is not connected. Cannot send command."
-                )
+                logger.warning(f"Driver '{server_id}' is not connected. Cannot send command.")
                 feedback = CommandFeedbackMsg(
                     command_id=data.command_id,
                     datapoint_identifier=data.datapoint_identifier,

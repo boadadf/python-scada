@@ -1,5 +1,5 @@
 # -----------------------------------------------------------------------------
-# Copyright 2025 Daniel&Hector Fernandez
+# Copyright 2026 Daniel&Hector Fernandez
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,17 +14,9 @@
 # limitations under the License.
 # -----------------------------------------------------------------------------
 
-from typing import Dict
-from openscada_lite.modules.rule.actioncommands.action import Action
-from openscada_lite.modules.rule.actioncommands.lower_alarm import LowerAlarmAction
-from openscada_lite.modules.rule.actioncommands.raise_alarm import RaiseAlarmAction
-from openscada_lite.modules.rule.actioncommands.send_command import SendCommandAction
-from openscada_lite.modules.rule.actioncommands.client_alert import ClientAlertAction
+from openscada_lite.modules.base.base_model import BaseModel
 
 
-ACTION_MAP: Dict[str, Action] = {
-    "send_command": SendCommandAction(),
-    "raise_alarm": RaiseAlarmAction(),
-    "lower_alarm": LowerAlarmAction(),
-    "client_alert": ClientAlertAction(),
-}
+class ScheduleModel(BaseModel[None]):
+    def __init__(self):
+        super().__init__()

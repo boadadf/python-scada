@@ -41,12 +41,8 @@ class TestDriver(DriverProtocol, ABC):
         self._server_name = server_name
         self._tags: Dict[str, RawTagUpdateMsg] = {}
         self._value_callback: Callable[[RawTagUpdateMsg], Any] | None = None
-        self._communication_status_callback: (
-            Callable[[DriverConnectStatus], Any] | None
-        ) = None
-        self._command_feedback_callback: Callable[[CommandFeedbackMsg], Any] | None = (
-            None
-        )
+        self._communication_status_callback: Callable[[DriverConnectStatus], Any] | None = None
+        self._command_feedback_callback: Callable[[CommandFeedbackMsg], Any] | None = None
         self._running = False
         self._connected = False
         self._task: asyncio.Task | None = None
@@ -79,13 +75,9 @@ class TestDriver(DriverProtocol, ABC):
 
     async def initValues(self):
         now = datetime.datetime.now()
-        logger.info(
-            f"[INIT] Initializing values for {self._server_name} tags: {self._tags}"
-        )
+        logger.info(f"[INIT] Initializing values for {self._server_name} tags: {self._tags}")
         for tag in self._tags.values():
-            tag.value = Config.get_instance().get_default_value(
-                tag.datapoint_identifier
-            )
+            tag.value = Config.get_instance().get_default_value(tag.datapoint_identifier)
             tag.timestamp = now
             tag.quality = "good"
             await self._publish_value(tag)
@@ -179,9 +171,7 @@ class TestDriver(DriverProtocol, ABC):
         )
         await self._safe_invoke(self._command_feedback_callback, msg)
 
-    async def handle_special_command(
-        self, datapoint_name: str, value: str
-    ) -> Optional[str]:
+    async def handle_special_command(self, datapoint_name: str, value: str) -> Optional[str]:
         logger.info(f"[COMMAND] Handling special command: {datapoint_name} = {value}")
 
         if datapoint_name == "TEST_CMD":
@@ -266,9 +256,7 @@ class TestDriver(DriverProtocol, ABC):
                     await self._publish_value(tag)
                 logger.debug(f"[TEST] Published all tag values for {self._server_name}")
                 await asyncio.sleep(5)
-                logger.debug(
-                    f"[TEST] Simulation loop iteration complete for {self._server_name}"
-                )
+                logger.debug(f"[TEST] Simulation loop iteration complete for {self._server_name}")
         except asyncio.CancelledError:
             logger.debug(f"[TEST] Simulation loop canceled for {self._server_name}")
             raise

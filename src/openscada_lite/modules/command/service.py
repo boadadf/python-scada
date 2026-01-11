@@ -19,9 +19,7 @@ from openscada_lite.modules.base.base_service import BaseService
 from openscada_lite.common.models.dtos import CommandFeedbackMsg, SendCommandMsg
 
 
-class CommandService(
-    BaseService[CommandFeedbackMsg, SendCommandMsg, CommandFeedbackMsg]
-):
+class CommandService(BaseService[CommandFeedbackMsg, SendCommandMsg, CommandFeedbackMsg]):
     def __init__(self, event_bus, model, controller):
         super().__init__(
             event_bus,

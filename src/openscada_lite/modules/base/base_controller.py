@@ -97,9 +97,7 @@ class BaseController(ABC, Generic[T, U]):
             await self.handle_subscribe_live_feed(sid)
 
     async def handle_subscribe_live_feed(self, sid):
-        logger.debug(
-            f"[{self.base_event}] ******* Client subscribed to live feed: {sid}"
-        )
+        logger.debug(f"[{self.base_event}] ******* Client subscribed to live feed: {sid}")
         self._initializing_clients.add(sid)
         all_msgs = self.model.get_all()
         sorted_msgs = sorted(all_msgs.values(), key=lambda v: v.get_id())
@@ -169,9 +167,7 @@ class BaseController(ABC, Generic[T, U]):
                 user_info = verify_jwt(token) if token else None
                 username = user_info["username"] if user_info else None
                 logger.debug(f"Verified username from token: {username}")
-                if not SecurityService.get_instance_or_none().is_allowed(
-                    username, endpoint_name
-                ):
+                if not SecurityService.get_instance_or_none().is_allowed(username, endpoint_name):
                     logger.debug(
                         f"Unauthorized access attempt by user: {username}"
                         f"to endpoint: {endpoint_name}"
@@ -184,9 +180,7 @@ class BaseController(ABC, Generic[T, U]):
                         user=username,
                         endpoint=endpoint_name,
                     )
-                logger.debug(
-                    f"User {username} is authorized for endpoint: {endpoint_name}"
-                )
+                logger.debug(f"User {username} is authorized for endpoint: {endpoint_name}")
                 logger.debug(f"Request: {request}")
                 logger.debug(
                     f"Incoming data for user {username} on endpoint {endpoint_name}: {body}"

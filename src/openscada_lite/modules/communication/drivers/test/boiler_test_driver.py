@@ -43,23 +43,15 @@ class BoilerTestDriver(TestDriver):
         heater = heater_tag.value if heater_tag.value else "CLOSED"
 
         try:
-            pressure = (
-                float(pressure_tag.value)
-                if pressure_tag.value not in (None, "")
-                else 50.0
-            )
+            pressure = float(pressure_tag.value) if pressure_tag.value not in (None, "") else 50.0
         except Exception as e:
-            logger.warning(
-                f"[SIM] Error parsing pressure value: {pressure_tag.value} ({e})"
-            )
+            logger.warning(f"[SIM] Error parsing pressure value: {pressure_tag.value} ({e})")
             pressure = 50.0
 
         try:
             temp = float(temp_tag.value) if temp_tag.value not in (None, "") else 120.0
         except Exception as e:
-            logger.warning(
-                f"[SIM] Error parsing temperature value: {temp_tag.value} ({e})"
-            )
+            logger.warning(f"[SIM] Error parsing temperature value: {temp_tag.value} ({e})")
             temp = 120.0
 
         logger.debug(

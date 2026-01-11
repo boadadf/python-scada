@@ -424,12 +424,8 @@ class AnimationUpdateRequestMsg(DTO):
             now = datetime.datetime.now()
             status = (self.alarm_status or "UNKNOWN").upper()
 
-            activation_time = (
-                now if status in ["ACTIVE", "ACK", "INACTIVE", "FINISHED"] else None
-            )
-            acknowledge_time = (
-                now if status in ["ACK", "INACTIVE", "FINISHED"] else None
-            )
+            activation_time = now if status in ["ACTIVE", "ACK", "INACTIVE", "FINISHED"] else None
+            acknowledge_time = now if status in ["ACK", "INACTIVE", "FINISHED"] else None
             deactivation_time = now if status in ["INACTIVE", "FINISHED"] else None
 
             return AlarmUpdateMsg(

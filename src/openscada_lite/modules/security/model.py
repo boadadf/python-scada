@@ -43,9 +43,7 @@ class SecurityModel(BaseModel[None]):
         """Scan FastAPI app for all registered POST endpoint names."""
         with self._lock:
             self.endpoints = {
-                route.name
-                for route in router.routes
-                if "POST" in getattr(route, "methods", [])
+                route.name for route in router.routes if "POST" in getattr(route, "methods", [])
             }
 
     def _load(self):

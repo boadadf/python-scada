@@ -26,9 +26,7 @@ async def module_loader(config: dict, socketio_obj, event_bus, app) -> dict:
 
         logger.info(f"[INIT] Loading module: {module_name}")
 
-        model_cls = getattr(
-            importlib.import_module(f"{base_path}.model"), f"{class_prefix}Model"
-        )
+        model_cls = getattr(importlib.import_module(f"{base_path}.model"), f"{class_prefix}Model")
         logger.debug(f"[INIT] Model class loaded: {module_name}")
         controller_cls = getattr(
             importlib.import_module(f"{base_path}.controller"),
@@ -41,9 +39,7 @@ async def module_loader(config: dict, socketio_obj, event_bus, app) -> dict:
         logger.debug(f"[INIT] Service class loaded: {module_name}")
         model = model_cls()
         logger.debug(f"[INIT] Model initialized: {module_name}")
-        controller: BaseController = controller_cls(
-            model, socketio_obj, module_name, app
-        )
+        controller: BaseController = controller_cls(model, socketio_obj, module_name, app)
         logger.debug(f"[INIT] Controller initialized: {module_name}")
         service = service_cls(event_bus, model, controller)
         logger.debug(f"[INIT] Service initialized: {module_name}")
@@ -55,9 +51,7 @@ async def module_loader(config: dict, socketio_obj, event_bus, app) -> dict:
     logger.info("[INIT] Loading Security module")
     # Security module is always loaded regardless of config
     security_model = SecurityModel()
-    security_controller = SecurityController(
-        security_model, socketio_obj, "security", app
-    )
+    security_controller = SecurityController(security_model, socketio_obj, "security", app)
     security_service = SecurityService(event_bus, security_model, security_controller)
     security_controller.set_service(security_service)
     logger.debug("[INIT] Security module loaded")

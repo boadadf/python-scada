@@ -29,9 +29,7 @@ class Config:
 
     def __new__(cls, *args, **kwargs):
         if cls._instance is not None:
-            raise RuntimeError(
-                "Use Config.get_instance() instead of direct instantiation."
-            )
+            raise RuntimeError("Use Config.get_instance() instead of direct instantiation.")
         return super().__new__(cls)
 
     def __init__(self, config_path: str):
@@ -81,10 +79,7 @@ class Config:
         """
         for drv in self.get_drivers():
             if drv["name"] == driver_name:
-                return {
-                    dp["name"]: types.get(dp["type"])
-                    for dp in drv.get("datapoints", [])
-                }
+                return {dp["name"]: types.get(dp["type"]) for dp in drv.get("datapoints", [])}
         return {}
 
     def get_allowed_datapoint_identifiers(self):
@@ -96,9 +91,7 @@ class Config:
                 # Check if the datapoint_identifier is already fully qualified
                 # Fully qualified dps are handled by its own driver
                 if "@" not in datapoint_identifier["name"]:
-                    datapoint_identifiers.append(
-                        f"{driver_name}@{datapoint_identifier['name']}"
-                    )
+                    datapoint_identifiers.append(f"{driver_name}@{datapoint_identifier['name']}")
         return datapoint_identifiers
 
     def get_allowed_command_identifiers(self):
@@ -107,9 +100,7 @@ class Config:
         for driver in self.get_drivers():
             driver_name = driver["name"]
             for datapoint_identifier in driver.get("command_datapoints", []):
-                datapoint_identifiers.append(
-                    f"{driver_name}@{datapoint_identifier['name']}"
-                )
+                datapoint_identifiers.append(f"{driver_name}@{datapoint_identifier['name']}")
         return datapoint_identifiers
 
     def _get_default_for_datapoint(self, dp_name: str, datapoints: list) -> any:
@@ -133,9 +124,7 @@ class Config:
         for driver in self._config.get("drivers", []):
             if driver.get("name") == driver_name:
                 # Search in datapoints
-                default = self._get_default_for_datapoint(
-                    dp_name, driver.get("datapoints", [])
-                )
+                default = self._get_default_for_datapoint(dp_name, driver.get("datapoints", []))
                 if default is not None:
                     return default
                 # Search in command_datapoints if not found
@@ -148,9 +137,7 @@ class Config:
         """Find and return the datapoint type definition for a given identifier."""
         for driver in self.get_drivers():
             driver_name = driver["name"]
-            for dp in driver.get("datapoints", []) + driver.get(
-                "command_datapoints", []
-            ):
+            for dp in driver.get("datapoints", []) + driver.get("command_datapoints", []):
                 if f"{driver_name}@{dp['name']}" == datapoint_identifier:
                     dp_type_name = dp.get("type")
                     return self.get_types().get(dp_type_name)
@@ -199,9 +186,7 @@ class Config:
     def get_animations(self):
         animations_dict = self._config.get("animations", {})
         return {
-            name: Animation(
-                name=name, entries=[AnimationEntry(**entry) for entry in entries]
-            )
+            name: Animation(name=name, entries=[AnimationEntry(**entry) for entry in entries])
             for name, entries in animations_dict.items()
         }
 
@@ -254,9 +239,7 @@ class Config:
                 dp = elem.attrib.get("data-datapoint")
                 anim = elem.attrib.get("data-animation")
                 if dp and anim:
-                    datapoint_map.setdefault(dp, []).append(
-                        (fname, elem.attrib.get("id"), anim)
-                    )
+                    datapoint_map.setdefault(dp, []).append((fname, elem.attrib.get("id"), anim))
         return datapoint_map
 
     def get_gis_icons(self) -> list:
@@ -278,9 +261,7 @@ class Config:
             )
             base_dir = os.path.dirname(raw_path)
         else:
-            logger.debug(
-                f"SCADA_CONFIG_PATH is a directory. Using it directly: {raw_path}"
-            )
+            logger.debug(f"SCADA_CONFIG_PATH is a directory. Using it directly: {raw_path}")
             base_dir = raw_path
         logger.debug(
             f"Security config will be at: {os.path.join(base_dir, 'security_config.json')}"

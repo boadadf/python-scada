@@ -50,7 +50,7 @@
         }
       ],
       "driver_class": "OPCUAServerDriver",
-      "driver_config": {
+      "params": {
         "allow_write_regex": ".*_CMD$",
         "namespaceurl": "http://openscada-lite/opcua/server"
       },

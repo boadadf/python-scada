@@ -33,8 +33,7 @@ def create_jwt(username: str, groups=None) -> str:
     payload = {
         "username": username,
         "groups": groups or [],
-        "exp": datetime.datetime.now()
-        + datetime.timedelta(seconds=JWT_EXP_DELTA_SECONDS),
+        "exp": datetime.datetime.now() + datetime.timedelta(seconds=JWT_EXP_DELTA_SECONDS),
     }
     token = jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
     return token
