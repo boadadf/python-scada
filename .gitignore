@@ -8,7 +8,7 @@ __pycache__/
 *.venv/
 env/
 venv/
-
+*.log
 # Node
 node_modules/
 npm-debug.log

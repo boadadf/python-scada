@@ -71,6 +71,7 @@ async def test_mqtt_connect_emits_status_and_subscribes(monkeypatch):
                 {"topic": "stat/{device}/RESULT", "type": "feedback"},
             ],
             "publish": {"command": "cmnd/{device}/{power}"},
+            "demo": False,
         }
     )
 
@@ -115,6 +116,7 @@ async def test_mqtt_toggle_publishes_opposite_and_feedback(monkeypatch):
             ],
             "publish": {"command": "cmnd/{device}/{power}"},
             "command_timeout": 2,
+            "demo": False,
         }
     )
 
@@ -174,6 +176,7 @@ async def test_mqtt_toggle_unknown_state_sends_toggle(monkeypatch):
             "relay_mapping": {"RELAY_2": "POWER2"},
             "subscriptions": [],
             "publish": {"command": "cmnd/{device}/{power}"},
+            "demo": False,
         }
     )
 

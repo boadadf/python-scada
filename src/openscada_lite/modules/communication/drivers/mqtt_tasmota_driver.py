@@ -59,6 +59,8 @@ class MQTTTasmotaRelayDriver(DriverProtocol):
         # Track last known relay status per relay key (RELAY_1, RELAY_2)
         self._relay_status: dict[str, str] = {}
 
+        self._demo: bool = True  # Default to demo mode
+
     # --------------------------------------------------
     # Lifecycle
     # --------------------------------------------------
@@ -73,7 +75,20 @@ class MQTTTasmotaRelayDriver(DriverProtocol):
         self._subscriptions = config.get("subscriptions", [])
         self._publish_templates = config.get("publish", {})
 
+        self._demo = config.get("demo", True)  # Default to True
+
     async def connect(self) -> None:
+        if self._demo:
+            self._connected = True
+            if self._status_listener and self._loop:
+                await self._status_listener(
+                    DriverConnectStatus(
+                        driver_name=self._server_name,
+                        status="online",
+                    )
+                )
+            return
+
         self._loop = asyncio.get_running_loop()
 
         self._client = mqtt.Client(client_id=self._config.get("client_id"))
@@ -97,6 +112,17 @@ class MQTTTasmotaRelayDriver(DriverProtocol):
         self._client.loop_start()
 
     async def disconnect(self) -> None:
+        if self._demo:
+            self._connected = False
+            if self._status_listener and self._loop:
+                await self._status_listener(
+                    DriverConnectStatus(
+                        driver_name=self._server_name,
+                        status="offline",
+                    )
+                )
+            return
+
         if self._client:
             self._client.loop_stop()
             self._client.disconnect()
@@ -110,6 +136,30 @@ class MQTTTasmotaRelayDriver(DriverProtocol):
         pass
 
     async def send_command(self, data: SendCommandMsg) -> None:
+        if self._demo:
+            # Simulate immediate feedback and status update
+            if self._feedback_listener:
+                await self._feedback_listener(
+                    CommandFeedbackMsg(
+                        command_id=data.command_id,
+                        datapoint_identifier=data.datapoint_identifier,
+                        feedback="OK",
+                        value=data.value,
+                        timestamp=datetime.datetime.now(),
+                    )
+                )
+            # Simulate status update
+            relay_key = data.datapoint_identifier.split("@", 1)[1].replace("_CMD", "")
+            if self._value_listener:
+                await self._value_listener(
+                    RawTagUpdateMsg(
+                        datapoint_identifier=f"{self._server_name}@{relay_key}_STATUS",
+                        value=data.value,
+                        timestamp=datetime.datetime.now(),
+                    )
+                )
+            return
+
         if not self._client or not self._loop:
             return
 
