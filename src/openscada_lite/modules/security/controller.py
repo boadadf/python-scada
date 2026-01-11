@@ -30,7 +30,9 @@ class SecurityController(
     BaseController[None, None],
 ):
 
-    def __init__(self, model: SecurityModel, socketio, module_name: str, router: APIRouter):
+    def __init__(
+        self, model: SecurityModel, socketio, module_name: str, router: APIRouter
+    ):
         super().__init__(model, socketio, None, None, module_name, router)
         self.model = model
 
@@ -45,7 +47,7 @@ class SecurityController(
 
     # ---------------- Register Routes ----------------
     def register_local_routes(self, router: APIRouter):
-        print("[SECURITY] Loading security routes")
+        logger.debug("[SECURITY] Loading security routes")
 
         # GET all registered endpoints
         @router.get(
@@ -57,19 +59,19 @@ class SecurityController(
             endpoints = self.model.get_end_points()
             return JSONResponse(content=endpoints)
 
-        print("[SECURITY] Registered endpoints route loaded")
+        logger.debug("[SECURITY] Registered endpoints route loaded")
 
         # POST login
         @router.post("/security/login", tags=[self.base_event], operation_id="login")
         @publish_route_async(DataFlowStatus.USER_ACTION, source="SecurityController")
         async def login(data: dict, response: Response, app: str = None):
-            print("[SECURITY] Login request received")
+            logger.debug("[SECURITY] Login request received")
 
             username = data.get("username")
             password = data.get("password")
             app_name = app if app is not None else data.get("app")
 
-            print(f"[SECURITY] Login attempt for user: {username}, app: {app_name}")
+            logger.debug(f"[SECURITY] Login attempt for user: {username}, app: {app_name}")
 
             if not username or not password or not app_name:
                 logger.warning("[SECURITY] Missing username, password, or app")
@@ -112,14 +114,18 @@ class SecurityController(
             return response
 
         # GET security config
-        @router.get("/security/config", tags=[self.base_event], operation_id="getSecurityConfig")
+        @router.get(
+            "/security/config", tags=[self.base_event], operation_id="getSecurityConfig"
+        )
         async def get_security_config():
             try:
                 config = self.model.get_security_config()
                 return JSONResponse(content=config)
             except Exception as e:
                 return JSONResponse(
-                    content=StatusDTO(status="error", reason=f"Failed to load: {e}").to_dict(),
+                    content=StatusDTO(
+                        status="error", reason=f"Failed to load: {e}"
+                    ).to_dict(),
                     status_code=500,
                 )
 
@@ -132,20 +138,26 @@ class SecurityController(
         async def save_security_config(data: dict):
             if not data:
                 return JSONResponse(
-                    content=StatusDTO(status="error", reason="No data provided").to_dict(),
+                    content=StatusDTO(
+                        status="error", reason="No data provided"
+                    ).to_dict(),
                     status_code=400,
                 )
             try:
                 self.model.save_security_config(data)
             except Exception as e:
                 return JSONResponse(
-                    content=StatusDTO(status="error", reason=f"Failed to save: {e}").to_dict(),
+                    content=StatusDTO(
+                        status="error", reason=f"Failed to save: {e}"
+                    ).to_dict(),
                     status_code=500,
                 )
             # Notify service if applicable
             if hasattr(self.service, "notify_config_changed"):
                 self.service.notify_config_changed()
-            return JSONResponse(content=StatusDTO(status="ok", reason="Config saved").to_dict())
+            return JSONResponse(
+                content=StatusDTO(status="ok", reason="Config saved").to_dict()
+            )
 
         self.model.load_endpoints(router)
 
