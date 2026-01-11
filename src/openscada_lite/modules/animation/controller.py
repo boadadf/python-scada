@@ -66,7 +66,7 @@ class AnimationController(BaseController[AnimationUpdateMsg, AnimationUpdateRequ
             },
         )
         async def svg(filename: str):
-            logger.debug(f"Requested SVG file: {filename}")            
+            logger.debug(f"Requested SVG file: {filename}")
             logger.debug(f"SVG directory: {self.svg_folder}")
             file = Path(self.svg_folder) / filename
             if file.exists():
