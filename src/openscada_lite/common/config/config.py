@@ -196,7 +196,7 @@ class Config:
         """
         return self._config.get("streams", [])
 
-    def _get_svg_folder(self) -> str:
+    def get_svg_folder(self) -> str:
         """
         Internal: Returns the SVG folder path from config or defaults to './svg'.
         """
@@ -213,7 +213,7 @@ class Config:
         if svg_files:
             return svg_files
         logger.debug("No svg_files in config, scanning folder.")
-        svg_folder = self._get_svg_folder()
+        svg_folder = self.get_svg_folder()
         if not os.path.exists(svg_folder):
             logger.debug(f"SVG folder does not exist: {svg_folder}")
             # folder missing — return empty list instead of crashing
@@ -226,7 +226,7 @@ class Config:
         Parses all SVG files and returns a map:
         {datapoint_identifier: [(svg_name, element_id, animation_type), ...]}
         """
-        svg_folder = self._get_svg_folder()
+        svg_folder = self.get_svg_folder()
         svg_files = self.get_svg_files()
         datapoint_map = {}
         for fname in svg_files:

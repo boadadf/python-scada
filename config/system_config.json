@@ -103,9 +103,6 @@
     {
       "name": "TasmotaRelayDriver",
       "driver_class": "MQTTTasmotaRelayDriver",
-      "connection_info": {
-        "server_name": "TasmotaRelayDriver"
-      },
       "datapoints": [
         { "name": "RELAY_1_STATUS", "type": "ON_OFF" },
         { "name": "RELAY_2_STATUS", "type": "ON_OFF" }
@@ -142,9 +139,6 @@
     },
     {
       "command_datapoints": [],
-      "connection_info": {
-        "server_name": "OPCUAServerDriver"
-      },
       "datapoints": [
         {
           "name": "CameraDriver@CAMERA_1_POSITION",
@@ -193,9 +187,6 @@
           "type": "CAMERA_POSITION"
         }
       ],
-      "connection_info": {
-        "server_name": "CameraDriver"
-      },
       "datapoints": [
         {
           "name": "CAMERA_1_POSITION",
@@ -240,9 +231,6 @@
           "type": "START_STOP_CMD"
         }
       ],
-      "connection_info": {
-        "server_name": "WaterTank"
-      },
       "datapoints": [
         {
           "name": "TANK",
@@ -271,9 +259,6 @@
           "type": "START_STOP_CMD"
         }
       ],
-      "connection_info": {
-        "server_name": "StressTest"
-      },
       "datapoints": [
         {
           "name": "TEST",
@@ -1297,9 +1282,6 @@
           "type": "SWITCH_CONTROL_CMD"
         }
       ],
-      "connection_info": {
-        "server_name": "TrainTestDriver"
-      },
       "datapoints": [
         {
           "name": "RIGHT_SWITCH_CONTROL",

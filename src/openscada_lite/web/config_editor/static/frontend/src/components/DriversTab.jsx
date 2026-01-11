@@ -96,22 +96,20 @@ export default function DriversTab({ config, setConfig }) {
             <label>Driver Class:</label>
             <input value={drivers[selected].driver_class || ''} onChange={e => updateField('driver_class', e.target.value)} />
 
-            <label>Connection Info:</label>
-            <div style={{ border: '1px solid #ccc', padding: 6, borderRadius: 4 }}>
-              {Object.entries(drivers[selected].connection_info || {}).map(([k, v]) => (
-                <div key={k} style={{ display: 'flex', gap: 4, marginBottom: 4, alignItems: 'center' }}>
-                  <input style={{ flex: 1 }} value={k} disabled={k === 'server_name'} />
-                  <input style={{ flex: 2 }} value={v} onChange={e => updateConnectionInfo(k, e.target.value)} />
-                  {k !== 'server_name' && <button onClick={() => removeConnectionKey(k)}>Del</button>}
-                </div>
-              ))}
-              <button onClick={() => {
-                const key = prompt('Key:');
-                if (!key || key === 'server_name') return;
-                const value = prompt('Value:');
-                updateConnectionInfo(key, value);
-              }}>+ param</button>
-            </div>
+            <label>Params (JSON):</label>
+            <textarea
+              style={{ width: '100%', minHeight: 120, fontFamily: 'monospace' }}
+              value={JSON.stringify(drivers[selected].params || {}, null, 2)}
+              onChange={e => {
+                let val = e.target.value;
+                try {
+                  const parsed = JSON.parse(val);
+                  updateField('params', parsed);
+                } catch {
+                  // Optionally show error or ignore until valid JSON
+                }
+              }}
+            />
           </div>
 
           <div style={{ marginTop: 12 }}>

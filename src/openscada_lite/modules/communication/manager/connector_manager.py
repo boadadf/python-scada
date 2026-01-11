@@ -84,7 +84,7 @@ class ConnectorManager:
             driver_cls = DRIVER_REGISTRY.get(cfg["driver_class"])
             if not driver_cls:
                 raise ValueError(f"Unknown driver class: {cfg['driver_class']}")
-            driver_instance: DriverProtocol = driver_cls(**cfg.get("connection_info", {}))
+            driver_instance: DriverProtocol = driver_cls(cfg['name'])
             driver_instance.initialize(cfg.get("params", {}))
             driver_instance.subscribe(datapoint_objs)
             self.driver_instances[cfg["name"]] = driver_instance
