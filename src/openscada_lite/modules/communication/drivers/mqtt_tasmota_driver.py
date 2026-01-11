@@ -262,7 +262,12 @@ class MQTTTasmotaRelayDriver(DriverProtocol):
             self._pending_command = None
 
             if self._command_timeout_task:
-                self._command_timeout_task.cancel()
+                old_task = self._command_timeout_task
+                old_task.cancel()
+                # Consume the canceled task to avoid 'Task exception was never retrieved'
+                asyncio.run_coroutine_threadsafe(
+                    self._consume_canceled_task(old_task), self._loop
+                )
                 self._command_timeout_task = None
 
             asyncio.run_coroutine_threadsafe(
@@ -278,11 +283,22 @@ class MQTTTasmotaRelayDriver(DriverProtocol):
         try:
             await asyncio.sleep(timeout)
         except asyncio.CancelledError:
-            return
+            # Re-raise cancellation after any cleanup to propagate properly
+            raise
 
         if self._pending_command == data:
             self._pending_command = None
             await self._send_command_feedback(data, exists=False)
+
+    async def _consume_canceled_task(self, task: asyncio.Task):
+        try:
+            await task
+        except asyncio.CancelledError:
+            # Expected cancellation; swallow to avoid noisy logs
+            pass
+        except Exception:
+            # Any other exception shouldn't bubble up from a canceled timeout task
+            pass
 
     async def _send_command_feedback(self, data: SendCommandMsg, exists: bool):
         if not self._feedback_listener:
