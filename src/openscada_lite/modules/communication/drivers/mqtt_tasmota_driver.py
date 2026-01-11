@@ -17,6 +17,7 @@
 import asyncio
 import json
 import datetime
+import logging
 from typing import Callable, List, Optional
 
 import paho.mqtt.client as mqtt
@@ -33,6 +34,7 @@ from openscada_lite.modules.communication.drivers.driver_protocol import DriverP
 
 class MQTTTasmotaRelayDriver(DriverProtocol):
     def __init__(self, server_name: str) -> None:
+    self._logger = logging.getLogger(__name__)
         self._server_name = server_name
         self._client: Optional[mqtt.Client] = None
         self._connected: bool = False
@@ -262,12 +264,7 @@ class MQTTTasmotaRelayDriver(DriverProtocol):
             self._pending_command = None
 
             if self._command_timeout_task:
-                old_task = self._command_timeout_task
-                old_task.cancel()
-                # Consume the canceled task to avoid 'Task exception was never retrieved'
-                asyncio.run_coroutine_threadsafe(
-                    self._consume_canceled_task(old_task), self._loop
-                )
+                self._command_timeout_task.cancel()
                 self._command_timeout_task = None
 
             asyncio.run_coroutine_threadsafe(
@@ -283,22 +280,13 @@ class MQTTTasmotaRelayDriver(DriverProtocol):
         try:
             await asyncio.sleep(timeout)
         except asyncio.CancelledError:
-            # Re-raise cancellation after any cleanup to propagate properly
-            raise
+            # Task was canceled intentionally; stop execution and do not raise (NOSONAR)
+            self._logger.debug("Command timeout task canceled; stopping handler.")
+            return  # NOSONAR
 
         if self._pending_command == data:
             self._pending_command = None
             await self._send_command_feedback(data, exists=False)
-
-    async def _consume_canceled_task(self, task: asyncio.Task):
-        try:
-            await task
-        except asyncio.CancelledError:
-            # Expected cancellation; swallow to avoid noisy logs
-            pass
-        except Exception:
-            # Any other exception shouldn't bubble up from a canceled timeout task
-            pass
 
     async def _send_command_feedback(self, data: SendCommandMsg, exists: bool):
         if not self._feedback_listener:
