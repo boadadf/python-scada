@@ -17,7 +17,6 @@
 import asyncio
 import json
 import datetime
-import logging
 from typing import Callable, List, Optional
 
 import paho.mqtt.client as mqtt
@@ -34,7 +33,6 @@ from openscada_lite.modules.communication.drivers.driver_protocol import DriverP
 
 class MQTTTasmotaRelayDriver(DriverProtocol):
     def __init__(self, server_name: str) -> None:
-    self._logger = logging.getLogger(__name__)
         self._server_name = server_name
         self._client: Optional[mqtt.Client] = None
         self._connected: bool = False
@@ -279,10 +277,9 @@ class MQTTTasmotaRelayDriver(DriverProtocol):
     async def _command_timeout_handler(self, data: SendCommandMsg, timeout: int):
         try:
             await asyncio.sleep(timeout)
-        except asyncio.CancelledError:
-            # Task was canceled intentionally; stop execution and do not raise (NOSONAR)
-            self._logger.debug("Command timeout task canceled; stopping handler.")
-            return  # NOSONAR
+        except asyncio.CancelledError:  # NOSONAR
+            # Feedback was received so no need to raise timeout
+            return
 
         if self._pending_command == data:
             self._pending_command = None
