@@ -65,4 +65,5 @@ COPY --from=frontend /app/openscada_lite/web/security_editor/static/frontend/dis
 # Expose port (optional, Render uses $PORT)
 EXPOSE 5443
 ENV SCADA_CONFIG_PATH=/app/config
+ENV LOGGING_CONFIG_PATH=/app/config/logging_config.json
 CMD ["uvicorn", "openscada_lite.app:asgi_app", "--host", "0.0.0.0", "--port", "5443"]
