@@ -103,7 +103,7 @@ def dummy_config(monkeypatch, tmp_path):
 
     # Patch Config methods used by AnimationService
     monkeypatch.setattr(Config, "get_svg_files", lambda self: ["tank.svg"])
-    monkeypatch.setattr(Config, "_get_svg_folder", lambda self: str(svg_dir))
+    monkeypatch.setattr(Config, "get_svg_folder", lambda self: str(svg_dir))
     monkeypatch.setattr(Config, "get_animations", lambda self: dummy_animations)
     monkeypatch.setattr(
         Config,
