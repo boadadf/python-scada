@@ -1,5 +1,5 @@
 # -----------------------------------------------------------------------------
-# Copyright 2025 Daniel&Hector Fernandez
+# Copyright 2026 Daniel&Hector Fernandez
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -68,9 +68,7 @@ class MQTTTasmotaRelayDriver(DriverProtocol):
         self._device_topic = config["device_topic"]
 
         self._relay_mapping = config.get("relay_mapping", {})
-        self._reverse_relay_mapping = {
-            v: k for k, v in self._relay_mapping.items()
-        }
+        self._reverse_relay_mapping = {v: k for k, v in self._relay_mapping.items()}
 
         self._subscriptions = config.get("subscriptions", [])
         self._publish_templates = config.get("publish", {})
@@ -78,9 +76,7 @@ class MQTTTasmotaRelayDriver(DriverProtocol):
     async def connect(self) -> None:
         self._loop = asyncio.get_running_loop()
 
-        self._client = mqtt.Client(
-            client_id=self._config.get("client_id")
-        )
+        self._client = mqtt.Client(client_id=self._config.get("client_id"))
 
         if "username" in self._config:
             self._client.username_pw_set(
@@ -110,7 +106,7 @@ class MQTTTasmotaRelayDriver(DriverProtocol):
     # --------------------------------------------------
 
     def subscribe(self, datapoints: List[Datapoint]) -> None:
-        #MQTT doesn't work like this
+        # MQTT doesn't work like this
         pass
 
     async def send_command(self, data: SendCommandMsg) -> None:
@@ -194,7 +190,7 @@ class MQTTTasmotaRelayDriver(DriverProtocol):
     # --------------------------------------------------
 
     def _on_connect(self, client, userdata, flags, rc):
-        self._connected = (rc == 0)
+        self._connected = rc == 0
 
         for sub in self._subscriptions:
             topic = sub.get("topic", "").replace("{device}", self._device_topic)

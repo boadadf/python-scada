@@ -1,6 +1,4 @@
-import asyncio
 import pytest
-from types import SimpleNamespace
 
 from openscada_lite.modules.schedule.model import ScheduleModel
 from openscada_lite.modules.schedule.service import ScheduleService
@@ -12,7 +10,9 @@ class FakeScheduler:
         self.jobs = []
         self.started = False
 
-    def add_job(self, func, trigger, args=None, id=None, replace_existing=False, next_run_time=None):
+    def add_job(
+        self, func, trigger, args=None, id=None, replace_existing=False, next_run_time=None
+    ):
         self.jobs.append(
             {
                 "func": func,
@@ -54,6 +54,7 @@ async def test_schedule_registers_jobs_and_starts(monkeypatch):
     monkeypatch.setattr(Config, "get_instance", DummyConfig.get_instance)
     # Monkeypatch AsyncIOScheduler to FakeScheduler
     import openscada_lite.modules.schedule.service as schedule_service_module
+
     monkeypatch.setattr(schedule_service_module, "AsyncIOScheduler", FakeScheduler)
 
     svc = ScheduleService(DummyEventBus(), ScheduleModel(), None)
@@ -73,28 +74,35 @@ async def test_schedule_registers_jobs_and_starts(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_schedule_execute_triggers_actions(monkeypatch):
-    # Dummy single schedule
-    sched_cfg = {"schedule_id": "daily_toggle", "cron": "0 12 * * *", "actions": ["mode:toggle", "notify:all"]}
+    # Dummy single schedule (parseable strings will be used below)
 
     # Capture execute_action calls (monkeypatch the symbol used in the schedule service module)
     calls = []
-    async def fake_execute_action(action_str, identifier, track_id, rule_id):
-        calls.append({
-            "action_str": action_str,
-            "identifier": identifier,
-            "track_id": track_id,
-            "rule_id": rule_id,
-        })
+
+    async def fake_execute_action(action_str, identifier, track_id, rule_id):  # NOSONAR
+        calls.append(
+            {
+                "action_str": action_str,
+                "identifier": identifier,
+                "track_id": track_id,
+                "rule_id": rule_id,
+            }
+        )
 
     # Minimal service with fake scheduler
     import openscada_lite.modules.schedule.service as schedule_service_module
+
     monkeypatch.setattr(schedule_service_module, "AsyncIOScheduler", FakeScheduler)
     monkeypatch.setattr(schedule_service_module, "execute_action", fake_execute_action)
     svc = ScheduleService(DummyEventBus(), ScheduleModel(), None)
 
     # Execute directly
     # Use parseable action strings
-    parseable_sched = {"schedule_id": "daily_toggle", "cron": "0 12 * * *", "actions": ["mode('toggle')", "notify('all')"]}
+    parseable_sched = {
+        "schedule_id": "daily_toggle",
+        "cron": "0 12 * * *",
+        "actions": ["mode('toggle')", "notify('all')"],
+    }
     await svc._execute_schedule(parseable_sched)
 
     # Verify actions executed in order

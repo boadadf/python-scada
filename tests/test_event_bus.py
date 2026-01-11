@@ -26,9 +26,7 @@ async def test_publish_and_subscribe():
         TagUpdateMsg(track_id="1234", datapoint_identifier="t1", value=42),
     )
     await asyncio.sleep(0.01)
-    assert results == [
-        TagUpdateMsg(track_id="1234", datapoint_identifier="t1", value=42)
-    ]
+    assert results == [TagUpdateMsg(track_id="1234", datapoint_identifier="t1", value=42)]
 
 
 @pytest.mark.asyncio
@@ -50,12 +48,8 @@ async def test_multiple_subscribers():
         TagUpdateMsg(track_id="1234", datapoint_identifier="t2", value=123),
     )
     await asyncio.sleep(0.01)
-    assert results1 == [
-        TagUpdateMsg(track_id="1234", datapoint_identifier="t2", value=123)
-    ]
-    assert results2 == [
-        TagUpdateMsg(track_id="1234", datapoint_identifier="t2", value=123)
-    ]
+    assert results1 == [TagUpdateMsg(track_id="1234", datapoint_identifier="t2", value=123)]
+    assert results2 == [TagUpdateMsg(track_id="1234", datapoint_identifier="t2", value=123)]
 
 
 @pytest.mark.asyncio
@@ -68,9 +62,7 @@ async def test_unsubscribe():
 
     bus.subscribe(EventType.TAG_UPDATE, callback)
     bus.unsubscribe(EventType.TAG_UPDATE, callback)
-    await bus.publish(
-        EventType.TAG_UPDATE, TagUpdateMsg(datapoint_identifier="t3", value=999)
-    )
+    await bus.publish(EventType.TAG_UPDATE, TagUpdateMsg(datapoint_identifier="t3", value=999))
     await asyncio.sleep(0.01)
     assert results == []
 
@@ -79,6 +71,4 @@ async def test_unsubscribe():
 async def test_publish_no_subscribers():
     bus = EventBus.get_instance()
     # Should not raise any error
-    await bus.publish(
-        EventType.TAG_UPDATE, TagUpdateMsg(datapoint_identifier="t4", value=True)
-    )
+    await bus.publish(EventType.TAG_UPDATE, TagUpdateMsg(datapoint_identifier="t4", value=True))

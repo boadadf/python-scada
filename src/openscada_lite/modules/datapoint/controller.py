@@ -23,13 +23,9 @@ from openscada_lite.common.models.dtos import StatusDTO, TagUpdateMsg, RawTagUpd
 
 class DatapointController(BaseController[TagUpdateMsg, RawTagUpdateMsg]):
     def __init__(self, model, socketio, module_name: str, router: APIRouter):
-        super().__init__(
-            model, socketio, TagUpdateMsg, RawTagUpdateMsg, module_name, router
-        )
+        super().__init__(model, socketio, TagUpdateMsg, RawTagUpdateMsg, module_name, router)
 
-    def validate_request_data(
-        self, data: RawTagUpdateMsg
-    ) -> Union[TagUpdateMsg, StatusDTO]:
+    def validate_request_data(self, data: RawTagUpdateMsg) -> Union[TagUpdateMsg, StatusDTO]:
         try:
             datapoint_identifier = data.datapoint_identifier
             value = data.value

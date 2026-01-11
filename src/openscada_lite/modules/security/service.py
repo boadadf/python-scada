@@ -91,11 +91,7 @@ class SecurityService(BaseService[None, None, None]):
         for group_name in user.get("groups", []):
             logger.debug("Checking permissions for group: %s", group_name)
             group = next(
-                (
-                    g
-                    for g in self.model.get_all_groups_list()
-                    if g["name"] == group_name
-                ),
+                (g for g in self.model.get_all_groups_list() if g["name"] == group_name),
                 None,
             )
             logger.debug("Permissions for the group: %s", group.get("permissions", []))
@@ -106,9 +102,7 @@ class SecurityService(BaseService[None, None, None]):
                     endpoint_name,
                 )
                 return True
-        logger.debug(
-            "Access denied for user: %s to endpoint: %s", username, endpoint_name
-        )
+        logger.debug("Access denied for user: %s to endpoint: %s", username, endpoint_name)
         return False
 
     def should_accept_update(self, tag: None) -> bool:

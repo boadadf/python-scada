@@ -4,7 +4,11 @@ import pytest
 
 from types import SimpleNamespace
 
-from openscada_lite.common.models.dtos import SendCommandMsg, DriverConnectStatus, CommandFeedbackMsg
+from openscada_lite.common.models.dtos import (
+    SendCommandMsg,
+    DriverConnectStatus,
+    CommandFeedbackMsg,
+)
 import openscada_lite.modules.communication.drivers.mqtt_tasmota_driver as mtd
 from openscada_lite.modules.communication.drivers.mqtt_tasmota_driver import MQTTTasmotaRelayDriver
 
@@ -88,9 +92,9 @@ async def test_mqtt_connect_emits_status_and_subscribes(monkeypatch):
 
     assert status_events and status_events[0].status == "online"
     subs = driver._client.subscriptions
-    assert f"stat/xmas/POWER1" in subs
-    assert f"stat/xmas/POWER2" in subs
-    assert f"stat/xmas/RESULT" in subs
+    assert "stat/xmas/POWER1" in subs
+    assert "stat/xmas/POWER2" in subs
+    assert "stat/xmas/RESULT" in subs
 
 
 @pytest.mark.asyncio

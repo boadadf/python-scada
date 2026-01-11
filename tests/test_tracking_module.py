@@ -98,8 +98,7 @@ async def test_controller_publish_live_feed(model):
     args, kwargs = socketio.emit.call_args
     assert args[0] == "tracking_datafloweventmsg"
     assert any(
-        emitted_event["track_id"] == "abc123"
-        and emitted_event["event_type"] == "TestEvent"
+        emitted_event["track_id"] == "abc123" and emitted_event["event_type"] == "TestEvent"
         for emitted_event in args[1]
     )
 

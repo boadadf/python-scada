@@ -62,9 +62,7 @@ def get_logging_config_path(args=None):
     env_var = "LOGGING_CONFIG_PATH"
     if env_var in os.environ:
         return os.environ[env_var]
-    cfg = next(
-        (arg for arg in (args or []) if arg.startswith("--logging-config=")), None
-    )
+    cfg = next((arg for arg in (args or []) if arg.startswith("--logging-config=")), None)
     if cfg:
         return cfg.split("=", 1)[1]
     return str(Path(__file__).parent.parent.parent / "config" / "logging_config.json")

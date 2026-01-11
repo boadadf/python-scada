@@ -22,12 +22,8 @@ from openscada_lite.common.models.dtos import AckAlarmMsg, AlarmUpdateMsg, Statu
 
 
 class AlarmController(BaseController[AlarmUpdateMsg, AckAlarmMsg]):
-    def __init__(
-        self, model: AlarmModel, socketio, module_name: str, router: APIRouter
-    ):
-        super().__init__(
-            model, socketio, AlarmUpdateMsg, AckAlarmMsg, module_name, router
-        )
+    def __init__(self, model: AlarmModel, socketio, module_name: str, router: APIRouter):
+        super().__init__(model, socketio, AlarmUpdateMsg, AckAlarmMsg, module_name, router)
         self.model: AlarmModel = model
 
     def validate_request_data(self, data: AckAlarmMsg) -> Union[AckAlarmMsg, StatusDTO]:

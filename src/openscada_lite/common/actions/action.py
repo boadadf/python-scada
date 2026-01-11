@@ -34,9 +34,7 @@ class Action(ABC):
     async def __call__(
         self, datapoint_identifier, params, track_id, rule_id
     ) -> tuple[DTO, EventType]:
-        dto, event = self.get_event_data(
-            datapoint_identifier, params, track_id, rule_id
-        )
+        dto, event = self.get_event_data(datapoint_identifier, params, track_id, rule_id)
         await self.bus.publish(event, dto)
         return dto, event
 

@@ -31,9 +31,7 @@ from openscada_lite.modules.communication.drivers.test.tank_test_driver import (
 from openscada_lite.modules.communication.drivers.test.boiler_test_driver import (
     BoilerTestDriver,
 )
-from openscada_lite.modules.communication.drivers.mqtt_tasmota_driver import (
-    MQTTTasmotaRelayDriver
-)
+from openscada_lite.modules.communication.drivers.mqtt_tasmota_driver import MQTTTasmotaRelayDriver
 
 DRIVER_REGISTRY = {
     "TankTestDriver": TankTestDriver,
@@ -42,5 +40,5 @@ DRIVER_REGISTRY = {
     "OPCUAServerDriver": OPCUAServerDriver,
     "StressTestDriver": StressTestDriver,
     "CameraDriver": CameraDriver,
-    "MQTTTasmotaRelayDriver": MQTTTasmotaRelayDriver
+    "MQTTTasmotaRelayDriver": MQTTTasmotaRelayDriver,
 }

@@ -72,9 +72,7 @@ class BaseService(ABC, Generic[T, U, V]):
         if t_cls is not None:
             for t_cls in self.t_cls_list:
                 if t_cls is not None:
-                    self.event_bus.subscribe(
-                        t_cls.get_event_type(), self.handle_bus_message
-                    )
+                    self.event_bus.subscribe(t_cls.get_event_type(), self.handle_bus_message)
 
     # @publish_from_arg_async(status=DataFlowStatus.RECEIVED)
     async def handle_bus_message(self, data: T):

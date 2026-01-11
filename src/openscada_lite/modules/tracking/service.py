@@ -20,9 +20,7 @@ from openscada_lite.common.models.dtos import DataFlowEventMsg
 
 class TrackingService(BaseService[DataFlowEventMsg, None, DataFlowEventMsg]):
     def __init__(self, event_bus, model, controller):
-        super().__init__(
-            event_bus, model, controller, DataFlowEventMsg, None, DataFlowEventMsg
-        )
+        super().__init__(event_bus, model, controller, DataFlowEventMsg, None, DataFlowEventMsg)
 
     def should_accept_update(self, msg: DataFlowEventMsg) -> bool:
         return True

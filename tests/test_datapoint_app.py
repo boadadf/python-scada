@@ -105,9 +105,7 @@ async def test_live_feed_and_set_tag_real():
     all_updates = [item for batch in received_updates for item in batch]
 
     # Check if the expected update is in the batch
-    update = next(
-        (u for u in all_updates if u["datapoint_identifier"] == test_tag), None
-    )
+    update = next((u for u in all_updates if u["datapoint_identifier"] == test_tag), None)
     assert update is not None, "Expected update not found in received updates"
     assert update["value"] == pytest.approx(test_value)
 

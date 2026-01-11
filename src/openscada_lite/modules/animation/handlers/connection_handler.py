@@ -38,9 +38,7 @@ class ConnectionHandler:
 
         return updates
 
-    def _create_animation_update(
-        self, service, svg_name, elem_id, anim_name, event_value
-    ):
+    def _create_animation_update(self, service, svg_name, elem_id, anim_name, event_value):
         animation = service.animations.get(anim_name)
         if not animation:
             return None
@@ -70,9 +68,7 @@ class ConnectionHandler:
             if getattr(entry, "trigger_type", "") != "connection":
                 continue
 
-            attr_changes, text_change, dur = service.process_single_entry(
-                entry, event_value, None
-            )
+            attr_changes, text_change, dur = service.process_single_entry(entry, event_value, None)
             agg_attr.update(attr_changes)
             if text_change:
                 agg_text = text_change

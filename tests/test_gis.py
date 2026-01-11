@@ -66,9 +66,7 @@ def test_process_tag_update_match(gis_service):
         quality="good",
         timestamp="2025-11-23T12:00:00Z",
     )
-    gis_update = gis_service._process_tag_update(
-        tag_msg, gis_service.gis_icons_config[0]
-    )
+    gis_update = gis_service._process_tag_update(tag_msg, gis_service.gis_icons_config[0])
     assert gis_update is not None
     assert isinstance(gis_update, GisUpdateMsg)
     assert gis_update.id == "icon1"
@@ -83,9 +81,7 @@ def test_process_tag_update_no_match(gis_service):
         quality="good",
         timestamp="2025-11-23T12:00:00Z",
     )
-    gis_update = gis_service._process_tag_update(
-        tag_msg, gis_service.gis_icons_config[0]
-    )
+    gis_update = gis_service._process_tag_update(tag_msg, gis_service.gis_icons_config[0])
     assert gis_update is None
 
 
@@ -98,9 +94,7 @@ def test_process_tag_update_with_states(gis_service):
         quality="good",
         timestamp="2025-11-23T12:00:00Z",
     )
-    gis_update = gis_service._process_tag_update(
-        tag_msg, gis_service.gis_icons_config[0]
-    )
+    gis_update = gis_service._process_tag_update(tag_msg, gis_service.gis_icons_config[0])
     assert gis_update is not None
     assert gis_update.icon == "state_icon.png"
 
@@ -115,9 +109,7 @@ def test_process_alarm_update_match(gis_service):
         deactivation_time=None,
     )
 
-    gis_update = gis_service._process_alarm_update(
-        alarm_msg, gis_service.gis_icons_config[1]
-    )
+    gis_update = gis_service._process_alarm_update(alarm_msg, gis_service.gis_icons_config[1])
     assert gis_update is not None
     assert isinstance(gis_update, GisUpdateMsg)
     assert gis_update.id == "icon2"
@@ -134,9 +126,7 @@ def test_process_alarm_update_no_match(gis_service):
         acknowledge_time=None,
         deactivation_time=None,
     )
-    gis_update = gis_service._process_alarm_update(
-        alarm_msg, gis_service.gis_icons_config[1]
-    )
+    gis_update = gis_service._process_alarm_update(alarm_msg, gis_service.gis_icons_config[1])
     assert gis_update is None
 
 

@@ -52,9 +52,7 @@ class RuleEngine:
 
     def __new__(cls, *args, **kwargs):
         if cls._instance is not None:
-            raise RuntimeError(
-                "Use RuleManager.get_instance() instead of direct instantiation."
-            )
+            raise RuntimeError("Use RuleManager.get_instance() instead of direct instantiation.")
         cls._instance = super().__new__(cls)
         return cls._instance
 
@@ -81,9 +79,7 @@ class RuleEngine:
         self.asteval.symtable["FALSE"] = False
         config = Config.get_instance()
         dp_types = config.get_types()
-        logger.info(
-            f"Initializing RuleEngine with datapoint types: {list(dp_types.keys())}"
-        )
+        logger.info(f"Initializing RuleEngine with datapoint types: {list(dp_types.keys())}")
         for dp in dp_types.values():
             values = dp.get("values", [])
             for val in values:
@@ -187,9 +183,7 @@ class RuleEngine:
         on_result, has_off, off_result = evaluation_result
 
         if has_off:
-            await self._handle_on_off_rule(
-                rule, rule_id, on_result, off_result, tag_id, track_id
-            )
+            await self._handle_on_off_rule(rule, rule_id, on_result, off_result, tag_id, track_id)
         else:
             await self._handle_on_only_rule(rule, rule_id, on_result, tag_id, track_id)
 
@@ -197,9 +191,7 @@ class RuleEngine:
         """Evaluate on and off conditions for a rule."""
         try:
             on_result = self.asteval(rule.on_condition.replace("@", "__"))
-            logger.debug(
-                f"[RuleEngine] Evaluated on_condition for rule {rule_id}: {on_result}"
-            )
+            logger.debug(f"[RuleEngine] Evaluated on_condition for rule {rule_id}: {on_result}")
 
             if self.asteval.error:
                 logger.error(f"asteval errors: {self.asteval.error}")
@@ -216,9 +208,7 @@ class RuleEngine:
             logger.error(f"[RuleEngine] Error evaluating rule {rule_id}: {e}")
             return None
 
-    async def _handle_on_off_rule(
-        self, rule, rule_id, on_result, off_result, tag_id, track_id
-    ):
+    async def _handle_on_off_rule(self, rule, rule_id, on_result, off_result, tag_id, track_id):
         """Handle rules with both on and off conditions."""
         on_active = self.rule_states.get(rule_id, False)
 
@@ -256,9 +246,7 @@ class RuleEngine:
     async def _execute_actions(self, actions, tag_id, track_id, active, rule_id):
         """Execute a list of actions."""
         for action in actions:
-            await self.execute_action(
-                action, tag_id, track_id, active=active, rule_id=rule_id
-            )
+            await self.execute_action(action, tag_id, track_id, active=active, rule_id=rule_id)
 
     def parse_action(self, action_str):
         """
@@ -277,9 +265,7 @@ class RuleEngine:
         params = eval(f"({params_str},)") if params_str else ()
         return action_name, params
 
-    async def execute_action(
-        self, action_str, identifier, track_id, active=True, rule_id=None
-    ):
+    async def execute_action(self, action_str, identifier, track_id, active=True, rule_id=None):
         """
         Execute an action by looking up its handler and calling it.
 

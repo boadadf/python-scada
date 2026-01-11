@@ -56,9 +56,7 @@ class TagHandler:
             test=getattr(msg, "test", False),
         )
 
-    def _process_animation_entries(
-        self, animation, msg, service, svg_name, elem_id, anim_name
-    ):
+    def _process_animation_entries(self, animation, msg, service, svg_name, elem_id, anim_name):
         agg_attr = {}
         agg_text = None
         duration = service.DURATION_DEFAULT

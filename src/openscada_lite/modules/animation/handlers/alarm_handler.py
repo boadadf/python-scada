@@ -54,16 +54,12 @@ class AlarmHandler:
 
     def _schedule_revert_if_needed(self, entry, svg_name, elem_id, anim_name, service):
         if getattr(entry, "revert_after", 0):
-            task = asyncio.create_task(
-                service.schedule_revert(svg_name, elem_id, anim_name, entry)
-            )
+            task = asyncio.create_task(service.schedule_revert(svg_name, elem_id, anim_name, entry))
             task.add_done_callback(lambda t: t.exception())
 
     def handle(self, msg, service):
         updates = []
-        identifier = getattr(msg, "datapoint_identifier", None) or getattr(
-            msg, "alarm_id", None
-        )
+        identifier = getattr(msg, "datapoint_identifier", None) or getattr(msg, "alarm_id", None)
         if not identifier:
             return updates
 
@@ -86,9 +82,7 @@ class AlarmHandler:
                 continue
             for entry in animation.entries:
                 if getattr(entry, "trigger_type", "") == "alarm":
-                    self._schedule_revert_if_needed(
-                        entry, svg_name, elem_id, anim_name, service
-                    )
+                    self._schedule_revert_if_needed(entry, svg_name, elem_id, anim_name, service)
 
             cfg = {"attr": agg_attr, "duration": duration}
             if agg_text:

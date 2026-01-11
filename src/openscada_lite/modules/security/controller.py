@@ -30,9 +30,7 @@ class SecurityController(
     BaseController[None, None],
 ):
 
-    def __init__(
-        self, model: SecurityModel, socketio, module_name: str, router: APIRouter
-    ):
+    def __init__(self, model: SecurityModel, socketio, module_name: str, router: APIRouter):
         super().__init__(model, socketio, None, None, module_name, router)
         self.model = model
 
@@ -114,18 +112,14 @@ class SecurityController(
             return response
 
         # GET security config
-        @router.get(
-            "/security/config", tags=[self.base_event], operation_id="getSecurityConfig"
-        )
+        @router.get("/security/config", tags=[self.base_event], operation_id="getSecurityConfig")
         async def get_security_config():
             try:
                 config = self.model.get_security_config()
                 return JSONResponse(content=config)
             except Exception as e:
                 return JSONResponse(
-                    content=StatusDTO(
-                        status="error", reason=f"Failed to load: {e}"
-                    ).to_dict(),
+                    content=StatusDTO(status="error", reason=f"Failed to load: {e}").to_dict(),
                     status_code=500,
                 )
 
@@ -138,26 +132,20 @@ class SecurityController(
         async def save_security_config(data: dict):
             if not data:
                 return JSONResponse(
-                    content=StatusDTO(
-                        status="error", reason="No data provided"
-                    ).to_dict(),
+                    content=StatusDTO(status="error", reason="No data provided").to_dict(),
                     status_code=400,
                 )
             try:
                 self.model.save_security_config(data)
             except Exception as e:
                 return JSONResponse(
-                    content=StatusDTO(
-                        status="error", reason=f"Failed to save: {e}"
-                    ).to_dict(),
+                    content=StatusDTO(status="error", reason=f"Failed to save: {e}").to_dict(),
                     status_code=500,
                 )
             # Notify service if applicable
             if hasattr(self.service, "notify_config_changed"):
                 self.service.notify_config_changed()
-            return JSONResponse(
-                content=StatusDTO(status="ok", reason="Config saved").to_dict()
-            )
+            return JSONResponse(content=StatusDTO(status="ok", reason="Config saved").to_dict())
 
         self.model.load_endpoints(router)
 

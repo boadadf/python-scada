@@ -27,9 +27,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class AnimationController(
-    BaseController[AnimationUpdateMsg, AnimationUpdateRequestMsg]
-):
+class AnimationController(BaseController[AnimationUpdateMsg, AnimationUpdateRequestMsg]):
     def __init__(self, model, socketio, module_name: str, router: APIRouter):
         super().__init__(
             model,
@@ -68,19 +66,13 @@ class AnimationController(
         )
         async def svg(filename: str):
             logger.debug(f"Requested SVG file: {filename}")
-            svg_dir = (
-                Path(__file__).parent.parent.parent.parent.parent / "config" / "svg"
-            )
+            svg_dir = Path(__file__).parent.parent.parent.parent.parent / "config" / "svg"
             logger.debug(f"SVG directory: {svg_dir}")
             file = svg_dir / filename
             if file.exists():
-                return FileResponse(
-                    file, media_type="text/plain"
-                )  # Ensure correct media type
+                return FileResponse(file, media_type="text/plain")  # Ensure correct media type
             return JSONResponse(content={"error": "File not found"}, status_code=404)
 
-    def validate_request_data(
-        self, data: AnimationUpdateRequestMsg
-    ) -> AnimationUpdateRequestMsg:
+    def validate_request_data(self, data: AnimationUpdateRequestMsg) -> AnimationUpdateRequestMsg:
         # You could also return a StatusDTO if invalid
         return data

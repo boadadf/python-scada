@@ -136,13 +136,9 @@ def publish_route_async(status: DataFlowStatus, source: Optional[str] = None):
             result = await func(*args, **kwargs)
 
             dto = None
-            logger.debug(
-                f"[TRACKING] Tape {type(result)} returned from {func.__name__}"
-            )
+            logger.debug(f"[TRACKING] Tape {type(result)} returned from {func.__name__}")
             if isinstance(result, JSONResponse):
-                logger.debug(
-                    f"[TRACKING] JSONResponse detected with body: {result.body}"
-                )
+                logger.debug(f"[TRACKING] JSONResponse detected with body: {result.body}")
                 try:
                     content_dict = json.loads(result.body.decode())
                     dto = DataFlowEventMsg(
@@ -162,9 +158,7 @@ def publish_route_async(status: DataFlowStatus, source: Optional[str] = None):
                 logger.debug(
                     f"[TRACKING] Publishing event from route {func.__name__} with status {status}"
                 )
-                pub.publish_data_flow_event(
-                    dto, source=source or func.__name__, status=status
-                )
+                pub.publish_data_flow_event(dto, source=source or func.__name__, status=status)
 
             return result
 
