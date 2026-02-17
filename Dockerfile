@@ -55,7 +55,6 @@ RUN pip install gunicorn
 
 # Copy backend + config + modules
 COPY src/openscada_lite ./openscada_lite
-COPY config ./config
 
 # Copy built frontends from previous stage
 COPY --from=frontend /app/openscada_lite/web/scada/static/frontend/dist ./openscada_lite/web/scada/static/frontend/dist
@@ -64,6 +63,6 @@ COPY --from=frontend /app/openscada_lite/web/security_editor/static/frontend/dis
 
 # Expose port (optional, Render uses $PORT)
 EXPOSE 5443
-ENV SCADA_CONFIG_PATH=/app/config
-ENV LOGGING_CONFIG_PATH=/app/config/logging_config.json
+VOLUME /config
+ENV SCADA_CONFIG_PATH=/config
 CMD ["uvicorn", "openscada_lite.app:asgi_app", "--host", "0.0.0.0", "--port", "5443"]

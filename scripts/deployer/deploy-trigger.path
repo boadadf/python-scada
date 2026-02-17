@@ -1,0 +1,9 @@
+[Unit]
+Description=Watch deploy trigger file
+
+[Path]
+PathExists=/opt/deployer/deploy.trigger
+
+[Install]
+WantedBy=multi-user.target
+

@@ -1,0 +1,10 @@
+[Unit]
+Description=Run SCADA deploy script
+
+[Service]
+Type=oneshot
+User=orangepi
+WorkingDirectory=/opt/deployer
+Environment="SSH_AUTH_SOCK=/tmp/ssh-agent.sock"
+ExecStartPre=/usr/bin/ssh-agent -a /tmp/ssh-agent.sock
+ExecStart=/bin/bash /opt/deployer/deploy.sh

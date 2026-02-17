@@ -1,0 +1,15 @@
+[Unit]
+Description=SCADA deployer webhook
+After=network.target docker.service
+
+[Service]
+
+Environment="PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" "GITHUB_SECRET=Tel_0034696312712"
+ExecStart=/opt/deployer/venv/bin/python /opt/deployer/webhook.py
+WorkingDirectory=/opt/deployer
+Restart=always
+User=orangepi
+
+[Install]
+WantedBy=multi-user.target
+

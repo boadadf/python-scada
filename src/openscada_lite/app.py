@@ -65,6 +65,15 @@ def get_logging_config_path(args=None):
     cfg = next((arg for arg in (args or []) if arg.startswith("--logging-config=")), None)
     if cfg:
         return cfg.split("=", 1)[1]
+    # Fallback: use SCADA_CONFIG_PATH or --config-dir if provided
+    scada_dir = os.environ.get("SCADA_CONFIG_PATH")
+    if not scada_dir:
+        cfg_dir = next((arg for arg in (args or []) if arg.startswith("--config-dir=")), None)
+        if cfg_dir:
+            scada_dir = cfg_dir.split("=", 1)[1]
+    if scada_dir:
+        return str(Path(scada_dir) / "logging_config.json")
+    # Final fallback: internal packaged config
     return str(Path(__file__).parent.parent.parent / "config" / "logging_config.json")
 
 
@@ -89,6 +98,8 @@ sio = socketio.AsyncServer(
 # Core singletons
 # -----------------------------------------------------------------------------
 event_bus = EventBus.get_instance()
+
+
 # Resolve configuration directory (env > CLI > default) early
 def get_config_dir(args=None):
     env_var = "SCADA_CONFIG_PATH"
@@ -99,6 +110,7 @@ def get_config_dir(args=None):
         return cfg.split("=", 1)[1]
     # Default to packaged config directory
     return str(Path(__file__).parent.parent / "config")
+
 
 CONFIG_DIR = get_config_dir(sys.argv[1:])
 # Ensure downstream utilities relying on env see the same path
