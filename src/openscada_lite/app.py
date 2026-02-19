@@ -78,11 +78,18 @@ def get_logging_config_path(args=None):
 
 
 logging_config_path = get_logging_config_path(sys.argv[1:])
-with open(logging_config_path, "r") as f:
-    config = json.load(f)
-logging.config.dictConfig(config)
+if os.path.isfile(logging_config_path):
+    with open(logging_config_path, "r", encoding="utf-8") as f:
+        config = json.load(f)
+    logging.config.dictConfig(config)
+else:
+    logging.basicConfig(level=logging.INFO)
 
 logger = logging.getLogger(__name__)
+if not os.path.isfile(logging_config_path):
+    logger.warning(
+        "Logging config not found at %s. Using basicConfig.", logging_config_path
+    )
 
 # -----------------------------------------------------------------------------
 # Socket.IO server
