@@ -108,6 +108,12 @@ event_bus = EventBus.get_instance()
 
 
 # Resolve configuration directory (env > CLI > default) early
+def _is_valid_config_path(path: Path) -> bool:
+    if path.is_file():
+        return path.name == "system_config.json"
+    return (path / "system_config.json").is_file()
+
+
 def get_config_dir(args=None):
     env_var = "SCADA_CONFIG_PATH"
     if env_var in os.environ and os.environ[env_var]:
@@ -115,7 +121,16 @@ def get_config_dir(args=None):
     cfg = next((arg for arg in (args or []) if arg.startswith("--config-dir=")), None)
     if cfg:
         return cfg.split("=", 1)[1]
-    # Default to packaged config directory
+    repo_root = Path(__file__).resolve().parents[2]
+    candidates = [
+        repo_root / "config",
+        repo_root / "tests" / "config",
+        Path(__file__).parent.parent / "config",
+    ]
+    for candidate in candidates:
+        if _is_valid_config_path(candidate):
+            return str(candidate)
+    # Default to previous behavior
     return str(Path(__file__).parent.parent / "config")
 
 
