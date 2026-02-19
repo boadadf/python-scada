@@ -27,9 +27,7 @@ logger = logging.getLogger(__name__)
 
 SYSTEM_CONFIG_FILENAME = "system_config.json"
 
-CONFIG_FILE = os.path.join(
-    os.path.dirname(__file__), "..", "..", "..", "..", "config", SYSTEM_CONFIG_FILENAME
-)
+CONFIG_FILE = os.environ.get("SCADA_CONFIG_PATH")
 
 config_router = APIRouter(prefix="/config-editor", tags=["ConfigEditor"])
 
@@ -51,9 +49,10 @@ def normalize_config_filename(name: str) -> str:
     operation_id="getConfigByName",
 )
 async def get_config_by_name(name: str):
-    config_dir = os.path.dirname(CONFIG_FILE)
     filename = normalize_config_filename(name)
-    path = os.path.join(config_dir, filename)
+    print(f"Getting config for name: {name}, normalized filename: {filename}")
+    path = os.path.join(CONFIG_FILE, filename)
+    print(f"Full path to config file: {path}")
     if not os.path.isfile(path):
         return JSONResponse({"error": "File not found"}, status_code=404)
     async with await anyio.open_file(path, "r") as file:
@@ -68,16 +67,13 @@ async def get_config_by_name(name: str):
     operation_id="getConfigs",
 )
 async def get_configs():
-    logger.debug("Getting configs...")
-    config_dir = os.path.dirname(CONFIG_FILE)
-    logger.debug("Config dir:", config_dir)
-    files = [
-        f for f in os.listdir(config_dir) if f.endswith(f"_{SYSTEM_CONFIG_FILENAME}")
-    ]
-    logger.debug("Found config files:", files)
+    print("Getting configs...")
+    print("Config dir:", CONFIG_FILE)
+    files = [f for f in os.listdir(CONFIG_FILE) if f.endswith(f"_{SYSTEM_CONFIG_FILENAME}")]
+    print("Found config files:", files)
     # Strip suffix for user display
     display_names = [f.replace(f"_{SYSTEM_CONFIG_FILENAME}", "") for f in files]
-    logger.debug("Display names:", display_names)
+    print("Display names:", display_names)
     return display_names
 
 
@@ -107,8 +103,7 @@ async def save_config_as(request: Request):
     if not name:
         return JSONResponse({"error": "Invalid filename"}, status_code=400)
     filename = normalize_config_filename(name)
-    config_dir = os.path.dirname(CONFIG_FILE)
-    path = os.path.join(config_dir, filename)
+    path = os.path.join(CONFIG_FILE, filename)
     async with await anyio.open_file(path, "w") as file:
         await file.write(json.dumps(config, indent=2))
     return {"status": "ok", "filename": filename}
@@ -131,9 +126,7 @@ async def restart_app():
             container_id = os.environ.get("HOSTNAME")
             if container_id:
                 container = client.containers.get(container_id)
-                logger.info(
-                    f"[RESTART] Restarting container {container_id} via Docker socket..."
-                )
+                logger.info(f"[RESTART] Restarting container {container_id} via Docker socket...")
                 container.restart()
                 return
         except Exception as e:

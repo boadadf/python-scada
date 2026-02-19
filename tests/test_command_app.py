@@ -43,7 +43,7 @@ def run_server():
     from pathlib import Path
 
     # Ensure SCADA_CONFIG_PATH is set
-    cfg_file = Path(__file__).parent / "config" / "test_config.json"
+    cfg_file = Path(__file__).parent / "config"
     os.environ["SCADA_CONFIG_PATH"] = str(cfg_file.resolve())
 
     # Start Uvicorn in a subprocess

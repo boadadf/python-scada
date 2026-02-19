@@ -14,6 +14,11 @@ from openscada_lite.common.models.dtos import (
 )
 
 
+@pytest.fixture(autouse=True)
+def set_config_env(monkeypatch):
+    monkeypatch.setenv("SCADA_CONFIG_PATH", "tests/config/system_config.json")
+
+
 # Reset the bus for each test
 @pytest.fixture(autouse=True)
 def reset_event_bus(monkeypatch):

@@ -8,6 +8,11 @@ from openscada_lite.modules.security.service import SecurityService
 from openscada_lite.modules.security.controller import SecurityController
 
 
+@pytest.fixture(autouse=True)
+def set_config_env(monkeypatch):
+    monkeypatch.setenv("SCADA_CONFIG_PATH", "tests/config/system_config.json")
+
+
 @pytest.fixture
 def app(tmp_path):
     """Create a FastAPI app with SecurityController mounted."""

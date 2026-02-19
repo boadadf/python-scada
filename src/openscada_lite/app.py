@@ -65,15 +65,31 @@ def get_logging_config_path(args=None):
     cfg = next((arg for arg in (args or []) if arg.startswith("--logging-config=")), None)
     if cfg:
         return cfg.split("=", 1)[1]
+    # Fallback: use SCADA_CONFIG_PATH or --config-dir if provided
+    scada_dir = os.environ.get("SCADA_CONFIG_PATH")
+    if not scada_dir:
+        cfg_dir = next((arg for arg in (args or []) if arg.startswith("--config-dir=")), None)
+        if cfg_dir:
+            scada_dir = cfg_dir.split("=", 1)[1]
+    if scada_dir:
+        return str(Path(scada_dir) / "logging_config.json")
+    # Final fallback: internal packaged config
     return str(Path(__file__).parent.parent.parent / "config" / "logging_config.json")
 
 
 logging_config_path = get_logging_config_path(sys.argv[1:])
-with open(logging_config_path, "r") as f:
-    config = json.load(f)
-logging.config.dictConfig(config)
+if os.path.isfile(logging_config_path):
+    with open(logging_config_path, "r", encoding="utf-8") as f:
+        config = json.load(f)
+    logging.config.dictConfig(config)
+else:
+    logging.basicConfig(level=logging.INFO)
 
 logger = logging.getLogger(__name__)
+if not os.path.isfile(logging_config_path):
+    logger.warning(
+        "Logging config not found at %s. Using basicConfig.", logging_config_path
+    )
 
 # -----------------------------------------------------------------------------
 # Socket.IO server
@@ -89,7 +105,40 @@ sio = socketio.AsyncServer(
 # Core singletons
 # -----------------------------------------------------------------------------
 event_bus = EventBus.get_instance()
-system_config = Config.get_instance().load_system_config()
+
+
+# Resolve configuration directory (env > CLI > default) early
+def _is_valid_config_path(path: Path) -> bool:
+    if path.is_file():
+        return path.name == "system_config.json"
+    return (path / "system_config.json").is_file()
+
+
+def get_config_dir(args=None):
+    env_var = "SCADA_CONFIG_PATH"
+    if env_var in os.environ and os.environ[env_var]:
+        return os.environ[env_var]
+    cfg = next((arg for arg in (args or []) if arg.startswith("--config-dir=")), None)
+    if cfg:
+        return cfg.split("=", 1)[1]
+    repo_root = Path(__file__).resolve().parents[2]
+    candidates = [
+        repo_root / "config",
+        repo_root / "tests" / "config",
+        Path(__file__).parent.parent / "config",
+    ]
+    for candidate in candidates:
+        if _is_valid_config_path(candidate):
+            return str(candidate)
+    # Default to previous behavior
+    return str(Path(__file__).parent.parent / "config")
+
+
+CONFIG_DIR = get_config_dir(sys.argv[1:])
+# Ensure downstream utilities relying on env see the same path
+os.environ["SCADA_CONFIG_PATH"] = CONFIG_DIR
+
+system_config = Config.get_instance(CONFIG_DIR).load_system_config()
 publisher = TrackingPublisher.get_instance()
 
 
@@ -100,9 +149,7 @@ publisher = TrackingPublisher.get_instance()
 async def lifespan(app: FastAPI):
     logger.info("[LIFESPAN] Startup starting...")
 
-    # Ensure config path is set
-    if "SCADA_CONFIG_PATH" not in os.environ:
-        os.environ["SCADA_CONFIG_PATH"] = str(Path(__file__).parent.parent / "config")
+    # Config path is already set before app init; keep as-is
 
     loop = asyncio.get_running_loop()
     publisher.initialize(loop)

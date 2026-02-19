@@ -11,6 +11,13 @@ from openscada_lite.common.utils import SecurityUtils
 
 SERVER_URL = "http://localhost:5001"
 
+CONFIG_DIR = os.path.join(os.path.dirname(__file__), "config")
+
+
+@pytest.fixture(autouse=True)
+def set_config_env(monkeypatch):
+    monkeypatch.setenv("SCADA_CONFIG_PATH", CONFIG_DIR)
+
 
 @pytest.fixture(scope="session", autouse=True)
 def run_server():
@@ -19,8 +26,8 @@ def run_server():
     import socket
     import os
 
-    # Ensure SCADA_CONFIG_PATH is set
-    os.environ["SCADA_CONFIG_PATH"] = "tests/config/test_config.json"
+    env = os.environ.copy()
+    env["SCADA_CONFIG_PATH"] = CONFIG_DIR
 
     # Start Uvicorn in a subprocess
     process = subprocess.Popen(
@@ -32,7 +39,7 @@ def run_server():
             "--port",
             "5001",
         ],
-        env=os.environ.copy(),  # Pass the current environment variables to the subprocess
+        env=env,
     )
     # Wait for server readiness (avoid race conditions)
     start = time.time()
@@ -81,7 +88,7 @@ async def test_live_feed_and_set_tag_real():
     await asyncio.sleep(1)  # Wait for initial state
 
     async with aiofiles.open(
-        os.path.join(os.path.dirname(__file__), "config", "test_config.json")
+        os.path.join(os.path.dirname(__file__), "config", "system_config.json")
     ) as f:
         content = await f.read()
         config = json.loads(content)

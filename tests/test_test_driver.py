@@ -7,6 +7,11 @@ from openscada_lite.common.models.dtos import SendCommandMsg, TagUpdateMsg
 from openscada_lite.common.models.entities import Datapoint
 
 
+@pytest.fixture(autouse=True)
+def set_config_env(monkeypatch):
+    monkeypatch.setenv("SCADA_CONFIG_PATH", "tests/config/system_config.json")
+
+
 @pytest.mark.asyncio
 async def test_test_driver_value_callback():
     driver = TankTestDriver("WaterTank")
