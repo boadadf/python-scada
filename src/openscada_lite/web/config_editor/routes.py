@@ -70,9 +70,8 @@ async def get_config_by_name(name: str):
 )
 async def get_configs():
     print("Getting configs...")
-    config_dir = os.path.dirname(CONFIG_FILE)
-    print("Config dir:", config_dir)
-    files = [f for f in os.listdir(config_dir) if f.endswith(f"_{SYSTEM_CONFIG_FILENAME}")]
+    print("Config dir:", CONFIG_FILE)
+    files = [f for f in os.listdir(CONFIG_FILE) if f.endswith(f"_{SYSTEM_CONFIG_FILENAME}")]
     print("Found config files:", files)
     # Strip suffix for user display
     display_names = [f.replace(f"_{SYSTEM_CONFIG_FILENAME}", "") for f in files]
@@ -106,8 +105,7 @@ async def save_config_as(request: Request):
     if not name:
         return JSONResponse({"error": "Invalid filename"}, status_code=400)
     filename = normalize_config_filename(name)
-    config_dir = os.path.dirname(CONFIG_FILE)
-    path = os.path.join(config_dir, filename)
+    path = os.path.join(CONFIG_FILE, filename)
     async with await anyio.open_file(path, "w") as file:
         await file.write(json.dumps(config, indent=2))
     return {"status": "ok", "filename": filename}
