@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
+import hashlib
 from flask import Flask, request
-import os, hmac, hashlib
+import os
+import hmac
 
 SECRET = os.environ.get("GITHUB_SECRET", "").encode()
 BRANCH = "refs/heads/master"
@@ -8,12 +10,14 @@ TRIGGER_FILE = "/opt/deployer/deploy.trigger"
 
 app = Flask(__name__)
 
+
 def verify_signature(payload, signature_header):
     if not SECRET or not signature_header:
         return False
     mac = hmac.new(SECRET, msg=payload, digestmod=hashlib.sha256)
     expected = "sha256=" + mac.hexdigest()
     return hmac.compare_digest(expected, signature_header)
+
 
 @app.route("/webhook", methods=["POST"])
 def webhook():
@@ -48,4 +52,3 @@ def webhook():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5002)
-

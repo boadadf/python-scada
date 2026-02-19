@@ -31,6 +31,7 @@ REGISTRY="localhost:5000"
 REPO="python-scada"
 IMAGE="$REGISTRY/$REPO:$DATE"
 REPO_DIR="/opt/deployer/repo"
+CONFIG_DIR="/opt/deployer/config"
 DEPLOY_KEY="/home/orangepi/.ssh/id_ed25519"
 
 # ---------------------------
@@ -92,7 +93,7 @@ fi
 $ECHO "=== Restarting container ==="
 $DOCKER stop python-scada || $ECHO "No container to stop"
 $DOCKER rm python-scada || $ECHO "No container to remove"
-$DOCKER run -d --name python-scada -v /var/run/docker.sock:/var/run/docker.sock --restart=always -p 5443:5443 "$IMAGE"
+$DOCKER run -d --name python-scada -v /var/run/docker.sock:/var/run/docker.sock -v "$CONFIG_DIR":/config --restart=always -p 5443:5443 "$IMAGE"
 
 $ECHO "=== DEPLOY COMPLETE ==="
 $ECHO "Log saved to $LOG_FILE"

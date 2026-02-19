@@ -27,9 +27,7 @@ logger = logging.getLogger(__name__)
 
 SYSTEM_CONFIG_FILENAME = "system_config.json"
 
-CONFIG_FILE = os.environ.get(
-    "SCADA_CONFIG_PATH"
-)
+CONFIG_FILE = os.environ.get("SCADA_CONFIG_PATH")
 
 config_router = APIRouter(prefix="/config-editor", tags=["ConfigEditor"])
 

@@ -13,9 +13,11 @@ SERVER_URL = "http://localhost:5001"
 
 CONFIG_DIR = os.path.join(os.path.dirname(__file__), "config")
 
+
 @pytest.fixture(autouse=True)
 def set_config_env(monkeypatch):
     monkeypatch.setenv("SCADA_CONFIG_PATH", CONFIG_DIR)
+
 
 @pytest.fixture(scope="session", autouse=True)
 def run_server():
